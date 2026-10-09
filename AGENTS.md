@@ -11,3 +11,4 @@
 
 - The imported Mansa app lives in src/mansa and is rendered client-only from src/routes/index.tsx — it relies on browser APIs and Firebase client SDK during migration.
 - lucide-react is pinned to 0.546.0 — newer versions removed brand icons (Instagram etc.) the Mansa UI imports.
+- Public-home styling uses scoped store semantic tokens and shared Button variants so changes do not retheme the imported seller screens.

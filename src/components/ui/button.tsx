@@ -9,6 +9,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        storefront: "bg-store-primary text-store-primary-foreground font-bold hover:bg-store-primary/90",
+        storefrontLink: "text-store-muted hover:text-store-foreground hover:bg-store-foreground/5",
         default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:

@@ -47,6 +47,12 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+  --color-store-background: var(--store-background);
+  --color-store-foreground: var(--store-foreground);
+  --color-store-muted: var(--store-muted);
+  --color-store-border: var(--store-border);
+  --color-store-primary: var(--store-primary);
+  --color-store-primary-foreground: var(--store-primary-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -63,6 +69,12 @@
 }
 
 :root {
+  --store-background: oklch(0 0 0);
+  --store-foreground: oklch(0.96 0 0);
+  --store-muted: oklch(0.68 0 0);
+  --store-border: oklch(1 0 0 / 10%);
+  --store-primary: oklch(0.794 0.181 153.5);
+  --store-primary-foreground: oklch(0 0 0);
   --radius: 0.625rem;
   --background: oklch(0 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -141,5 +153,23 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+}
+
+.afhub-home h1,
+.afhub-home h2,
+.afhub-home header * {
+  letter-spacing: 0;
+}
+
+.afhub-home-hero {
+  min-height: min(780px, calc(100svh - 120px));
+  padding-block: 48px;
+}
+
+@media (max-width: 639px) {
+  .afhub-home-hero {
+    min-height: calc(100svh - 116px);
+    padding-block: 36px;
   }
 }
