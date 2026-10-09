@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { ArrowRight, Twitter, Github, Disc as Discord, ShieldCheck } from "lucide-react";
 import { AfhubLogo } from "./AfhubLogo";

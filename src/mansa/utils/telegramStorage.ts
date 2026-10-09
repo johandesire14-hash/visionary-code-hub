@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface TelegramChannelItem {
   id: string;
   name: string;

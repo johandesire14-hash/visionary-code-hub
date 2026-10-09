@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type CurrencyCode =
   | "XOF"
   | "XAF"

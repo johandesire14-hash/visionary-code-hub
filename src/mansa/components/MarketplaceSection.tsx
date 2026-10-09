@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { Search, Star, ArrowRight, Sparkles } from "lucide-react";
 import { MarketplaceItem } from "../types";

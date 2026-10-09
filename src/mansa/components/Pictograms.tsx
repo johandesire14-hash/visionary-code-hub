@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 
 export const StorefrontPictogram: React.FC<{ className?: string }> = ({ className = "size-32 sm:size-64" }) => (

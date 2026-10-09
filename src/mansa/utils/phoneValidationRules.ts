@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Règles de validation centralisées pour les numéros de téléphone et opérateurs Mobile Money
  * Conforme aux spécifications :

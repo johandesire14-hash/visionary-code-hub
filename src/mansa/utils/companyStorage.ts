@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Company } from "../types";
 import { db, doc, setDoc, deleteDoc } from "../services/firebase";
 

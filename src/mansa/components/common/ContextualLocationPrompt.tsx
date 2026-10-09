@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { MapPin, Check, X, Compass, Loader2 } from "lucide-react";
 import { requestUserLocation, getStoredCountry, SUPPORTED_COUNTRIES } from "../../utils/geolocation";

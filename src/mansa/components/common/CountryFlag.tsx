@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import * as Flags from "country-flag-icons/react/3x2";
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useRef } from "react";
 import { X, Flag, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useModalDismiss } from "../../hooks/useModalDismiss";

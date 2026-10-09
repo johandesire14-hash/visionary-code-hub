@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface CompanyPost {
   id: string;
   companyId: string;

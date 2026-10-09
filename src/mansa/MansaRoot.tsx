@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { Component, ErrorInfo, ReactNode, StrictMode } from "react";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";

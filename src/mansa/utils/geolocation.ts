@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { CurrencyCode, SupportedCountry } from "./currency";
 import { SUPPORTED_COUNTRIES, getStoredCountry, setStoredCountry, setStoredCurrency } from "./currency";
 

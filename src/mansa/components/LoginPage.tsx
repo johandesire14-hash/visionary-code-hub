@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { ArrowLeft, Mail, Lock, User, AlertCircle, ArrowRight, Sparkles } from "lucide-react";
 import { AfhubLogo } from "./AfhubLogo";

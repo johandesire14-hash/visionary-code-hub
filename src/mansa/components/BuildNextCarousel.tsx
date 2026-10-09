@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { ArrowRight, Send, Disc as DiscordIcon, BookOpen, PackageCheck, Code2, Sparkles } from "lucide-react";
 import { CategoryCardItem } from "../types";

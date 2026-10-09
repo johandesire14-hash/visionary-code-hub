@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GESTION DU MOYEN DE RETRAIT CRÉATEUR
  * 

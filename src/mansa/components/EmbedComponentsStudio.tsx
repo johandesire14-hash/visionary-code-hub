@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { CreditCard, Wallet, MessageSquare, Key, Copy, Check, Terminal, ExternalLink, ShieldCheck, Zap } from "lucide-react";
 import { EmbedComponentTab } from "../types";

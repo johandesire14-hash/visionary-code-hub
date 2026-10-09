@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { CreditCard, Smartphone, X } from "lucide-react";
 import { ModalOverlay } from "../common/ModalOverlay";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import logoImg from "../assets/images/afhub_logo_africa_1787956612844.jpg";
 

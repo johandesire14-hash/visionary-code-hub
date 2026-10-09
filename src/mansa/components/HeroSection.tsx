@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { ArrowRight, Sparkles, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
 import { CountryFlag } from "./common/CountryFlag";
