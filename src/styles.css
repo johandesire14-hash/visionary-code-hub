@@ -155,3 +155,21 @@
     color: var(--color-foreground);
   }
 }
+
+.afhub-home h1,
+.afhub-home h2,
+.afhub-home header * {
+  letter-spacing: 0;
+}
+
+.afhub-home-hero {
+  min-height: min(780px, calc(100svh - 120px));
+  padding-block: 48px;
+}
+
+@media (max-width: 639px) {
+  .afhub-home-hero {
+    min-height: calc(100svh - 116px);
+    padding-block: 36px;
+  }
+}
