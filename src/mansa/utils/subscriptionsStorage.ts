@@ -43,14 +43,14 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: EnterpriseSubscription[] = [
     companyName: "Cadre financier",
     companyInitials: "FF",
     companyGradient: "from-[#0d2818] via-[#051f10] to-[#010a04]",
-    productName: "Financial Framework Pro & VIP Discord",
+    productName: "Financial Framework Pro & VIP Discord + Masterclass",
     priceDisplay: "19 000 FCFA / mois",
     status: "active",
     subscribedAt: "Aujourd'hui",
     onlineMembersCount: 1,
     unreadCount: 0,
-    includedApps: ["Discord VIP", "Telegram Pro", "Formations Trading", "dashboard", "support", "telegram", "discord"],
-    unlockedProductIds: ["offer-cadre-financier"],
+    includedApps: ["Discord VIP", "Telegram Pro", "Formations Trading", "Fichiers", "Courses", "dashboard", "support", "telegram", "discord"],
+    unlockedProductIds: ["offer-cadre-financier", "offer-cadre-financier-formation"],
     hasPaidOffer: true,
     telegramChannels: [
       {
@@ -689,4 +689,3 @@ export function updateSubscriptionBranding(
   }
   return updated;
 }
-

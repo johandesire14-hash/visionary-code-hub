@@ -3,17 +3,17 @@
 @layer base {
   :root {
     --mansa-green: #3DDC84;
-    --mansa-green-hover: #2FB86A;
-    --mansa-green-light: #EBFBF2;
-    --mansa-bg: #000000;
-    --mansa-surface: #0E0F12;
-    --mansa-border: rgba(255, 255, 255, 0.08);
+    --mansa-green-hover: #3DDC84;
+    --mansa-green-light: #F2F2F2;
+    --mansa-bg: #F2F2F2;
+    --mansa-surface: #F2F2F2;
+    --mansa-border: rgba(0, 0, 0, 0.14);
   }
 
   body {
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: #000000;
-    color: #F1F1F1;
+    background-color: #F2F2F2;
+    color: #000000;
     min-height: 100%;
     min-height: 100dvh;
     overflow-x: hidden;
@@ -161,6 +161,55 @@
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Harmonisation de l’interface importée avec la palette afhub. */
+.mansa-palette [class*="bg-[#0"],
+.mansa-palette [class*="bg-[#1"],
+.mansa-palette [class*="bg-[#2"],
+.mansa-palette [class*="bg-[#3"] {
+  background-color: #F2F2F2 !important;
+  background-image: none !important;
+}
+.mansa-palette [class*="text-white"],
+.mansa-palette [class*="text-zinc-"],
+.mansa-palette [class*="text-gray-"] {
+  color: #000000 !important;
+}
+.mansa-palette [class*="border-white"] {
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+.mansa-palette [class*="#00D26A"],
+.mansa-palette [class*="#00b85c"],
+.mansa-palette [class*="#10E47A"] {
+  color: #3DDC84 !important;
+  border-color: #3DDC84 !important;
+}
+.mansa-palette [class*="bg-[#00D26A"] {
+  background-color: #3DDC84 !important;
+  color: #000000 !important;
+}
+.mansa-palette.mansa-dark {
+  background: #000000;
+  color: #F2F2F2;
+}
+.mansa-palette.mansa-dark [class*="bg-[#0"],
+.mansa-palette.mansa-dark [class*="bg-[#1"],
+.mansa-palette.mansa-dark [class*="bg-[#2"],
+.mansa-palette.mansa-dark [class*="bg-[#3"] {
+  background-color: #000000 !important;
+}
+.mansa-palette.mansa-dark [class*="text-white"],
+.mansa-palette.mansa-dark [class*="text-zinc-"],
+.mansa-palette.mansa-dark [class*="text-gray-"] {
+  color: #F2F2F2 !important;
+}
+.mansa-palette.mansa-dark [class*="border-white"] {
+  border-color: rgba(242, 242, 242, 0.14) !important;
+}
+.mansa-palette.mansa-dark [class*="bg-[#00D26A"] {
+  background-color: #3DDC84 !important;
+  color: #000000 !important;
 }
 
 @keyframes shimmer {

@@ -82,6 +82,7 @@ import { WorkforceView } from "./dashboard/WorkforceView";
 import { PartnersView } from "./dashboard/PartnersView";
 import { AccountSettingsModal } from "./common/AccountSettingsModal";
 import { ConnectedAppsView, TelegramIcon, DiscordIcon } from "./dashboard/ConnectedAppsView";
+import { FilesWorkspace } from "./dashboard/FilesWorkspace";
 import { RevenueAnalyticsChart } from "./dashboard/RevenueAnalyticsChart";
 import {
   CurrencyCode,
@@ -710,6 +711,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const [newChatInput, setNewChatInput] = useState("");
   const [isTabLoading, setIsTabLoading] = useState(false);
   const [creatorCoursesLink, setCreatorCoursesLink] = useState<string[] | null>(null);
+  const [creatorFilesLink, setCreatorFilesLink] = useState<string[] | null>(null);
   const [isGuidedTourOpen, setIsGuidedTourOpen] = useState(false);
   const [isSeedingData, setIsSeedingData] = useState(false);
   const [seedToastMessage, setSeedToastMessage] = useState<string | null>(null);
@@ -2867,6 +2869,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                   products={productsList}
                   onBack={() => setCreatorCoursesLink(null)}
                 />
+              ) : creatorFilesLink && activeCompany ? (
+                <FilesWorkspace
+                  companyId={activeCompany.id}
+                  productIds={creatorFilesLink}
+                  products={productsList}
+                  onBack={() => setCreatorFilesLink(null)}
+                />
               ) : (
                 <ConnectedAppsView
                   lang={lang}
@@ -2878,7 +2887,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     subscribersCount: p.activeUsers || 0,
                   }))}
                   onOpenCoursesWorkflow={(productIds) => setCreatorCoursesLink(productIds)}
-                  onOpenFilesWorkflow={() => undefined}
+                  onOpenFilesWorkflow={(productIds) => setCreatorFilesLink(productIds)}
                 />
               )
             )

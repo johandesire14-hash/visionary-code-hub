@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { Component, ErrorInfo, ReactNode, StrictMode } from "react";
+import { Moon, Sun } from "lucide-react";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -79,13 +80,49 @@ function ViewportMetrics() {
   return null;
 }
 
+function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={isDark ? "Activer le mode clair" : "Activer le mode sombre"}
+      title={isDark ? "Mode clair" : "Mode sombre"}
+      className="fixed bottom-4 right-4 z-[100] flex size-11 items-center justify-center rounded-full bg-store-primary text-store-primary-foreground shadow-lg transition-transform hover:scale-105"
+    >
+      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
+  );
+}
+
 export default function MansaRoot() {
+  const [isDark, setIsDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const storedTheme = window.localStorage.getItem("afhub-theme");
+    const nextIsDark = storedTheme === "dark";
+    setIsDark(nextIsDark);
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    document.documentElement.style.colorScheme = nextIsDark ? "dark" : "light";
+  }, []);
+
+  const toggleTheme = () => {
+    const nextIsDark = !isDark;
+    setIsDark(nextIsDark);
+    window.localStorage.setItem("afhub-theme", nextIsDark ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    document.documentElement.style.colorScheme = nextIsDark ? "dark" : "light";
+  };
+
   return (
     <RootErrorBoundary>
-      <AuthProvider>
-        <ViewportMetrics />
-        <App />
-      </AuthProvider>
+      <div className={`mansa-palette min-h-screen${isDark ? " mansa-dark" : ""}`}>
+        <AuthProvider>
+          <ViewportMetrics />
+          <App />
+          <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+        </AuthProvider>
+      </div>
     </RootErrorBoundary>
   );
 }

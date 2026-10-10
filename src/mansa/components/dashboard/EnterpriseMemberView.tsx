@@ -780,17 +780,11 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
       keywords.some((keyword) => candidate.title.toLowerCase().includes(keyword))
     ) || enterpriseOffers[0];
     if (!offer) return;
-    const isUnlocked = memberUnlockedOfferIds.some((offerId) => offerId.toLowerCase() === offer.id.toLowerCase());
     setActiveTab("accueil");
     setCompanyTab("produits");
-    if (isUnlocked) {
-      if (app === "courses") setIsCourseModalOpen(true);
-      else setIsEbookModalOpen(true);
-    } else {
-      setSelectedProductDetailOffer(offer);
-      setSelectedProductPlanId(offer.pricingOptions?.[0]?.id || null);
-      setExpandedProductFaqIndex(null);
-    }
+    setSelectedProductDetailOffer(null);
+    if (app === "courses") setIsCourseModalOpen(true);
+    else setIsEbookModalOpen(true);
   };
 
   // Redirection automatique si onglet non autorisé
@@ -838,6 +832,17 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [creatorChapterContents, setCreatorChapterContents] = useState<string[]>([""]);
   const [creatorNewChapterName, setCreatorNewChapterName] = useState("");
   const [creatorFileName, setCreatorFileName] = useState("");
+  type CreatorFilesScreen = "library" | "add";
+  const [creatorFilesScreen, setCreatorFilesScreen] = useState<CreatorFilesScreen>("library");
+  const [creatorFiles, setCreatorFiles] = useState<Array<{
+    id: string;
+    name: string;
+    size: string;
+    type: string;
+    productIds: string[];
+    updatedAt: string;
+  }>>([]);
+  const [creatorSelectedFile, setCreatorSelectedFile] = useState<File | null>(null);
   const [creatorCourses, setCreatorCourses] = useState<Array<{
     id: string;
     productIds: string[];
@@ -895,6 +900,21 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
       setCreatorCourses(Array.isArray(saved) ? saved : []);
       setEditingCreatorCourseId(null);
       setCourseCreationStep("library");
+    }
+    if (selectedCreatorApp === "files") {
+      const linkedFiles = enterpriseOffers
+        .filter((offer) => linkedCreatorProductIds.includes(offer.id))
+        .flatMap((offer) => ((offer as any).digitalFiles || []).map((file: any) => ({
+          id: file.id,
+          name: file.name || file.title || "Fichier sans nom",
+          size: file.size || "Taille inconnue",
+          type: file.type || "application/octet-stream",
+          productIds: linkedCreatorProductIds,
+          updatedAt: file.updatedAt || new Date().toISOString(),
+        })));
+      setCreatorFiles(linkedFiles);
+      setCreatorFilesScreen("library");
+      setCreatorSelectedFile(null);
     }
     setCreatorAppStep("content");
   };
@@ -986,13 +1006,18 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     }
 
     if (selectedCreatorApp === "files") {
-      const fileName = creatorFileName.trim() || "Fichier_Ressource.pdf";
+      const fileName = creatorSelectedFile?.name || creatorFileName.trim() || "Fichier_Ressource.pdf";
+      const fileSize = creatorSelectedFile
+        ? `${(creatorSelectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+        : "12.4 MB";
+      const fileType = creatorSelectedFile?.type || "application/pdf";
       const newFile = {
         id: `file-${Date.now()}`,
         name: fileName,
-        size: "12.4 MB",
-        type: "application/pdf",
+        size: fileSize,
+        type: fileType,
         isFreePreview: false,
+        updatedAt: new Date().toISOString(),
       };
       const updatedOffers = enterpriseOffers.map((off) => {
         if (linkedCreatorProductIds.includes(off.id)) {
@@ -1018,16 +1043,25 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
         appId: selectedCreatorApp,
         productIds: linkedCreatorProductIds,
         title: fileName,
-        description: creatorCourseDescription,
-        chapters: creatorChapterNames,
+        description: "Fichier téléchargeable lié à cette offre.",
+        files: [newFile],
         updatedAt: new Date().toISOString(),
       };
       const withoutCurrent = Array.isArray(currentApps)
         ? currentApps.filter((app: { appId?: string }) => app.appId !== selectedCreatorApp)
         : [];
       localStorage.setItem(storageKey, JSON.stringify([...withoutCurrent, nextApp]));
-      setCreatorAppStep("closed");
-      setSelectedCreatorApp(null);
+      setCreatorFiles((files) => [...files, {
+        id: newFile.id,
+        name: newFile.name,
+        size: newFile.size,
+        type: newFile.type,
+        productIds: linkedCreatorProductIds,
+        updatedAt: newFile.updatedAt,
+      }]);
+      setCreatorFilesScreen("library");
+      setCreatorSelectedFile(null);
+      setCreatorFileName("");
       return;
     }
 
@@ -3752,7 +3786,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     </div>
                   </div>
                 )}
-                {(selectedCreatorApp === "courses" || selectedCreatorApp === "files") && (
+                {selectedCreatorApp === "courses" && (
                   <>
                     {selectedCreatorApp === "courses" && courseCreationStep === "library" && (
                       <div className="space-y-3">
@@ -3839,6 +3873,71 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     ) : null}
                   </>
                 )}
+                {selectedCreatorApp === "files" && (
+                  <div className="space-y-5">
+                    {creatorFilesScreen === "library" && (
+                      <>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Fichiers</div>
+                            <h3 className="mt-1 text-lg font-bold text-white">Fichiers du produit</h3>
+                            <p className="mt-1 text-xs text-zinc-400">Ajoutez et gérez les ressources téléchargeables liées aux offres sélectionnées.</p>
+                          </div>
+                          <button type="button" onClick={() => { setCreatorFilesScreen("add"); setCreatorSelectedFile(null); setCreatorFileName(""); }} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-colors hover:bg-blue-500">
+                            <Plus className="size-4" /> Ajouter un fichier
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {linkedCreatorProductIds.map((productId) => {
+                            const offer = enterpriseOffers.find((item) => item.id === productId);
+                            return <span key={productId} className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-[11px] font-semibold text-blue-300">Lié à {offer?.title || "l’offre sélectionnée"}</span>;
+                          })}
+                        </div>
+                        {creatorFiles.length === 0 ? (
+                          <div className="flex min-h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-[#0c0d0e] px-6 text-center">
+                            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 text-3xl">📁</div>
+                            <h4 className="text-sm font-bold text-white">Aucun fichier ajouté</h4>
+                            <p className="mt-1 max-w-sm text-xs leading-relaxed text-zinc-500">Ajoutez un PDF, un ebook, un template, un logiciel ou une archive à distribuer avec cette offre.</p>
+                            <button type="button" onClick={() => setCreatorFilesScreen("add")} className="mt-4 rounded-xl border border-blue-500/40 px-4 py-2 text-xs font-bold text-blue-300 transition-colors hover:bg-blue-500/10">Ajouter le premier fichier</button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {creatorFiles.map((file) => (
+                              <div key={file.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0c0d0e] px-4 py-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-xl">📄</div>
+                                  <div className="min-w-0">
+                                    <div className="truncate text-sm font-semibold text-white">{file.name}</div>
+                                    <div className="mt-1 text-[11px] text-zinc-500">{file.size} · {file.type || "Fichier"}</div>
+                                  </div>
+                                </div>
+                                <span className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">Prêt au téléchargement</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {creatorFilesScreen === "add" && (
+                      <div className="space-y-4">
+                        <button type="button" onClick={() => setCreatorFilesScreen("library")} className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 transition-colors hover:text-white"><ChevronLeft className="size-4" /> Retour aux fichiers</button>
+                        <div>
+                          <h3 className="text-lg font-bold text-white">Ajouter un fichier</h3>
+                          <p className="mt-1 text-xs text-zinc-400">Sélectionnez la ressource qui sera disponible après l’achat de l’offre.</p>
+                        </div>
+                        <label className="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-blue-500/40 bg-blue-500/5 px-6 text-center transition-colors hover:bg-blue-500/10">
+                          <input type="file" className="sr-only" onChange={(event) => { const file = event.target.files?.[0] || null; setCreatorSelectedFile(file); if (file) setCreatorFileName(file.name); }} />
+                          <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-blue-500/15 text-2xl">↑</div>
+                          <span className="text-sm font-bold text-white">Cliquez pour sélectionner un fichier</span>
+                          <span className="mt-1 text-[11px] text-zinc-500">PDF, ePub, ZIP, DOCX, MP3, logiciels et templates</span>
+                        </label>
+                        <label className="block space-y-1.5"><span className="text-xs font-semibold text-zinc-300">Nom du fichier</span><input value={creatorFileName} onChange={(event) => setCreatorFileName(event.target.value)} placeholder="Ex. Guide PDF premium" className="w-full rounded-xl border border-white/10 bg-[#0c0d0e] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500" /></label>
+                        {creatorSelectedFile && <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-xs text-emerald-300"><span className="truncate">✓ {creatorSelectedFile.name}</span><span className="ml-3 shrink-0 text-[10px]">{(creatorSelectedFile.size / (1024 * 1024)).toFixed(1)} MB</span></div>}
+                        <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCreatorFilesScreen("library")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Annuler</button><button type="button" disabled={!creatorFileName.trim()} onClick={finishCreatorAppWorkflow} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40">Ajouter le fichier</button></div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {(selectedCreatorApp === "telegram" || selectedCreatorApp === "discord") && (
                   <div className="rounded-xl border border-white/10 bg-[#0c0d0e] p-5 text-center">
                     <div className="text-3xl">{creatorAppMeta[selectedCreatorApp].icon}</div>
@@ -3846,7 +3945,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     <p className="mt-1 text-xs text-zinc-400">Les produits sélectionnés sont enregistrés. Continuez la connexion du canal ou du serveur depuis l’onglet correspondant de cette entreprise.</p>
                   </div>
                 )}
-                {(!selectedCreatorApp || selectedCreatorApp !== "courses" || courseCreationStep === "content") && <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCreatorAppStep("link")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button><button type="button" onClick={finishCreatorAppWorkflow} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500">Enregistrer dans cette entreprise</button></div>}
+                {selectedCreatorApp !== "files" && (!selectedCreatorApp || selectedCreatorApp !== "courses" || courseCreationStep === "content") && <div className="flex items-center justify-between border-t border-white/10 pt-4"><button type="button" onClick={() => setCreatorAppStep("link")} className="rounded-xl px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white">Retour</button><button type="button" onClick={finishCreatorAppWorkflow} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-500">Enregistrer dans cette entreprise</button></div>}
               </div>
             )}
           </div>
