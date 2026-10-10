@@ -32,7 +32,7 @@ export const AfhubLogo: React.FC<AfhubLogoProps> = ({
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
       <div
-        className={`relative overflow-hidden rounded-xl border border-white/10 bg-black ${sizeMap[size]} shrink-0`}
+        className={`relative overflow-hidden rounded-xl border border-white/10 bg-[#2A2929] ${sizeMap[size]} shrink-0`}
       >
         <img
           src={logoImg}

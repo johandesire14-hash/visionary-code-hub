@@ -34,7 +34,7 @@ class RootErrorBoundary extends React.Component<Props, State> {
   public override render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen w-full bg-[#000000] text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-screen w-full bg-[#2A2929] text-white flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-md w-full p-8 rounded-2xl bg-[#0e1015] border border-white/10 space-y-4">
             <h2 className="text-xl font-bold tracking-tight">Une erreur est survenue</h2>
             <p className="text-sm text-white/60">

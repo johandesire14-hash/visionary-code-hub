@@ -171,10 +171,6 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
     initialData?.currency || activeCurrency || getStoredCurrency();
   const [currentCurrency, setCurrentCurrency] = useState<CurrencyCode>(initialCurrency);
 
-  // Stepper state: 'type_selection' or 'customize'
-  const [studioStep, setStudioStep] = useState<"type_selection" | "customize">(
-    initialData ? "customize" : "type_selection"
-  );
 
   // 4 Core Product Sections
   const [productType, setProductType] = useState<ProductTypeCategory>(
@@ -841,170 +837,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
     handleSave(newProduct);
   };
 
-  // =========================================================================
-  // STEP 1: PRODUCT FORMAT SELECTION
-  // =========================================================================
-  if (studioStep === "type_selection") {
-    return (
-      <ModalOverlay
-        isOpen={true}
-        onClose={onClose}
-        contentClassName="max-w-3xl mx-auto"
-      >
-        <div className="relative w-full rounded-3xl border border-white/10 bg-[#0f1013] p-6 sm:p-10 shadow-2xl space-y-8">
-          
-          <div className="flex items-center justify-between border-b border-white/10 pb-5">
-            <div>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#00D26A]">
-                Création de Produit & Communauté
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                Quel type d'offre souhaitez-vous créer ?
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-            >
-              <X className="size-5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* 1. ADHÉSION & COMMUNAUTÉ */}
-            <div
-              onClick={() => handleSelectProductType("membership")}
-              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                productType === "membership"
-                  ? "border-[#00D26A] bg-[#00D26A]/10"
-                  : "border-white/10 bg-[#16181f] hover:border-white/20"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="size-11 rounded-xl bg-[#00D26A]/20 text-[#00D26A] flex items-center justify-center border border-[#00D26A]/30">
-                  <Users className="size-6" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center justify-between">
-                    <span>Adhésion & Communauté</span>
-                    {productType === "membership" && <span className="text-[#00D26A]">✓</span>}
-                  </h3>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Créez votre club privé, communauté Discord/Telegram avec gestion d'abonnements et accès récurrents.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-[#00D26A] font-semibold flex items-center gap-1.5">
-                <MessageCircle className="size-3.5" />
-                <span>Discord VIP & Telegram automatisés</span>
-              </div>
-            </div>
-
-            {/* 2. E-BOOK / GUIDE (UPLOAD DE FICHIERS / DOCUMENTS) */}
-            <div
-              onClick={() => handleSelectProductType("ebook")}
-              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                productType === "ebook"
-                  ? "border-[#00D26A] bg-[#00D26A]/10"
-                  : "border-white/10 bg-[#16181f] hover:border-white/20"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="size-11 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-                  <BookOpen className="size-6" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center justify-between">
-                    <span>E-book / Guide</span>
-                    {productType === "ebook" && <span className="text-[#00D26A]">✓</span>}
-                  </h3>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Publiez un guide, livre ou document (PDF, ePub) avec upload de fichier, extrait gratuit ou paiement.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-amber-400 font-semibold flex items-center gap-1.5">
-                <FileText className="size-3.5" />
-                <span>Upload PDF/ePub & Téléchargement sécurisé</span>
-              </div>
-            </div>
-
-            {/* 3. PRODUIT NUMÉRIQUE / FICHIERS */}
-            <div
-              onClick={() => handleSelectProductType("digital")}
-              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                productType === "digital"
-                  ? "border-[#00D26A] bg-[#00D26A]/10"
-                  : "border-white/10 bg-[#16181f] hover:border-white/20"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="size-11 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
-                  <FolderArchive className="size-6" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center justify-between">
-                    <span>Fichiers & Ressources</span>
-                    {productType === "digital" && <span className="text-[#00D26A]">✓</span>}
-                  </h3>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Vendez des templates, presets, logiciels, archives ZIP ou documents avec livraison immédiate post-achat.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-blue-400 font-semibold flex items-center gap-1.5">
-                <Download className="size-3.5" />
-                <span>Téléchargement instantané multi-fichiers</span>
-              </div>
-            </div>
-
-            {/* 4. COURS OU FORMATION */}
-            <div
-              onClick={() => handleSelectProductType("course")}
-              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                productType === "course"
-                  ? "border-[#00D26A] bg-[#00D26A]/10"
-                  : "border-white/10 bg-[#16181f] hover:border-white/20"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="size-11 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
-                  <GraduationCap className="size-6" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center justify-between">
-                    <span>Cours & Formations</span>
-                    {productType === "course" && <span className="text-[#00D26A]">✓</span>}
-                  </h3>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Hébergez vos modules vidéo, chapitres, exercices et ressources d'apprentissage.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-purple-400 font-semibold flex items-center gap-1.5">
-                <Layers className="size-3.5" />
-                <span>Espace membre & vidéos sécurisées</span>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="flex items-center justify-end pt-4">
-            <button
-              onClick={() => setStudioStep("customize")}
-              className="mansa-btn-green px-8 py-3.5 text-sm font-bold cursor-pointer flex items-center gap-2"
-            >
-              <span>Suivant : Configurer & Prévisualiser</span>
-              <ArrowRight className="size-4" />
-            </button>
-          </div>
-
-        </div>
-      </ModalOverlay>
-    );
-  }
-
+  // The studio opens directly on product configuration.
   // =========================================================================
   // STEP 2: STUDIO CUSTOMIZATION WITH FULL PREVIEW AND INLINE CONTROLS
   // =========================================================================
@@ -1548,7 +1381,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                         : "border-zinc-600"
                     }`}
                   >
-                    {pricingType === "free" && <span className="size-1.5 rounded-full bg-black" />}
+                    {pricingType === "free" && <span className="size-1.5 rounded-full bg-[#2A2929]" />}
                   </span>
                 </button>
 
@@ -1572,7 +1405,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                         : "border-zinc-600"
                     }`}
                   >
-                    {pricingType === "paid" && <span className="size-1.5 rounded-full bg-black" />}
+                    {pricingType === "paid" && <span className="size-1.5 rounded-full bg-[#2A2929]" />}
                   </span>
                 </button>
               </div>
@@ -1582,7 +1415,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                 <div className="space-y-3 p-3.5 rounded-xl bg-[#151515] border border-white/10">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     {/* Fixed attached prefix to prevent overlapping characters like FCF20 */}
-                    <div className="flex items-center rounded-xl border border-white/10 bg-[#000000] focus-within:border-[#3DDC84] overflow-hidden flex-1 transition-colors">
+                    <div className="flex items-center rounded-xl border border-white/10 bg-[#2A2929] focus-within:border-[#3DDC84] overflow-hidden flex-1 transition-colors">
                       <span className="px-3.5 py-2.5 text-xs font-mono font-bold text-[#B6B5B0] bg-white/[0.04] border-r border-white/10 select-none whitespace-nowrap flex items-center justify-center shrink-0">
                         {currencyConfig.symbol}
                       </span>
@@ -1599,7 +1432,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                     <select
                       value={billingCycle}
                       onChange={(e) => setBillingCycle(e.target.value as any)}
-                      className="rounded-xl border border-white/10 bg-[#000000] px-3.5 py-2.5 text-xs font-semibold text-white outline-none focus:border-[#3DDC84] cursor-pointer hover:border-white/20 transition-colors shrink-0"
+                      className="rounded-xl border border-white/10 bg-[#2A2929] px-3.5 py-2.5 text-xs font-semibold text-white outline-none focus:border-[#3DDC84] cursor-pointer hover:border-white/20 transition-colors shrink-0"
                     >
                       <option value="monthly">par mois</option>
                       <option value="yearly">par an</option>
@@ -1646,10 +1479,10 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                       value={newOptionName}
                       onChange={(e) => setNewOptionName(e.target.value)}
                       placeholder="Nom de l'option (ex: Accès Annuel VIP)"
-                      className="w-full rounded-xl border border-white/10 bg-[#000000] px-3 py-2 text-xs text-white outline-none focus:border-[#3DDC84]"
+                      className="w-full rounded-xl border border-white/10 bg-[#2A2929] px-3 py-2 text-xs text-white outline-none focus:border-[#3DDC84]"
                     />
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <div className="flex items-center rounded-xl border border-white/10 bg-[#000000] focus-within:border-[#3DDC84] overflow-hidden flex-1">
+                      <div className="flex items-center rounded-xl border border-white/10 bg-[#2A2929] focus-within:border-[#3DDC84] overflow-hidden flex-1">
                         <span className="px-3 py-2 text-xs font-mono font-bold text-[#B6B5B0] bg-white/[0.04] border-r border-white/10 select-none whitespace-nowrap">
                           {currencyConfig.symbol}
                         </span>
@@ -1665,7 +1498,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                       <select
                         value={newOptionBilling}
                         onChange={(e) => setNewOptionBilling(e.target.value as any)}
-                        className="rounded-xl border border-white/10 bg-[#000000] px-3 py-2 text-xs text-white outline-none cursor-pointer focus:border-[#3DDC84] shrink-0"
+                        className="rounded-xl border border-white/10 bg-[#2A2929] px-3 py-2 text-xs text-white outline-none cursor-pointer focus:border-[#3DDC84] shrink-0"
                       >
                         <option value="monthly">par mois</option>
                         <option value="yearly">par an</option>
@@ -2154,7 +1987,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                             <span className={`size-3 rounded-full border flex items-center justify-center ${
                               selectedPlanId === opt.id ? "border-[#00D26A] bg-[#00D26A]" : "border-zinc-500"
                             }`}>
-                              {selectedPlanId === opt.id && <span className="size-1 rounded-full bg-black" />}
+                              {selectedPlanId === opt.id && <span className="size-1 rounded-full bg-[#2A2929]" />}
                             </span>
                             <span>{opt.name}</span>
                           </div>

@@ -83,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#000000] text-[#F1F1F1] flex flex-col items-center justify-center px-4 py-12 selection:bg-[#3DDC84]/30 selection:text-[#3DDC84]">
+    <div className="relative min-h-screen w-full bg-[#2A2929] text-[#F1F1F1] flex flex-col items-center justify-center px-4 py-12 selection:bg-[#3DDC84]/30 selection:text-[#3DDC84]">
       {/* Back button */}
       <button
         onClick={onBackToLanding}
@@ -191,7 +191,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             type="button"
             onClick={handleGoogleLogin}
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/15 bg-[#000000] hover:bg-white/[0.06] hover:border-[#3DDC84]/50 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm group"
+            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/15 bg-[#2A2929] hover:bg-white/[0.06] hover:border-[#3DDC84]/50 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm group"
           >
             <svg className="size-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -241,7 +241,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Johan Desire"
-                    className="w-full rounded-xl border border-white/10 bg-[#000000] pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-[#3DDC84] outline-none transition-all"
+                    className="w-full rounded-xl border border-white/10 bg-[#2A2929] pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-[#3DDC84] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -258,7 +258,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nom@exemple.com"
-                  className="w-full rounded-xl border border-white/10 bg-[#000000] pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-[#3DDC84] outline-none transition-all"
+                  className="w-full rounded-xl border border-white/10 bg-[#2A2929] pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-[#3DDC84] outline-none transition-all"
                   required
                 />
               </div>
@@ -282,7 +282,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-white/10 bg-[#000000] pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-[#3DDC84] outline-none transition-all"
+                  className="w-full rounded-xl border border-white/10 bg-[#2A2929] pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-[#3DDC84] outline-none transition-all"
                   required
                 />
               </div>

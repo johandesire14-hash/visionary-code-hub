@@ -166,7 +166,7 @@ export default function App() {
   // We only show the full loading screen if the user is explicitly navigating to their private dashboard.
   if (authLoading && currentView === "dashboard") {
     return (
-      <div className="min-h-screen w-full bg-[#000000] flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen w-full bg-[#2A2929] flex flex-col items-center justify-center space-y-4">
         <div className="size-12 rounded-2xl bg-[#12141a] border border-white/10 flex items-center justify-center shadow-sm">
           <div className="size-5 rounded-full border-2 border-[#3DDC84] border-t-transparent animate-spin" />
         </div>
@@ -317,7 +317,7 @@ export default function App() {
               {selectedMarketplaceProduct.description}
             </p>
 
-            <div className="rounded-xl border border-white/10 bg-[#000000] p-4 flex items-center justify-between">
+            <div className="rounded-xl border border-white/10 bg-[#2A2929] p-4 flex items-center justify-between">
               <div>
                 <span className="text-[9px] font-bold uppercase tracking-widest text-[#B6B5B0] block">
                   Abonnement / Accès

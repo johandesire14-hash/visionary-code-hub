@@ -311,7 +311,7 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
                 <div className={`p-4 ${showBanners ? "-mt-7" : "pt-4"} relative z-10 space-y-3`}>
                   <div className="flex items-start justify-between gap-3">
                     {/* Photo de profil (Enterprise Logo) */}
-                    <div className="size-12 rounded-2xl bg-black border-2 border-[#12141c] shadow-md overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="size-12 rounded-2xl bg-[#2A2929] border-2 border-[#12141c] shadow-md overflow-hidden shrink-0 flex items-center justify-center">
                       {enterprise.companyLogo ? (
                         <img
                           src={enterprise.companyLogo}

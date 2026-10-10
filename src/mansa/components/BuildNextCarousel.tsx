@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { ArrowRight, Send, Disc as DiscordIcon, BookOpen, PackageCheck, Code2, Sparkles } from "lucide-react";
+import { ArrowRight, Send, BookOpen, PackageCheck } from "lucide-react";
 import { CategoryCardItem } from "../types";
 
 interface BuildNextCarouselProps {
@@ -37,15 +37,6 @@ const CATEGORIES_DATA: CategoryCardItem[] = [
     icon: PackageCheck,
     colorGradient: "from-[#00D26A]/10 to-transparent",
   },
-  {
-    id: "software",
-    categoryKey: "software",
-    title: "SaaS & Logiciels",
-    subtitle: "Licences logicielles, robots de trading et scripts avec gestion de clés.",
-    samplePrompt: "Logiciel ou script avec clé d'activation",
-    icon: Code2,
-    colorGradient: "from-indigo-500/10 to-transparent",
-  },
 ];
 
 export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
@@ -56,8 +47,6 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
   return (
     <section id="categories" className="w-full bg-[#0c0d12] py-16 border-t border-white/[0.04]">
       <div className="mx-auto max-w-[1100px] px-6 sm:px-10">
-        
-        {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -67,7 +56,6 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
               Sélectionnez un type de produit pour configurer votre offre en 2 minutes.
             </p>
           </div>
-
           <button
             onClick={() => onOpenStudio()}
             className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
@@ -76,12 +64,9 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
             <ArrowRight className="size-3.5" />
           </button>
         </div>
-
-        {/* 4 Clean Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {CATEGORIES_DATA.map((cat) => {
             const Icon = cat.icon;
-
             return (
               <div
                 key={cat.id}
@@ -94,16 +79,13 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
                       <Icon className="size-5" />
                     </div>
                   </div>
-
                   <h3 className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
                     {cat.title}
                   </h3>
-
                   <p className="mt-1.5 text-xs text-zinc-400 leading-relaxed">
                     {cat.subtitle}
                   </p>
                 </div>
-
                 <div className="mt-5 pt-3 border-t border-white/[0.04] flex items-center justify-between text-[11px] font-semibold text-zinc-500 group-hover:text-white transition-colors">
                   <span>Lancer ce modèle</span>
                   <ArrowRight className="size-3 text-emerald-400 group-hover:translate-x-1 transition-transform" />
@@ -112,9 +94,7 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
             );
           })}
         </div>
-
       </div>
     </section>
   );
 };
-

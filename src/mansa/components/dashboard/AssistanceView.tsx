@@ -1182,7 +1182,7 @@ export const AssistanceView: React.FC<AssistanceViewProps> = ({
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-black shadow ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#2A2929] shadow ring-0 transition duration-200 ease-in-out ${
                       autoReplyEnabled ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
