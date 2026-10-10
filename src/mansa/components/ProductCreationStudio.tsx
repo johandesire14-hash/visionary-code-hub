@@ -221,7 +221,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
   // Tags
   const [tags, setTags] = useState<string[]>(
     productType === "membership"
-      ? ["vip", "communauté", "discord", "telegram"]
+      ? ["vip", "communauté"]
       : productType === "digital"
       ? ["fichier", "téléchargement", "templates"]
       : productType === "course"
@@ -726,10 +726,27 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
 
   // Toggle App in membership
   const handleToggleApp = (appName: string) => {
-    if (selectedApps.includes(appName)) {
-      setSelectedApps(selectedApps.filter((a) => a !== appName));
-    } else {
-      setSelectedApps([...selectedApps, appName]);
+    const isCurrentlySelected = selectedApps.includes(appName);
+    setSelectedApps((previous) =>
+      isCurrentlySelected
+        ? previous.filter((app) => app !== appName)
+        : [...previous, appName]
+    );
+
+    // Telegram et Discord deviennent immédiatement des étiquettes produit.
+    if (appName === "Telegram" || appName === "Discord") {
+      setTags((previous) => {
+        if (isCurrentlySelected) {
+          return previous.filter((tag) => tag.toLowerCase() !== appName.toLowerCase());
+        }
+        const next = [...previous];
+        for (const tag of ["vip", "communauté", appName]) {
+          if (!next.some((existing) => existing.toLowerCase() === tag.toLowerCase())) {
+            next.push(tag);
+          }
+        }
+        return next;
+      });
     }
   };
 
