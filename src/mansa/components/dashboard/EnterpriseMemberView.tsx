@@ -753,6 +753,16 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     return apps;
   }, [currentIncludedApps, currentSub.includedApps, enterpriseOffers, hasTelegramApp, hasDiscordApp]);
 
+  const returnToEnterpriseNavigation = () => {
+    setActiveTab("accueil");
+    setCompanyTab("accueil");
+    setSelectedProductDetailOffer(null);
+    setIsEbookModalOpen(false);
+    setIsCourseModalOpen(false);
+    setIsMobileCompanyNavOpen(true);
+    setIsMobileSidebarOpen(false);
+  };
+
   const openMobileConfiguredApp = (app: "telegram" | "discord" | "files" | "courses" | "chat" | "content") => {
     setIsMobileCompanyNavOpen(false);
     if (app === "telegram") {
@@ -2267,10 +2277,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 <div className="flex lg:hidden items-center gap-3 border-b border-white/[0.08] bg-[#0a0b0d] px-4 py-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsMobileCompanyNavOpen(true);
-                      setIsMobileSidebarOpen(false);
-                    }}
+                    onClick={returnToEnterpriseNavigation}
                     className="flex size-9 items-center justify-center rounded-xl text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
                     aria-label="Retour à la navigation de l’entreprise"
                   >
@@ -3051,7 +3058,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2.5">
                 <button
-                  onClick={() => { setActiveTab("accueil"); setCompanyTab("accueil"); setIsMobileCompanyNavOpen(true); setIsMobileSidebarOpen(false); }}
+                  onClick={returnToEnterpriseNavigation}
                   className="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
                   title="Retour à la navigation de l’entreprise"
                   aria-label="Retour à la navigation de l’entreprise"
@@ -3118,7 +3125,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
             {/* Top header on mobile for opening sidebar if on small screen */}
             <div className="lg:hidden w-full h-12 px-3 border-b border-white/[0.08] bg-[#0c0d11] flex items-center justify-between shrink-0 select-none">
               <button
-                onClick={() => { setActiveTab("accueil"); setCompanyTab("accueil"); setIsMobileCompanyNavOpen(true); setIsMobileSidebarOpen(false); }}
+                onClick={returnToEnterpriseNavigation}
                 className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
                 title="Retour à la navigation de l’entreprise"
                 aria-label="Retour à la navigation de l’entreprise"
@@ -3145,7 +3152,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     priceDisplay: offer.priceDisplay,
                     subscribersCount: offer.subscribersCount || 0,
                   }))}
-                  onBackToDashboard={() => setActiveTab("accueil")}
+                  onBackToDashboard={returnToEnterpriseNavigation}
                 />
               ) : (
                 <div className="max-w-3xl mx-auto w-full space-y-4">
@@ -3175,7 +3182,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
             {/* Top header on mobile for opening sidebar if on small screen */}
             <div className="lg:hidden w-full h-12 px-3 border-b border-white/[0.08] bg-[#0c0d11] flex items-center justify-between shrink-0 select-none">
               <button
-                onClick={() => { setActiveTab("accueil"); setCompanyTab("accueil"); setIsMobileCompanyNavOpen(true); setIsMobileSidebarOpen(false); }}
+                onClick={returnToEnterpriseNavigation}
                 className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
                 title="Retour à la navigation de l’entreprise"
                 aria-label="Retour à la navigation de l’entreprise"
@@ -3220,7 +3227,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                   setCreatorWorkflowNotice("Fichiers a bien été lié à l’offre sélectionnée.");
                   setCreatorAppStep("content");
                 }}
-                onBackToDashboard={() => setActiveTab("accueil")}
+                onBackToDashboard={returnToEnterpriseNavigation}
               />
             </div>
           </div>
@@ -3234,7 +3241,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
             {/* Top header on mobile for opening sidebar if on small screen */}
             <div className="lg:hidden w-full h-12 px-3 border-b border-white/[0.08] bg-[#0c0d11] flex items-center justify-between shrink-0 select-none">
               <button
-                onClick={() => { setActiveTab("accueil"); setCompanyTab("accueil"); setIsMobileCompanyNavOpen(true); setIsMobileSidebarOpen(false); }}
+                onClick={returnToEnterpriseNavigation}
                 className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
                 title="Retour à la navigation de l’entreprise"
                 aria-label="Retour à la navigation de l’entreprise"
@@ -3261,7 +3268,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     priceDisplay: offer.priceDisplay,
                     subscribersCount: offer.subscribersCount || 0,
                   }))}
-                  onBackToDashboard={() => setActiveTab("accueil")}
+                  onBackToDashboard={returnToEnterpriseNavigation}
                 />
               ) : (
                 <div className="max-w-3xl mx-auto w-full space-y-4">
@@ -3398,7 +3405,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                   </div>
                   <div className="min-w-0"><p className="truncate text-xs font-semibold text-zinc-300">{offer.companyName}</p><h2 className="truncate text-sm font-bold text-white">{offer.title}</h2></div>
                 </div>
-                <button type="button" onClick={() => setSelectedProductDetailOffer(null)} aria-label="Fermer la fiche produit" className="flex size-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white"><X className="size-4" /></button>
+                <button type="button" onClick={returnToEnterpriseNavigation} aria-label="Fermer la fiche produit" className="flex size-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white"><X className="size-4" /></button>
               </div>
 
               <div className="grid grid-cols-1 gap-6 p-4 sm:p-8 lg:grid-cols-12 lg:gap-8">
@@ -3600,7 +3607,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => setIsEbookModalOpen(false)}
+                onClick={returnToEnterpriseNavigation}
                 className="size-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 ✕
@@ -3675,7 +3682,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
             <div className="pt-3 border-t border-white/5 flex justify-end">
               <button
-                onClick={() => setIsEbookModalOpen(false)}
+                onClick={returnToEnterpriseNavigation}
                 className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 Fermer
@@ -3967,7 +3974,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 </div>
               </div>
               <button
-                onClick={() => setIsCourseModalOpen(false)}
+                onClick={returnToEnterpriseNavigation}
                 className="size-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 ✕
@@ -4042,7 +4049,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
             <div className="pt-3 border-t border-white/5 flex justify-end">
               <button
-                onClick={() => setIsCourseModalOpen(false)}
+                onClick={returnToEnterpriseNavigation}
                 className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 Fermer
