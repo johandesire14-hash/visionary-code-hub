@@ -48,6 +48,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   activeCompanyName,
 }) => {
   const [activeTab, setActiveTab] = useState<"account" | "store">(initialTab);
+  const [companySettingsSection, setCompanySettingsSection] = useState<"menu" | "general" | "payment">("menu");
+
+  useEffect(() => {
+    if (activeTab === "store") setCompanySettingsSection("menu");
+  }, [activeTab, activeCompanyId]);
 
   // Check if we are configuring a specific enterprise or the personal profile
   const isCompanyContext = !!activeCompanyId && activeCompanyId !== "personnel";
@@ -313,7 +318,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
           <p className="text-xs text-zinc-400 mt-1">
             {activeTab === "store"
-              ? "Configurez l'identité de votre entreprise, les devises et vos coordonnées de virements bancaires & Mobile Money."
+              ? companySettingsSection === "menu"
+                ? "Choisissez une rubrique pour configurer votre entreprise."
+                : companySettingsSection === "general"
+                ? "Configurez l'identité et la présentation de votre entreprise."
+                : "Configurez vos moyens de versement et vos coordonnées financières."
               : "Gérez votre profil public Mansa, votre bio, votre identifiant et vos préférences d'affichage."}
           </p>
         </div>
@@ -363,6 +372,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         /* ========================================================================= */
         /* MODE 2: PARAMÈTRES DE L'ENTREPRISE MANSA */
         /* ========================================================================= */
+        companySettingsSection === "menu" ? (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-5 sm:p-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+                <Building2 className="size-4 text-[#00D26A]" />
+                <h2 className="text-sm font-bold text-white">Paramètres de l'entreprise</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setCompanySettingsSection("general")}
+                  className="group flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] p-4 text-left transition-all hover:border-[#00D26A]/60 hover:bg-[#00D26A]/5"
+                >
+                  <span>
+                    <span className="block text-sm font-bold text-white">Général</span>
+                    <span className="mt-1 block text-xs text-zinc-400">Identité, vitrine, logo, bannière et devise</span>
+                  </span>
+                  <span className="text-lg text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#00D26A]">›</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompanySettingsSection("payment")}
+                  className="group flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] p-4 text-left transition-all hover:border-[#00D26A]/60 hover:bg-[#00D26A]/5"
+                >
+                  <span>
+                    <span className="block text-sm font-bold text-white">Paiement</span>
+                    <span className="mt-1 block text-xs text-zinc-400">Versements, Mobile Money et coordonnées bancaires</span>
+                  </span>
+                  <span className="text-lg text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#00D26A]">›</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSave} className="space-y-6">
           {isLoadingProfile && (
             <div className="flex items-center gap-2 text-xs text-zinc-400 p-2">
@@ -385,7 +428,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCompanySettingsSection("menu")}
+              className="rounded-lg px-2 py-1 text-xs font-semibold text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              ← Paramètres
+            </button>
+            <span className="text-xs text-zinc-600">/</span>
+            <span className="text-xs font-semibold text-[#00D26A]">{companySettingsSection === "general" ? "Général" : "Paiement"}</span>
+          </div>
+
           {/* 1. Identity & Branding */}
+          {companySettingsSection === "general" && (
+          <>
           <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-white/5">
               <Building2 className="size-4 text-[#00D26A]" />
@@ -612,6 +669,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
 
+          </>
+          )}
+
+          {companySettingsSection === "payment" && (
+          <>
           {/* 3. African Banking & Mobile Money Payouts */}
           <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/5 flex-wrap gap-2">
@@ -728,6 +790,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
 
+          </>
+          )}
+
+          {companySettingsSection === "general" && (
+          <>
           {/* 3. African Currencies & Pricing */}
           <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-white/5">
@@ -761,6 +828,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
 
+          </>
+          )}
+
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-white/10">
             <button
@@ -791,9 +861,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </button>
           </div>
         </form>
+        )
       )}
 
     </div>
   );
 };
-

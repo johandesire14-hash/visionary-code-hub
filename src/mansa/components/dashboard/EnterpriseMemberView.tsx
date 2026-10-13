@@ -1835,8 +1835,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
     </div>
   );
 
-  // Deduplicated list of member companies for the left rail
-  const railItems = React.useMemo(() => {
+  // One unified list for the left rail, deduplicated by company ID.
+  const railCompanies = React.useMemo(() => {
     const rawList = (allSubscriptions || []).filter((s) => s.hasJoined !== false);
     const userKey = user?.uid || user?.email || "default";
     let leftIds: string[] = [];
@@ -1847,23 +1847,56 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
 
     const seen = new Set<string>();
     const unique: any[] = [];
-    for (const item of rawList) {
-      if (!item) continue;
-      const key = item.id || (item as any).companyId;
-      if (key && !seen.has(key) && !leftIds.includes(item.id) && !leftIds.includes((item as any).companyId)) {
-        seen.add(key);
-        unique.push(item);
-      }
+    const addCompany = (item: any, isCreator: boolean) => {
+      if (!item) return;
+      const companyId = item.companyId || item.id;
+      if (
+        !companyId ||
+        seen.has(companyId) ||
+        leftIds.includes(companyId) ||
+        leftIds.includes(item.id)
+      ) return;
+
+      seen.add(companyId);
+      unique.push({
+        ...item,
+        id: companyId,
+        companyId,
+        companyName: item.companyName || item.name,
+        isCreator,
+        sourceId: item.id,
+      });
+    };
+
+    // Creator companies come first; a matching subscription is then ignored
+    // because the company ID has already been seen.
+    for (const company of creatorCompanies || []) addCompany(company, true);
+    for (const subscription of rawList) {
+      addCompany(subscription, false);
     }
+
     return unique;
-  }, [allSubscriptions, user]);
+  }, [allSubscriptions, creatorCompanies, user]);
+
+  const handleRailCompanySelect = (company: any) => {
+    if (company.isCreator) {
+      onSelectCreatorCompany?.(company);
+    } else {
+      onSelectSubscription?.(company.sourceId || company.id);
+    }
+  };
+
+  /* Keep the list stable even if a legacy item has no company name. */
+  const railItems = React.useMemo(() => {
+    return railCompanies.filter((company) => company.companyName || company.name);
+  }, [railCompanies]);
 
   return (
     <div className="mansa-viewport mansa-safe-bottom flex h-full w-full flex-1 overflow-hidden relative select-none bg-[#08090b] text-[#eeeeee] font-sans antialiased">
       {/* 1. LEFTMOST RAIL: Enterprise Squares ("les cases entreprise sur le cote comme sur l'image") */}
       <div className={`${isMobileCompanyNavOpen ? "flex" : "hidden"} lg:flex w-[72px] shrink-0 bg-[#08090a] border-r border-white/5 flex-col items-center py-3 gap-2 overflow-y-auto no-scrollbar select-none z-10`}>
           
-          {/* 1. Return to Personal Workspace */}
+          {/* 1. User / Personal Workspace */}
           {onBackToPersonal && (
             <div className="relative group flex items-center justify-center w-full px-2">
               <button
@@ -1871,120 +1904,34 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 className="size-11 rounded-2xl bg-[#16171b] hover:bg-white/10 hover:text-white text-zinc-400 border border-white/10 flex items-center justify-center transition-all cursor-pointer overflow-hidden"
                 title="Espace Personnel"
               >
-                {creatorCompanies[0]?.companyLogo ? (
-                  <img
-                    src={creatorCompanies[0].companyLogo}
-                    alt={creatorCompanies[0].name}
-                    className="size-full object-cover"
-                  />
-                ) : creatorCompanies[0] ? (
-                  <div
-                    className={`size-full bg-gradient-to-br ${
-                      creatorCompanies[0].colorGradient || "from-emerald-950 via-slate-900 to-black"
-                    } flex items-center justify-center text-[11px] font-black text-white font-mono`}
-                  >
-                    <span>{creatorCompanies[0].logoInitials || creatorCompanies[0].name?.substring(0, 2).toUpperCase() || "CF"}</span>
-                  </div>
-                ) : (
-                  <div className="size-full bg-gradient-to-br from-emerald-950 to-zinc-900 flex items-center justify-center text-[10px] font-bold text-emerald-400 font-mono">
-                    <span>AF</span>
-                  </div>
-                )}
+                <div className="size-full bg-gradient-to-br from-zinc-700 to-zinc-950 flex items-center justify-center text-[11px] font-black text-white font-mono">
+                  {user.avatarInitials ? <span>{user.avatarInitials}</span> : <User className="size-5" />}
+                </div>
               </button>
               <div className="absolute left-[72px] z-50 px-2.5 py-1 rounded-lg bg-[#181a22] text-xs font-semibold text-white border border-white/10 shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150">
-                Espace Personnel
+                {user.name || "Espace Personnel"}
               </div>
             </div>
           )}
 
-          {/* DÉMARCATION 1 : MES ENTREPRISES (CRÉATEUR) */}
-          <div className="w-full flex flex-col items-center gap-1.5 pt-1">
-            <span
-              className="text-[9px] font-black uppercase tracking-wider text-emerald-400/90 px-1 select-none flex items-center gap-0.5 cursor-default"
-              title="Mes Entreprises (Créateur)"
-            >
-              👑
-            </span>
-
-            {/* Owned creator companies */}
-            {(creatorCompanies.length > 0 ? creatorCompanies : [
-              { id: "comp-cadre-financier", name: "Cadre financier", logoInitials: "FF", colorGradient: "from-emerald-950 via-slate-900 to-black" }
-            ]).map((comp: any) => {
-              const isOwnerActive = subscription.companyId === comp.id || subscription.id === comp.id;
+          {/* Unified company list: created and joined companies, one entry per company ID. */}
+          <div className="w-full flex flex-col items-center gap-1.5 pt-1 flex-1">
+            {railItems.map((item: any) => {
+              const isActive = item.companyId === subscription.companyId || item.id === subscription.id;
               return (
-                <div key={comp.id} className="relative group flex items-center justify-center w-full px-2">
-                  {isOwnerActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-emerald-400 rounded-r-full shadow-sm shadow-emerald-400/50" />
-                  )}
-
-                  <button
-                    onClick={() => {
-                      if (onSelectCreatorCompany) {
-                        onSelectCreatorCompany(comp);
-                      } else if (onSelectSubscription) {
-                        onSelectSubscription(comp.id);
-                      }
-                    }}
-                    className={`size-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer relative overflow-hidden select-none ${
-                      isOwnerActive
-                        ? "ring-2 ring-emerald-400 scale-105 shadow-lg shadow-emerald-500/20"
-                        : "border border-white/10 hover:border-emerald-400/50 hover:scale-105 opacity-85 hover:opacity-100"
-                    }`}
-                    title={`Mon Entreprise : ${comp.name}`}
-                  >
-                    {comp.companyLogo ? (
-                      <img src={comp.companyLogo} alt={comp.name} className="size-full object-cover" />
-                    ) : (
-                      <div className={`size-full bg-gradient-to-br ${comp.colorGradient || "from-emerald-950 via-slate-900 to-black"} flex items-center justify-center text-[10px] font-black text-white font-mono`}>
-                        <span>{comp.logoInitials || comp.name.substring(0, 2).toUpperCase()}</span>
-                      </div>
-                    )}
-                  </button>
-
-                  <div className="absolute left-[72px] z-50 px-2.5 py-1 rounded-lg bg-[#181a22] text-xs font-semibold text-white border border-white/10 shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150">
-                    👑 Créateur : {comp.name}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* SÉPARATEUR VISUEL CLAIR (DÉMARCATION) */}
-          <div className="w-8 h-px bg-white/15 my-1.5 shrink-0 flex items-center justify-center relative">
-            <span className="absolute bg-[#08090a] px-1 text-[8px] text-zinc-500 font-mono">•••</span>
-          </div>
-
-          {/* DÉMARCATION 2 : ENTREPRISES MEMBRE (ADHÉSIONS) */}
-          <div className="w-full flex flex-col items-center gap-1.5 flex-1">
-            <span
-              className="text-[9px] font-black uppercase tracking-wider text-blue-400/90 px-1 select-none flex items-center gap-0.5 cursor-default"
-              title="Entreprises Membre (Adhésions)"
-            >
-              🛡️
-            </span>
-
-            {/* Member companies */}
-            {railItems.map((item: any, idx: number) => {
-              const isActive = item.id === subscription.id || item.companyId === subscription.companyId || (idx === 0 && !railItems.some(c => c.id === subscription.id && c !== item));
-              return (
-                <div key={`rail-${item.id || item.companyId || idx}-${idx}`} className="relative group flex items-center justify-center w-full px-2">
-                  {/* Left vertical indicator pill */}
+                <div key={`rail-${item.companyId}`} className="relative group flex items-center justify-center w-full px-2">
                   {isActive && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-blue-500 rounded-r-full shadow-sm shadow-blue-500/50" />
                   )}
 
                   <button
-                    onClick={() => {
-                      if (onSelectSubscription) {
-                        onSelectSubscription(item.id);
-                      }
-                    }}
+                    onClick={() => handleRailCompanySelect(item)}
                     className={`size-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer relative overflow-hidden select-none ${
                       isActive
                         ? "ring-2 ring-blue-500 scale-105 shadow-lg shadow-blue-500/20"
                         : "border border-white/10 hover:border-blue-400/50 hover:scale-105 opacity-85 hover:opacity-100"
                     }`}
-                    title={`Espace Membre : ${item.companyName || item.name}`}
+                    title={item.companyName || item.name}
                   >
                     {item.companyLogo || item.logo ? (
                       <img src={item.companyLogo || item.logo} alt={item.companyName || item.name} className="size-full object-cover" />
@@ -2010,9 +1957,8 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                     )}
                   </button>
 
-                  {/* Tooltip on hover */}
                   <div className="absolute left-[72px] z-50 px-2.5 py-1 rounded-lg bg-[#181a22] text-xs font-semibold text-white border border-white/10 shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150">
-                    🛡️ Membre : {item.companyName || item.name}
+                    {item.companyName || item.name}
                   </div>
                 </div>
               );
@@ -2020,7 +1966,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
           </div>
 
           {/* Plus button to discover more */}
-          <div className="relative group flex items-center justify-center w-full px-2 pt-2 border-t border-white/10 shrink-0">
+          <div className="relative group flex items-center justify-center w-full px-2 pt-2 shrink-0">
             <button
               onClick={onOpenMarketplace}
               className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 hover:text-emerald-400 text-zinc-400 border border-dashed border-white/20 hover:border-emerald-400 flex items-center justify-center transition-all cursor-pointer"
