@@ -10,6 +10,7 @@ import {
   sendPasswordResetEmail,
   onAuthStateChanged,
   FirebaseUser,
+  firebaseConfigured,
 } from "../services/firebase";
 import { syncUserProfile, FirestoreUserProfile } from "../services/dbService";
 import { safeStorage } from "../utils/storage";
@@ -40,6 +41,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
+
+    if (!firebaseConfigured || !auth) {
+      setLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
 
     // Failsafe timeout: in cross-origin iframes or restricted environments, Firebase Auth
     // can take time to resolve IndexedDB locks. Never block the user for more than 1200ms.
