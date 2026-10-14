@@ -25,6 +25,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { siteUrl } from "@/lib/site";
 
 import {
   CurrencyCode,
@@ -106,7 +107,7 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
   };
 
   const handleJoinAffiliate = (company: AffiliateCompany) => {
-    const customUrl = `https://mansa.app/${company.handle}?a=${userRefName.toLowerCase()}`;
+    const customUrl = siteUrl(`/${company.handle}?a=${userRefName.toLowerCase()}`);
     const updatedCompany = { ...company, isJoined: true, affiliateUrl: customUrl };
 
     setCompanies((prev) =>
@@ -346,10 +347,10 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
                           </button>
 
                           <button
-                            onClick={() => handleCopy(comp.affiliateUrl || `https://mansa.app/${comp.handle}?a=${userRefName}`)}
+                            onClick={() => handleCopy(comp.affiliateUrl || siteUrl(`/${comp.handle}?a=${userRefName}`))}
                             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors cursor-pointer whitespace-nowrap inline-flex items-center gap-1.5"
                           >
-                            {copiedLink === (comp.affiliateUrl || `https://mansa.app/${comp.handle}?a=${userRefName}`) ? (
+                            {copiedLink === (comp.affiliateUrl || siteUrl(`/${comp.handle}?a=${userRefName}`)) ? (
                               <>
                                 <Check className="size-3 text-emerald-400" />
                                 <span className="text-emerald-400">Lien copié</span>
@@ -475,7 +476,7 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
             ) : (
               <div className="divide-y divide-white/[0.04]">
                 {joinedAffiliates.map((item) => {
-                  const url = item.affiliateUrl || `https://mansa.app/${item.handle}?a=${userRefName}`;
+                  const url = item.affiliateUrl || siteUrl(`/${item.handle}?a=${userRefName}`);
                   return (
                     <div key={item.id} className="py-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -615,7 +616,7 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
                   <button
                     onClick={() =>
                       handleSocialCopy(
-                        socialModalItem.affiliateUrl || `https://mansa.app/${socialModalItem.handle}?a=${userRefName}`,
+                        socialModalItem.affiliateUrl || siteUrl(`/${socialModalItem.handle}?a=${userRefName}`),
                         "insta_link"
                       )
                     }
@@ -631,7 +632,7 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
                 </p>
 
                 <div className="p-2 rounded-lg bg-black/40 border border-white/5 font-mono text-[11px] text-pink-300 break-all">
-                  {socialModalItem.affiliateUrl || `https://mansa.app/${socialModalItem.handle}?a=${userRefName}`}
+                  {socialModalItem.affiliateUrl || siteUrl(`/${socialModalItem.handle}?a=${userRefName}`)}
                 </div>
               </div>
 
@@ -644,7 +645,7 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
                   </div>
                   <button
                     onClick={() => {
-                      const caption = `🔥 Rejoins ${socialModalItem.name} ici : ${socialModalItem.affiliateUrl || `https://mansa.app/${socialModalItem.handle}?a=${userRefName}`} #mansa #${socialModalItem.handle} #business`;
+                      const caption = `🔥 Rejoins ${socialModalItem.name} ici : ${socialModalItem.affiliateUrl || siteUrl(`/${socialModalItem.handle}?a=${userRefName}`)} #mansa #${socialModalItem.handle} #business`;
                       handleSocialCopy(caption, "tiktok_caption");
                     }}
                     className="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold cursor-pointer flex items-center gap-1"
@@ -727,15 +728,15 @@ export const AffiliatesView: React.FC<AffiliatesViewProps> = ({
                   <input
                     type="text"
                     readOnly
-                    value={activeSuccessModal.affiliateUrl || `https://mansa.app/${activeSuccessModal.handle}?a=${userRefName}`}
+                    value={activeSuccessModal.affiliateUrl || siteUrl(`/${activeSuccessModal.handle}?a=${userRefName}`)}
                     className="w-full rounded-xl border border-white/10 bg-[#181a20] px-3 py-2 text-xs font-mono text-white outline-none"
                   />
                   <button
-                    onClick={() => handleCopy(activeSuccessModal.affiliateUrl || `https://mansa.app/${activeSuccessModal.handle}?a=${userRefName}`)}
+                    onClick={() => handleCopy(activeSuccessModal.affiliateUrl || siteUrl(`/${activeSuccessModal.handle}?a=${userRefName}`))}
                     className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer transition-colors shrink-0"
                     title="Copier"
                   >
-                    {copiedLink === (activeSuccessModal.affiliateUrl || `https://mansa.app/${activeSuccessModal.handle}?a=${userRefName}`) ? (
+                    {copiedLink === (activeSuccessModal.affiliateUrl || siteUrl(`/${activeSuccessModal.handle}?a=${userRefName}`)) ? (
                       <Check className="size-4 text-white" />
                     ) : (
                       <Copy className="size-4" />

@@ -19,7 +19,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenStudio, onOpenAiBuilder })
         <AfhubLogo size="sm" textColor="text-store-foreground" />
         <nav aria-label="Liens de pied de page" className="flex gap-5 text-xs text-store-muted">
           <a href="#marketplace" className="hover:text-store-foreground">Marketplace</a>
-          <a href="https://docs.mansa.app" target="_blank" rel="noreferrer" className="hover:text-store-foreground">Documentation</a>
+          <a href="/mentions-legales" className="hover:text-store-foreground">Mentions légales</a>
+          <a href="/privacy" className="hover:text-store-foreground">Confidentialité</a>
+          <a href="/cgu" className="hover:text-store-foreground">CGU</a>
+          <a href="/documentation" className="hover:text-store-foreground">Documentation</a>
           <a href="#faq" className="hover:text-store-foreground">FAQ</a>
         </nav>
         <span className="text-xs text-store-muted">© 2026 afhub</span>

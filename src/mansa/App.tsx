@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/site";
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { Header } from "./components/Header";
@@ -149,7 +150,7 @@ export default function App() {
   };
 
   const handleOpenDocs = () => {
-    window.open("https://docs.mansa.app", "_blank");
+    window.open(siteUrl("/documentation"), "_blank");
   };
 
   const handleLoginSuccess = () => {

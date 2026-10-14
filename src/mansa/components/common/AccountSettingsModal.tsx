@@ -34,6 +34,7 @@ import {
 import { getUserProfile, updateUserProfile } from "../../services/dbService";
 import { CustomerPurchasesView } from "../dashboard/CustomerPurchasesView";
 import { useModalDismiss } from "../../hooks/useModalDismiss";
+import { siteUrl } from "@/lib/site";
 
 export type AccountSettingsTab =
   | "profil"
@@ -141,7 +142,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   if (isModal && !isOpen) return null;
 
   const handleCopyProfileLink = () => {
-    const link = `https://mansa.app/@${username}`;
+    const link = siteUrl(`/@${username}`);
     navigator.clipboard.writeText(link);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);

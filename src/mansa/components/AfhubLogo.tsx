@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import logoImg from "../assets/images/afhub_logo_africa_1787956612844.jpg";
+import logoImg from "../assets/images/afhub_logo_africa_1787956612844.webp";
 
 interface AfhubLogoProps {
   className?: string;
@@ -34,9 +34,11 @@ export const AfhubLogo: React.FC<AfhubLogoProps> = ({
       <div
         className={`relative overflow-hidden rounded-xl border border-white/10 bg-[#2A2929] ${sizeMap[size]} shrink-0`}
       >
-        <img
-          src={logoImg}
-          alt="afhub logo carte afrique"
+          <img
+            src={logoImg}
+            alt="afhub logo carte afrique"
+            width={512}
+            height={512}
           className="h-full w-full object-cover object-center transform hover:scale-105 transition-transform duration-300"
           referrerPolicy="no-referrer"
         />

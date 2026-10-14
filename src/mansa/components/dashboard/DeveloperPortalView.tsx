@@ -66,10 +66,11 @@ export const DeveloperPortalView: React.FC<DeveloperPortalViewProps> = ({
   const [newWebhookUrl, setNewWebhookUrl] = useState("");
   const [testWebhookStatus, setTestWebhookStatus] = useState<string | null>(null);
 
-  const liveApiKey = "mansa_live_8f99a34bc9884e11a2d4889efc01289";
-  const testApiKey = "mansa_test_9011b22ff8110a33c1d999eaa023912";
+  const liveApiKey = "Clé gérée côté serveur";
+  const testApiKey = "Clé gérée côté serveur";
 
   const handleCopy = (text: string, label: string) => {
+    if (text === "Clé gérée côté serveur") return;
     navigator.clipboard?.writeText?.(text);
     setCopiedText(label);
     setTimeout(() => setCopiedText(null), 2000);
@@ -363,8 +364,8 @@ export const DeveloperPortalView: React.FC<DeveloperPortalViewProps> = ({
                 activeCodeTab === "node"
                   ? `import { MansaSDK } from "@mansa-sdk/core";\n\nconst mansa = new MansaSDK({\n  secretKey: process.env.MANSA_SECRET_KEY,\n});\n\n// Vérifier l'accès d'un utilisateur\nconst membership = await mansa.memberships.retrieve("mem_12345");\nconsole.log(membership.valid); // true`
                   : activeCodeTab === "python"
-                  ? `import mansa\n\nclient = mansa.Client(secret_key="mansa_live_...")\n\n# Récupérer les abonnements actifs\nmembers = client.memberships.list(product_id="prod_victory_odds")\nprint(f"Total membres actifs: {len(members)}")`
-                  : `curl -X GET https://gateway.mansa.app/v2/memberships \\\n  -H "Authorization: Bearer ${liveApiKey}" \\\n  -H "Content-Type: application/json"`;
+                  ? `import mansa\n\nclient = mansa.Client(secret_key=os.environ["MANSA_LIVE_API_KEY"])\n\n# Récupérer les abonnements actifs\nmembers = client.memberships.list(product_id="prod_victory_odds")\nprint(f"Total membres actifs: {len(members)}")`
+                  : `curl -X GET $SITE_URL/v2/memberships \\\n  -H "Authorization: Bearer $MANSA_LIVE_API_KEY" \\\n  -H "Content-Type: application/json"`;
               handleCopy(code, "code");
             }}
             className="absolute top-3 right-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer"
@@ -393,7 +394,7 @@ export const DeveloperPortalView: React.FC<DeveloperPortalViewProps> = ({
             {activeCodeTab === "python" && (
               <code>
                 <span className="text-purple-400">import</span> mansa{"\n\n"}
-                client = mansa.<span className="text-yellow-300">Client</span>(secret_key=<span className="text-emerald-300">"mansa_live_..."</span>){"\n\n"}
+                client = mansa.<span className="text-yellow-300">Client</span>(secret_key=<span className="text-emerald-300">os.environ["MANSA_LIVE_API_KEY"]</span>){"\n\n"}
                 <span className="text-zinc-500"># Récupérer les abonnements actifs</span>{"\n"}
                 members = client.memberships.<span className="text-yellow-300">list</span>(product_id=<span className="text-emerald-300">"prod_victory_odds"</span>){"\n"}
                 <span className="text-yellow-300">print</span>(f<span className="text-emerald-300">"Total membres actifs: {'{len(members)}'}"</span>)
@@ -402,8 +403,8 @@ export const DeveloperPortalView: React.FC<DeveloperPortalViewProps> = ({
 
             {activeCodeTab === "curl" && (
               <code>
-                curl -X GET https://gateway.mansa.app/v2/memberships \{"\n"}
-                {"  "}-H <span className="text-emerald-300">"Authorization: Bearer {liveApiKey}"</span> \{"\n"}
+                curl -X GET $SITE_URL/v2/memberships \{"\n"}
+                {"  "}-H <span className="text-emerald-300">"Authorization: Bearer $MANSA_LIVE_API_KEY"</span> \{"\n"}
                 {"  "}-H <span className="text-emerald-300">"Content-Type: application/json"</span>
               </code>
             )}

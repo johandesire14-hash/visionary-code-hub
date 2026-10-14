@@ -33,6 +33,7 @@ import { BusinessProject } from "../../types";
 import { CurrencyCode, formatCurrency, convertFromUSD } from "../../utils/currency";
 import { ConfirmActionModal } from "../common/ConfirmActionModal";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { siteUrl } from "@/lib/site";
 
 interface ProjectsViewProps {
   lang?: "fr" | "en";
@@ -150,7 +151,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       status: "draft",
       createdAt: new Date().toISOString().split("T")[0],
       updatedAt: new Date().toISOString().split("T")[0],
-      storeUrl: `mansa.app/${proj.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-copie`,
+      storeUrl: siteUrl(`/${proj.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-copie`),
     };
     onAddProject(duplicated);
   };
@@ -178,7 +179,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       createdAt: new Date().toISOString().split("T")[0],
       updatedAt: new Date().toISOString().split("T")[0],
       apps: newProjectForm.apps || ["Discord VIP", "Mansa Checkout"],
-      storeUrl: `mansa.app/${newProjectForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      storeUrl: siteUrl(`/${newProjectForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`),
     };
 
     onAddProject(newProj);

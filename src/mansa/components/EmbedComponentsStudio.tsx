@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/site";
 // @ts-nocheck
 import React, { useState } from "react";
 import { CreditCard, Wallet, MessageSquare, Key, Copy, Check, Terminal, ExternalLink, ShieldCheck, Zap } from "lucide-react";
@@ -167,7 +168,7 @@ export async function validateLicense(key: string) {
             <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-zinc-400">
               <span>{currentTab.description}</span>
               <a
-                href="https://docs.mansa.app"
+                href=siteUrl("/documentation")
                 target="_blank"
                 rel="noreferrer"
                 className="text-[#FA4616] hover:underline flex items-center gap-1 font-semibold"

@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import storefront from "@/assets/afhub-storefront.png";
+import storefront from "@/assets/afhub-storefront.webp";
 
 interface HeroSectionProps {
   onOpenStudio: (category?: string) => void;

@@ -42,6 +42,7 @@ import { ConfirmActionModal } from "./common/ConfirmActionModal";
 import { ModalOverlay } from "./common/ModalOverlay";
 import { AudioPreview30sPlayer } from "./common/AudioPreview30sPlayer";
 import { CurrencySelector } from "./dashboard/CurrencySelector";
+import { siteUrl } from "@/lib/site";
 import { CheckoutPreviewModal } from "./dashboard/CheckoutPreviewModal";
 import {
   getStoredTelegramChannels,
@@ -504,7 +505,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
 
   const [customUrl, setCustomUrl] = useState(
     initialData?.productUrl ||
-      `mansa.app/mon-espace/${productName.toLowerCase().replace(/[^a-z0-9]/g, "-") || "mon-produit"}`
+      siteUrl(`/mon-espace/${productName.toLowerCase().replace(/[^a-z0-9]/g, "-") || "mon-produit"}`)
   );
   const [enableAffiliate, setEnableAffiliate] = useState(true);
   const [affiliateRate, setAffiliateRate] = useState(initialData?.affiliateRate || 30);

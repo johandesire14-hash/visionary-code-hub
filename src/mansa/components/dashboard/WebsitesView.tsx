@@ -18,6 +18,7 @@ import {
   Palette,
 } from "lucide-react";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { siteUrl } from "@/lib/site";
 
 interface WebsitesViewProps {
   lang?: "fr" | "en";
@@ -34,6 +35,9 @@ export const WebsitesView: React.FC<WebsitesViewProps> = ({ lang = "fr" }) => {
     ssl: string;
     type: string;
   }>>([]);
+  const enterpriseUrl = siteUrl("/entreprise");
+  const bioUrl = siteUrl("/victory_odds/links");
+  const checkoutUrl = siteUrl("/checkout/victory_odds");
 
   const handleCopy = (url: string) => {
     navigator.clipboard?.writeText?.(url);
@@ -102,13 +106,13 @@ export const WebsitesView: React.FC<WebsitesViewProps> = ({ lang = "fr" }) => {
               </p>
               <div className="flex items-center gap-3 mt-3">
                 <span className="font-mono text-xs text-[#6699ff] font-semibold">
-                  mansa.app/entreprise
+                  {enterpriseUrl}
                 </span>
                 <button
-                  onClick={() => handleCopy("https://mansa.app/entreprise")}
+                  onClick={() => handleCopy(enterpriseUrl)}
                   className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer"
                 >
-                  {copiedUrl === "https://mansa.app/entreprise" ? (
+                  {copiedUrl === enterpriseUrl ? (
                     <span className="text-emerald-400">Copié !</span>
                   ) : (
                     <>
@@ -158,7 +162,7 @@ export const WebsitesView: React.FC<WebsitesViewProps> = ({ lang = "fr" }) => {
               Page mobile optimisée pour Instagram, TikTok et Twitter/X avec tous vos liens en 1 clic.
             </p>
             <button
-              onClick={() => handleCopy("https://mansa.app/victory_odds/links")}
+              onClick={() => handleCopy(bioUrl)}
               className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 py-1.5 text-xs text-zinc-300 hover:text-white font-semibold cursor-pointer"
             >
               <Copy className="size-3" />
@@ -179,7 +183,7 @@ export const WebsitesView: React.FC<WebsitesViewProps> = ({ lang = "fr" }) => {
               Page de paiement ultra-rapide avec conversion optimisée, avis vérifiés et garanties.
             </p>
             <button
-              onClick={() => handleCopy("https://mansa.app/checkout/victory_odds")}
+              onClick={() => handleCopy(checkoutUrl)}
               className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 py-1.5 text-xs text-zinc-300 hover:text-white font-semibold cursor-pointer"
             >
               <Copy className="size-3" />

@@ -32,6 +32,7 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
 
   const [selectedReason, setSelectedReason] = useState<string>(REPORT_REASONS[0]);
   const [details, setDetails] = useState("");
+  const [website, setWebsite] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,6 +46,7 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
       companyName,
       reason: selectedReason,
       details: details.trim(),
+      website,
       createdAt: new Date().toISOString(),
       status: "pending",
     };
@@ -120,6 +122,10 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs text-zinc-300">
+            <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+              <label htmlFor="report-website">Site web</label>
+              <input id="report-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <label className="font-semibold text-zinc-200 flex items-center gap-1.5">
                 <AlertTriangle className="size-3.5 text-amber-400" />

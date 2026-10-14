@@ -98,7 +98,7 @@ import { updateCompanyBranding, getSavedCompanies } from "../../utils/companySto
 import { EnterpriseBrandingModal } from "./EnterpriseBrandingModal";
 import { ManageMembershipModal } from "./ManageMembershipModal";
 import { ReportEnterpriseModal } from "./ReportEnterpriseModal";
-import logoImg from "../../assets/images/afhub_logo_africa_1787956612844.jpg";
+import logoImg from "../../assets/images/afhub_logo_africa_1787956612844.webp";
 
 interface EnterpriseMemberViewProps {
   subscription: EnterpriseSubscription;
