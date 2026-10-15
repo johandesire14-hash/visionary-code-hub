@@ -161,8 +161,11 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
     { id: "mtn_momo", name: "MTN Mobile Money", category: "wallet", color: "#FFCC00" },
     { id: "moov_money", name: "Moov Money", category: "wallet", color: "#005BAA" },
-    { id: "visa_mastercard", name: "Carte bancaire", category: "card", color: "#2563EB" },
     { id: "bank_uemoa", name: "Virement bancaire", category: "transfers", color: "#8B5CF6" },
+    { id: "bank_cemac", name: "Virement bancaire CEMAC", category: "transfers", color: "#7C3AED" },
+    { id: "bank_sepa", name: "Virement bancaire SEPA", category: "transfers", color: "#6366F1" },
+    { id: "paypal", name: "PayPal", category: "other", color: "#0070BA" },
+    { id: "crypto_usdt", name: "USDT", category: "other", color: "#26A17B" },
   ];
   const visibleWithdrawalMethods = withdrawalMethodCatalog.filter(
     (method) => withdrawalCategory === "all" || method.category === withdrawalCategory,
@@ -1534,6 +1537,10 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                             "mtn_momo",
                             "moov_money",
                             "bank_uemoa",
+                            "bank_cemac",
+                            "bank_sepa",
+                            "paypal",
+                            "crypto_usdt",
                           ].includes(method.id)
                             ? (method.id as PayoutMethodType)
                             : "wave";
@@ -1719,7 +1726,11 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   <label className="mb-1 block text-xs font-semibold text-zinc-300">
                     {selectedPayoutMethod.type.startsWith("bank")
                       ? "RIB / IBAN"
-                      : "Numéro de téléphone"}
+                      : selectedPayoutMethod.type === "paypal"
+                        ? "Adresse e-mail PayPal"
+                        : selectedPayoutMethod.type === "crypto_usdt"
+                          ? "Adresse du portefeuille USDT"
+                          : "Numéro de téléphone"}
                   </label>
                   <input
                     type="text"
@@ -1729,7 +1740,11 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     placeholder={
                       selectedPayoutMethod.type.startsWith("bank")
                         ? "RIB ou IBAN"
-                        : "Numéro Mobile Money"
+                        : selectedPayoutMethod.type === "paypal"
+                          ? "exemple@email.com"
+                          : selectedPayoutMethod.type === "crypto_usdt"
+                            ? "Adresse USDT"
+                            : "Numéro Mobile Money"
                     }
                     required
                   />
