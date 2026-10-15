@@ -16,6 +16,8 @@ import {
   Sparkles,
   RefreshCw,
   Eye,
+  X,
+  Smartphone,
 } from "lucide-react";
 import { AccountSettingsModal } from "../common/AccountSettingsModal";
 import { getUserProfile, updateUserProfile, isCreatorPayoutConfigured } from "../../services/dbService";
@@ -23,6 +25,7 @@ import { getSavedCompanies, updateCompanyBranding } from "../../utils/companySto
 import { updateSubscriptionBranding } from "../../utils/subscriptionsStorage";
 import { CurrencySelector } from "./CurrencySelector";
 import { CurrencyCode } from "../../utils/currency";
+import { DIAL_CODE_CONFIGS, validatePhoneNumber, normalizePhoneNumber } from "../../utils/phoneValidationRules";
 
 interface SettingsViewProps {
   lang?: "fr" | "en";
@@ -79,6 +82,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Mobile Money Details
   const [momoNumber, setMomoNumber] = useState("+225 07 00 00 00 00");
   const [momoName, setMomoName] = useState(user.name || "Compte Mobile Money");
+  const [isWaveConfigOpen, setIsWaveConfigOpen] = useState(false);
+  const [waveDialCode, setWaveDialCode] = useState("+225");
+  const [wavePhoneNumber, setWavePhoneNumber] = useState("0700000000");
+  const [waveAccountName, setWaveAccountName] = useState(user.name || "");
+  const [waveVerificationStatus, setWaveVerificationStatus] = useState<"not_configured" | "pending" | "configured">("not_configured");
+
+  const waveCountryOptions = Object.values(DIAL_CODE_CONFIGS).filter((country) =>
+    country.operators.some((operator) => operator.id === "wave")
+  );
+  const waveValidation = validatePhoneNumber(waveDialCode, "wave", wavePhoneNumber, storeCurrency);
   
   // African Bank Account Details
   const [bankName, setBankName] = useState("Ecobank Côte d'Ivoire / UEMOA");
@@ -118,6 +131,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             if (target.payoutMethod) setPayoutMethod(target.payoutMethod);
             if (target.momoNumber) setMomoNumber(target.momoNumber);
             if (target.momoName) setMomoName(target.momoName);
+            if (target.payoutVerificationStatus) setWaveVerificationStatus(target.payoutVerificationStatus);
             if (target.bankName) setBankName(target.bankName);
             if (target.bankIbanRib) setBankIbanRib(target.bankIbanRib);
             if (target.bankAccountHolder) setBankAccountHolder(target.bankAccountHolder);
@@ -138,6 +152,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               if (profile.payoutMethod) setPayoutMethod(profile.payoutMethod);
               if (profile.momoNumber) setMomoNumber(profile.momoNumber);
               if (profile.momoName) setMomoName(profile.momoName);
+              if (profile.payoutVerificationStatus) setWaveVerificationStatus(profile.payoutVerificationStatus);
               if (profile.bankName) setBankName(profile.bankName);
               if (profile.bankIbanRib) setBankIbanRib(profile.bankIbanRib);
               if (profile.bankAccountHolder) setBankAccountHolder(profile.bankAccountHolder);
@@ -212,6 +227,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           payoutMethod,
           momoNumber: momoNumber.trim(),
           momoName: momoName.trim(),
+          payoutVerificationStatus: waveVerificationStatus,
           bankName,
           bankIbanRib: bankIbanRib.trim(),
           bankAccountHolder: bankAccountHolder.trim(),
@@ -275,6 +291,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           payoutMethod,
           momoNumber: momoNumber.trim(),
           momoName: momoName.trim(),
+          payoutVerificationStatus: waveVerificationStatus,
           bankName,
           bankIbanRib: bankIbanRib.trim(),
           bankAccountHolder: bankAccountHolder.trim(),
@@ -697,7 +714,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 ].map((m) => (
                   <div
                     key={m.id}
-                    onClick={() => setPayoutMethod(m.id as any)}
+                    onClick={() => {
+                      setPayoutMethod(m.id as any);
+                      if (m.id === "wave") {
+                        setIsWaveConfigOpen(true);
+                      }
+                    }}
                     className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
                       payoutMethod === m.id
                         ? "border-[#00D26A] bg-[#00D26A]/10 text-white"
@@ -709,12 +731,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <span>{m.flag}</span>
                     </div>
                     <span className="text-[10px] opacity-75 block">{m.desc}</span>
+                    {m.id === "wave" && waveVerificationStatus === "pending" && (
+                      <span className="mt-2 inline-flex rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                        Vérification en attente
+                      </span>
+                    )}
+                    {m.id === "wave" && waveVerificationStatus === "configured" && (
+                      <span className="mt-2 inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                        Configuré
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
 
               {/* Mobile Money Details fields */}
-              {(payoutMethod === "wave" || payoutMethod === "orange_momo") && (
+              {payoutMethod === "orange_momo" && (
                 <div className="mt-3 p-4 rounded-xl bg-[#16181f] border border-white/5 space-y-3">
                   <h4 className="font-bold text-white text-xs">Coordonnées du Portefeuille Mobile Money :</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -829,6 +861,116 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           </>
+          )}
+
+          {isWaveConfigOpen && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
+                <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-[#1DC3FD]/15 text-[#1DC3FD]">
+                      <Smartphone className="size-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">Configurer Wave</h3>
+                      <p className="mt-0.5 text-xs text-zinc-400">Ajoutez le compte qui recevra vos versements.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsWaveConfigOpen(false)}
+                    aria-label="Fermer la configuration Wave"
+                    className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-4 text-xs">
+                  <div>
+                    <label className="mb-1 block font-semibold text-zinc-300">Pays</label>
+                    <select
+                      value={waveDialCode}
+                      onChange={(event) => {
+                        setWaveDialCode(event.target.value);
+                        setWavePhoneNumber("");
+                      }}
+                      className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                    >
+                      {waveCountryOptions.map((country) => (
+                        <option key={country.dialCode} value={country.dialCode}>
+                          {country.countryName} ({country.dialCode})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block font-semibold text-zinc-300">Numéro Wave</label>
+                    <div className={`flex items-center rounded-lg border bg-[#101114] ${waveValidation.isValid ? "border-emerald-500/70" : "border-white/10"}`}>
+                      <span className="border-r border-white/10 px-3 py-2.5 font-mono text-zinc-400">{waveDialCode}</span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        value={wavePhoneNumber}
+                        onChange={(event) => setWavePhoneNumber(normalizePhoneNumber(event.target.value, waveDialCode))}
+                        placeholder={DIAL_CODE_CONFIGS[waveDialCode]?.operators.find((operator) => operator.id === "wave")?.format || "07 XX XX XX XX"}
+                        className="min-w-0 flex-1 bg-transparent px-3 py-2.5 font-mono text-white outline-none placeholder:text-zinc-600"
+                      />
+                    </div>
+                    {wavePhoneNumber && !waveValidation.isValid && (
+                      <p className="mt-1 text-[10px] text-red-300">{waveValidation.errorMessage || "Numéro Wave invalide."}</p>
+                    )}
+                    {waveValidation.isValid && <p className="mt-1 text-[10px] text-emerald-300">Numéro Wave valide.</p>}
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block font-semibold text-zinc-300">Nom du titulaire</label>
+                    <input
+                      type="text"
+                      value={waveAccountName}
+                      onChange={(event) => setWaveAccountName(event.target.value)}
+                      placeholder="Nom associé au compte Wave"
+                      className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                    />
+                  </div>
+
+                  <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-zinc-300">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" defaultChecked className="accent-[#00D26A]" />
+                      Recevoir les paiements de mes clients
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" defaultChecked className="accent-[#00D26A]" />
+                      Recevoir mes versements
+                    </label>
+                  </div>
+
+                  <div className="flex justify-end gap-2 border-t border-white/10 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsWaveConfigOpen(false)}
+                      className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!waveValidation.isValid || !waveAccountName.trim()}
+                      onClick={() => {
+                        setMomoNumber(`${waveDialCode} ${wavePhoneNumber}`);
+                        setMomoName(waveAccountName.trim());
+                        setWaveVerificationStatus("pending");
+                        setIsWaveConfigOpen(false);
+                      }}
+                      className="rounded-xl bg-[#00D26A] px-4 py-2.5 text-xs font-bold text-black transition-colors hover:bg-[#10E47A] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Continuer la vérification
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Action Buttons */}
