@@ -2828,7 +2828,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
               {/* VUE CONTENU : ONGLET PRODUITS */}
               {companyTab === "produits" && (
                 <div className="space-y-6 animate-in fade-in duration-150 max-w-5xl">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="grid grid-cols-2 gap-4 sm:gap-5">
                     {enterpriseOffers.length === 0 ? (
                       <div className="col-span-1 md:col-span-2 py-12 px-6 rounded-2xl border border-white/10 bg-[#111318] text-center space-y-3">
                         <ShoppingBag className="size-10 text-zinc-500 mx-auto" />
@@ -2839,121 +2839,40 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                       </div>
                     ) : (
                       enterpriseOffers.map((offer) => {
-                        const isOfferTg =
-                          offer.includedApps?.some((a) => a.toLowerCase().includes("telegram")) ||
-                          offer.title.toLowerCase().includes("telegram");
-                        const isOfferDc =
-                          offer.includedApps?.some((a) => a.toLowerCase().includes("discord")) ||
-                          offer.title.toLowerCase().includes("discord");
-                        const isOfferEb =
-                          offer.type === "ebook" ||
-                          offer.includedApps?.some((a) => ["ebook", "guide", "pdf"].some((k) => a.toLowerCase().includes(k))) ||
-                          offer.title.toLowerCase().includes("ebook");
-                        const isOfferCo =
-                          offer.type === "course" ||
-                          offer.includedApps?.some((a) => ["cours", "formation", "masterclass", "course"].some((k) => a.toLowerCase().includes(k))) ||
-                          offer.title.toLowerCase().includes("formation");
-
-                        const isOfferUnlocked =
-                          memberUnlockedOfferIds.includes(offer.id) ||
-                          memberUnlockedOfferIds.some((id) => id.toLowerCase() === offer.id.toLowerCase());
+                        const visual = offer.imageUrl || offer.bannerUrl;
+                        const priceOrStatus =
+                          offer.pricingType === "free" ? "Gratuit" : offer.priceDisplay || "Gratuit";
 
                         return (
-                          <div
+                          <button
                             key={offer.id}
+                            type="button"
                             onClick={() => setSelectedProductDetailOffer(offer)}
-                            className={`rounded-2xl border p-6 space-y-4 relative flex flex-col justify-between transition-all ${
-                              isOfferUnlocked
-                                ? "border-emerald-500/40 bg-[#12141c] shadow-lg shadow-emerald-500/5"
-                                : "border-white/[0.08] bg-[#111318] hover:border-white/15"
-                            }`}
+                            className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111318] text-left transition-all hover:-translate-y-0.5 hover:border-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="size-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                {isOfferTg ? (
-                                  <TelegramIcon className="size-5 text-[#229ED9]" />
-                                ) : isOfferDc ? (
-                                  <DiscordIcon className="size-5 text-[#5865F2]" />
-                                ) : isOfferEb ? (
-                                  <BookOpen className="size-5 text-emerald-400" />
-                                ) : isOfferCo ? (
-                                  <GraduationCap className="size-5 text-indigo-400" />
-                                ) : (
-                                  <Package className="size-5 text-amber-400" />
-                                )}
-                              </div>
-
-                              {/* Cadenas ouvert ou fermé selon si le produit a été débloqué ou pas */}
-                              <div className="flex items-center gap-1.5">
-                                {isOfferUnlocked ? (
-                                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" title="Produit débloqué">
-                                    <Unlock className="size-4" />
-                                  </div>
-                                ) : (
-                                  <div className="p-1.5 rounded-lg bg-white/5 text-zinc-400 border border-white/10" title="Produit verrouillé">
-                                    <Lock className="size-4" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="text-xs font-mono text-zinc-400">
-                                {offer.categoryLabel || (isOfferTg ? "Canaux Privés Telegram" : isOfferDc ? "Communauté Discord" : isOfferEb ? "Guides PDF & E-books" : isOfferCo ? "Formation Vidéo" : "Offre Officielle")}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-base font-bold text-white">{offer.title}</h4>
-                                {isOfferUnlocked ? (
-                                  <Unlock className="size-4 text-emerald-400 shrink-0" />
-                                ) : (
-                                  <Lock className="size-4 text-zinc-500 shrink-0" />
-                                )}
-                              </div>
-                              <p className="text-xs text-zinc-400 leading-relaxed">
-                                {offer.description || `Accédez aux services et avantages inclus dans l'offre ${offer.title}.`}
-                              </p>
-                            </div>
-
-                            <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                              <span className="text-sm font-bold text-white font-mono">{offer.priceDisplay}</span>
-                              {isOfferUnlocked ? (
-                                <button
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    if (isOfferTg) {
-                                      setActiveTab("telegram");
-                                      setTelegramFlowStep("channels_list");
-                                    } else if (isOfferDc) {
-                                      setActiveTab("discord");
-                                      setDiscordFlowStep("channels_list");
-                                    } else if (isOfferEb) {
-                                      setIsEbookModalOpen(true);
-                                    } else if (isOfferCo) {
-                                      setIsCourseModalOpen(true);
-                                    } else {
-                                      setActiveTab("accueil");
-                                    }
-                                  }}
-                                  className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-                                >
-                                  <span>Accéder</span>
-                                  <ChevronRight className="size-3" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setSelectedProductDetailOffer(offer);
-                                    setSelectedProductPlanId(offer.pricingOptions?.[0]?.id || null);
-                                    setExpandedProductFaqIndex(null);
-                                  }}
-                                  className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shadow-md shadow-emerald-500/20"
-                                >
-                                  <span>Débloquer l'accès</span>
-                                </button>
+                            <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-900">
+                              {visual && (
+                                <img
+                                  src={visual}
+                                  alt=""
+                                  width={640}
+                                  height={480}
+                                  loading="lazy"
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
                               )}
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-3 pb-3 pt-10">
+                                <h4 className="line-clamp-2 text-sm font-bold leading-tight text-white sm:text-base">
+                                  {offer.title}
+                                </h4>
+                              </div>
                             </div>
-                          </div>
+                            <div className="border-t border-white/[0.06] bg-[#18191d] px-3 py-3">
+                              <span className="font-mono text-sm font-bold text-emerald-400 sm:text-base">
+                                {priceOrStatus}
+                              </span>
+                            </div>
+                          </button>
                         );
                       })
                     )}
