@@ -137,6 +137,11 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
+  const [withdrawalStep, setWithdrawalStep] = useState<"methods" | "form">("methods");
+  const [withdrawalCategory, setWithdrawalCategory] = useState<
+    "all" | "card" | "transfers" | "wallet" | "other"
+  >("all");
+  const [includeDefaultWithdrawalMethods, setIncludeDefaultWithdrawalMethods] = useState(true);
 
   const selectedPayoutMethod = payoutMethods.find((method) => method.id === selectedMethodId);
   const withdrawalMethodLabels: Record<string, string> = {
@@ -150,6 +155,17 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     crypto_usdt: "USDT",
     paypal: "PayPal",
   };
+  const withdrawalMethodCatalog = [
+    { id: "wave", name: "Wave", category: "wallet", color: "#1DC3FD" },
+    { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
+    { id: "mtn_momo", name: "MTN Mobile Money", category: "wallet", color: "#FFCC00" },
+    { id: "moov_money", name: "Moov Money", category: "wallet", color: "#005BAA" },
+    { id: "visa_mastercard", name: "Carte bancaire", category: "card", color: "#2563EB" },
+    { id: "bank_uemoa", name: "Virement bancaire", category: "transfers", color: "#8B5CF6" },
+  ];
+  const visibleWithdrawalMethods = withdrawalMethodCatalog.filter(
+    (method) => withdrawalCategory === "all" || method.category === withdrawalCategory,
+  );
 
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
@@ -527,6 +543,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
   const handleOpenWithdrawalDialog = () => {
     setWithdrawalError(null);
     setWithdrawalSuccess(null);
+    setWithdrawalStep("methods");
+    setWithdrawalCategory("all");
+    setIncludeDefaultWithdrawalMethods(true);
     if (payoutMethods.length > 0) {
       const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
       setSelectedMethodId(defaultM.id);
@@ -1479,6 +1498,138 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               >
                 Consulter mes virements
               </button>
+            </div>
+          ) : withdrawalStep === "methods" ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="size-5 text-white" />
+                <h3 className="text-2xl font-bold text-white">Méthodes de retrait</h3>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#292929] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Inclure les méthodes de retrait par défaut
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                    Activer automatiquement les nouvelles méthodes de retrait disponibles.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={includeDefaultWithdrawalMethods}
+                  onClick={() => setIncludeDefaultWithdrawalMethods((value) => !value)}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${includeDefaultWithdrawalMethods ? "bg-blue-600" : "bg-zinc-600"}`}
+                >
+                  <span
+                    className={`absolute top-1 size-5 rounded-full bg-white transition-transform ${includeDefaultWithdrawalMethods ? "translate-x-6" : "translate-x-1"}`}
+                  />
+                </button>
+              </div>
+
+              <div className="overflow-x-auto border-b border-white/10">
+                <div className="flex min-w-max items-end gap-6">
+                  {[
+                    ["all", "Tout"],
+                    ["card", "Carte"],
+                    ["transfers", "Versements"],
+                    ["wallet", "Portefeuille"],
+                    ["other", "Autres"],
+                  ].map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() =>
+                        setWithdrawalCategory(
+                          id as "all" | "card" | "transfers" | "wallet" | "other",
+                        )
+                      }
+                      className={`border-b-2 px-1 pb-3 text-xs font-semibold transition-colors ${withdrawalCategory === id ? "border-blue-500 text-white" : "border-transparent text-zinc-500 hover:text-zinc-200"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#292929]">
+                {visibleWithdrawalMethods.map((method, index) => {
+                  const configured = payoutMethods.find((item) => item.type === method.id);
+                  const selected = selectedMethodId === configured?.id;
+                  return (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => {
+                        if (configured) {
+                          setSelectedMethodId(configured.id);
+                          setWithdrawalDestination(configured.accountIdentifier);
+                          setWithdrawalError(null);
+                        } else {
+                          setWithdrawalError(
+                            `Configurez d'abord ${method.name} dans vos moyens de retrait.`,
+                          );
+                        }
+                      }}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index > 0 ? "border-t border-white/[0.08]" : ""} ${selected ? "bg-emerald-500/10" : "hover:bg-white/[0.04]"}`}
+                    >
+                      <Lock className="size-5 shrink-0 text-zinc-600" />
+                      <span
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-white"
+                        style={{ backgroundColor: method.color }}
+                      >
+                        {method.name.slice(0, 2).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
+                        {method.name}
+                      </span>
+                      <span
+                        className={`shrink-0 text-xs font-semibold ${selected ? "text-emerald-300" : configured ? "text-white" : "text-zinc-500"}`}
+                      >
+                        {selected ? "Sélectionné" : configured ? "Sélectionner" : "Configurer"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {withdrawalError && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+                  {withdrawalError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWithdrawalCategory("all");
+                    setIncludeDefaultWithdrawalMethods(true);
+                    setSelectedMethodId("");
+                  }}
+                  className="text-[11px] font-semibold text-zinc-400 transition-colors hover:text-white"
+                >
+                  Restaurer les paramètres par défaut
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPayoutModalOpen(false)}
+                    className="rounded-xl bg-[#292929] px-3 py-2.5 text-xs font-semibold text-white hover:bg-[#383838]"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!selectedMethodId}
+                    onClick={() => setWithdrawalStep("form")}
+                    className="rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             /* CAS 3: FORMULAIRE DE RETRAIT NORMAL */
