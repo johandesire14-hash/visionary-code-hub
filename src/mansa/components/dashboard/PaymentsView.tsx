@@ -134,6 +134,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   const [withdrawalAmount, setWithdrawalAmount] = useState<string>("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
   const [withdrawalDestination, setWithdrawalDestination] = useState<string>("");
+  const [withdrawalCountry, setWithdrawalCountry] = useState("Côte d'Ivoire");
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
@@ -471,7 +472,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     setTimeout(() => {
       if (
         selectedPayoutMethod &&
-        withdrawalDestination.trim() !== selectedPayoutMethod.accountIdentifier
+        (withdrawalDestination.trim() !== selectedPayoutMethod.accountIdentifier ||
+          withdrawalCountry !== selectedPayoutMethod.country)
       ) {
         savePayoutMethod(creatorKey, {
           ...selectedPayoutMethod,
@@ -546,6 +548,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     setWithdrawalStep("methods");
     setWithdrawalCategory("all");
     setIncludeDefaultWithdrawalMethods(true);
+    setWithdrawalCountry("Côte d'Ivoire");
     if (payoutMethods.length > 0) {
       const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
       setSelectedMethodId(defaultM.id);
@@ -1521,7 +1524,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                         if (configured) {
                           setSelectedMethodId(configured.id);
                           setWithdrawalDestination(configured.accountIdentifier);
+                          setWithdrawalCountry(configured.country || "Côte d'Ivoire");
                           setWithdrawalError(null);
+                          setWithdrawalStep("form");
                         } else {
                           const supportedType = [
                             "wave",
@@ -1532,11 +1537,23 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                           ].includes(method.id)
                             ? (method.id as PayoutMethodType)
                             : "wave";
-                          setNewMethodType(supportedType);
-                          setNewMethodLabel(method.name);
-                          setIsPayoutModalOpen(false);
-                          setActiveTab("payout_methods");
-                          setIsAddMethodModalOpen(true);
+                          const draftMethod: PayoutMethodConfig = {
+                            id: `payout-${supportedType}-${Date.now()}`,
+                            type: supportedType,
+                            label: method.name,
+                            accountHolder: profile?.momoName || user?.displayName || "",
+                            accountIdentifier: "",
+                            country: "Côte d'Ivoire",
+                            isVerified: false,
+                            isDefault: payoutMethods.length === 0,
+                            createdAt: new Date().toISOString(),
+                          };
+                          setPayoutMethods((current) => [...current, draftMethod]);
+                          savePayoutMethod(creatorKey, draftMethod);
+                          setSelectedMethodId(draftMethod.id);
+                          setWithdrawalDestination("");
+                          setWithdrawalCountry("Côte d'Ivoire");
+                          setWithdrawalStep("form");
                         }
                       }}
                       className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index > 0 ? "border-t border-white/[0.08]" : ""} ${selected ? "bg-emerald-500/10" : "hover:bg-white/[0.04]"}`}
@@ -1663,43 +1680,42 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-xs font-semibold text-zinc-300">
-                  Choisissez la méthode de retrait
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {payoutMethods.map((method) => {
-                    const label = withdrawalMethodLabels[method.type] || method.label;
-                    const initials = label.slice(0, 2).toUpperCase();
-                    return (
-                      <button
-                        key={method.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedMethodId(method.id);
-                          setWithdrawalDestination(method.accountIdentifier);
-                        }}
-                        className={`flex items-center gap-2 rounded-xl border p-3 text-left transition-all ${selectedMethodId === method.id ? "border-emerald-400 bg-emerald-400/10" : "border-white/10 bg-[#16181f] hover:border-white/25"}`}
-                      >
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[10px] font-black text-white">
-                          {initials}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-xs font-bold text-white">
-                            {label}
-                          </span>
-                          <span className="block truncate text-[10px] text-zinc-500">
-                            {method.accountIdentifier}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
+              <div className="flex items-center justify-between rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-emerald-300">
+                    Méthode choisie
+                  </p>
+                  <p className="text-sm font-bold text-white">
+                    {selectedPayoutMethod
+                      ? withdrawalMethodLabels[selectedPayoutMethod.type] ||
+                        selectedPayoutMethod.label
+                      : "Méthode de retrait"}
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setWithdrawalStep("methods")}
+                  className="text-xs font-semibold text-emerald-300 hover:text-white"
+                >
+                  Modifier
+                </button>
               </div>
 
               {selectedPayoutMethod && (
                 <div>
+                  <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
+                  <select
+                    value={withdrawalCountry}
+                    onChange={(event) => setWithdrawalCountry(event.target.value)}
+                    className="mb-3 w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
+                  >
+                    <option>Côte d'Ivoire</option>
+                    <option>Sénégal</option>
+                    <option>Bénin</option>
+                    <option>Togo</option>
+                    <option>Cameroun</option>
+                    <option>Ghana</option>
+                  </select>
                   <label className="mb-1 block text-xs font-semibold text-zinc-300">
                     {selectedPayoutMethod.type.startsWith("bank")
                       ? "RIB / IBAN"
@@ -1757,7 +1773,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   ) : (
                     <ArrowUpRight className="size-4" />
                   )}
-                  <span>Confirmer le virement</span>
+                  <span>Confirmer</span>
                 </button>
               </div>
             </form>
