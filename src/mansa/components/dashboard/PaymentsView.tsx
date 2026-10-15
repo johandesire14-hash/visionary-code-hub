@@ -617,7 +617,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
           >
             <ArrowUpRight className="size-4" />
-            <span>Demander un virement</span>
+            <span>Demander un retrait</span>
           </button>
         </div>
       </div>
@@ -1088,7 +1088,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5"
               >
                 <ArrowUpRight className="size-4" />
-                <span>Demander un virement</span>
+                <span>Demander un retrait</span>
               </button>
             </div>
           </div>
