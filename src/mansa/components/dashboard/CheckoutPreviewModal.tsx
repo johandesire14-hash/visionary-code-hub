@@ -279,7 +279,7 @@ export const CheckoutPreviewModal: React.FC<CheckoutPreviewModalProps> = ({
               disabled={mode === "preview" || isSubmitDisabled || isProcessing}
               onClick={onSubmit}
               title={mode === "preview" ? "Aperçu uniquement" : undefined}
-              className="w-full cursor-not-allowed rounded-xl bg-[#1769e8] px-4 py-3 text-sm font-bold text-white opacity-70"
+              className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isProcessing
                 ? "Validation sécurisée..."
