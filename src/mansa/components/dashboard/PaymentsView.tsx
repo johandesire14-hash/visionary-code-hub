@@ -76,7 +76,8 @@ interface PaymentTransaction {
   amountNetFormatted: string;
   amountNetNumber: number;
   currency: string;
-  paymentMethod: "wave" | "orange_money" | "mtn_momo" | "moov_money" | "visa_mastercard" | "bank_uemoa";
+  paymentMethod:
+    "wave" | "orange_money" | "mtn_momo" | "moov_money" | "visa_mastercard" | "bank_uemoa";
   paymentMethodLabel: string;
   countryFlag: string;
   countryName: string;
@@ -106,7 +107,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   const creatorKey = profile?.uid || user?.email || "creator-default";
 
   const isCompanyContext = Boolean(activeWorkspaceId && activeWorkspaceId !== "personnel");
-  const contextName = isCompanyContext ? (activeCompanyName || "Entreprise") : "Personnel";
+  const contextName = isCompanyContext ? activeCompanyName || "Entreprise" : "Personnel";
 
   // Navigation tab
   const [activeTab, setActiveTab] = useState<FinancialTab>("overview");
@@ -132,20 +133,39 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   // Withdrawal form inside modal
   const [withdrawalAmount, setWithdrawalAmount] = useState<string>("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
+  const [withdrawalDestination, setWithdrawalDestination] = useState<string>("");
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
 
+  const selectedPayoutMethod = payoutMethods.find((method) => method.id === selectedMethodId);
+  const withdrawalMethodLabels: Record<string, string> = {
+    wave: "Wave",
+    orange_money: "Orange Money",
+    mtn_momo: "MTN Mobile Money",
+    moov_money: "Moov Money",
+    bank_uemoa: "Virement bancaire",
+    bank_cemac: "Virement bancaire",
+    bank_sepa: "Virement bancaire",
+    crypto_usdt: "USDT",
+    paypal: "PayPal",
+  };
+
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
   const [newMethodLabel, setNewMethodLabel] = useState("Wave Côte d'Ivoire");
-  const [newMethodHolder, setNewMethodHolder] = useState(profile?.momoName || user?.displayName || "Johan Désiré");
+  const [newMethodHolder, setNewMethodHolder] = useState(
+    profile?.momoName || user?.displayName || "Johan Désiré",
+  );
   const [newMethodIdentifier, setNewMethodIdentifier] = useState("+225 07 88 99 00 11");
   const [newMethodBank, setNewMethodBank] = useState("");
   const [newMethodCountry, setNewMethodCountry] = useState("Côte d'Ivoire");
 
   // Feedback notifications
-  const [notification, setNotification] = useState<{ type: "success" | "info" | "error"; text: string } | null>(null);
+  const [notification, setNotification] = useState<{
+    type: "success" | "info" | "error";
+    text: string;
+  } | null>(null);
 
   // Manual Sale State
   const [saleProductName, setSaleProductName] = useState("Offre Pro Mansa Trading VIP");
@@ -209,24 +229,24 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
           paymentMethod: (t.paymentMethod?.toLowerCase().includes("wave")
             ? "wave"
             : t.paymentMethod?.toLowerCase().includes("orange")
-            ? "orange_money"
-            : t.paymentMethod?.toLowerCase().includes("mtn")
-            ? "mtn_momo"
-            : t.paymentMethod?.toLowerCase().includes("moov")
-            ? "moov_money"
-            : "visa_mastercard") as any,
+              ? "orange_money"
+              : t.paymentMethod?.toLowerCase().includes("mtn")
+                ? "mtn_momo"
+                : t.paymentMethod?.toLowerCase().includes("moov")
+                  ? "moov_money"
+                  : "visa_mastercard") as PaymentTransaction["paymentMethod"],
           paymentMethodLabel: t.paymentMethod || "Mobile Money",
           countryFlag: t.buyerLocation?.includes("Sénégal")
             ? "🇸🇳"
             : t.buyerLocation?.includes("Nigéria")
-            ? "🇳🇬"
-            : t.buyerLocation?.includes("Cameroun")
-            ? "🇨🇲"
-            : t.buyerLocation?.includes("Ghana")
-            ? "🇬🇭"
-            : "🇨🇮",
+              ? "🇳🇬"
+              : t.buyerLocation?.includes("Cameroun")
+                ? "🇨🇲"
+                : t.buyerLocation?.includes("Ghana")
+                  ? "🇬🇭"
+                  : "🇨🇮",
           countryName: t.buyerLocation || "Côte d'Ivoire",
-          status: (t.status as any) || "succeeded",
+          status: (t.status as PaymentTransaction["status"]) || "succeeded",
           date: t.createdAt
             ? new Date(t.createdAt).toLocaleDateString("fr-FR")
             : new Date().toLocaleDateString("fr-FR"),
@@ -257,10 +277,10 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
         return false;
       }
       const matchCompId = t.companyId === activeWorkspaceId;
-      const matchCompName = activeCompanyName && (
-        (t.companyName && t.companyName.toLowerCase() === activeCompanyName.toLowerCase()) ||
-        (t.storeName && t.storeName.toLowerCase() === activeCompanyName.toLowerCase())
-      );
+      const matchCompName =
+        activeCompanyName &&
+        ((t.companyName && t.companyName.toLowerCase() === activeCompanyName.toLowerCase()) ||
+          (t.storeName && t.storeName.toLowerCase() === activeCompanyName.toLowerCase()));
       return matchCompId || matchCompName;
     });
   }, [rawTransactions, isCompanyContext, activeWorkspaceId, activeCompanyName]);
@@ -275,10 +295,10 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
         return false;
       }
       const matchCompId = t.companyId === activeWorkspaceId;
-      const matchCompName = activeCompanyName && (
-        (t.companyName && t.companyName.toLowerCase() === activeCompanyName.toLowerCase()) ||
-        (t.storeName && t.storeName.toLowerCase() === activeCompanyName.toLowerCase())
-      );
+      const matchCompName =
+        activeCompanyName &&
+        ((t.companyName && t.companyName.toLowerCase() === activeCompanyName.toLowerCase()) ||
+          (t.storeName && t.storeName.toLowerCase() === activeCompanyName.toLowerCase()));
       return matchCompId || matchCompName;
     });
   }, [transactions, isCompanyContext, activeWorkspaceId, activeCompanyName]);
@@ -321,8 +341,8 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
       w.status === "completed"
         ? "VERSÉ AVEC SUCCÈS"
         : w.status === "processing"
-        ? "EN COURS DE TRAITEMENT"
-        : "EN ATTENTE DE VALIDATION";
+          ? "EN COURS DE TRAITEMENT"
+          : "EN ATTENTE DE VALIDATION";
 
     const content = `============================================================
               MANSA — BORDEREAU DE VIREMENT OFFICIEL
@@ -410,23 +430,38 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
       return;
     }
 
+    if (!withdrawalDestination.trim()) {
+      setWithdrawalError("Veuillez renseigner le numéro ou la destination du retrait.");
+      return;
+    }
+
     if (amountNum > balance.availableBalance) {
       setWithdrawalError(
-        `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`
+        `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`,
       );
       return;
     }
 
-    const minAmount = activeCurrency === "EUR" ? MIN_WITHDRAWAL_AMOUNT_EUR : MIN_WITHDRAWAL_AMOUNT_XOF;
+    const minAmount =
+      activeCurrency === "EUR" ? MIN_WITHDRAWAL_AMOUNT_EUR : MIN_WITHDRAWAL_AMOUNT_XOF;
     if (amountNum < minAmount) {
       setWithdrawalError(
-        `Le montant minimum de retrait est de ${formatCurrency(minAmount, activeCurrency)}.`
+        `Le montant minimum de retrait est de ${formatCurrency(minAmount, activeCurrency)}.`,
       );
       return;
     }
 
     setIsSubmittingWithdrawal(true);
     setTimeout(() => {
+      if (
+        selectedPayoutMethod &&
+        withdrawalDestination.trim() !== selectedPayoutMethod.accountIdentifier
+      ) {
+        savePayoutMethod(creatorKey, {
+          ...selectedPayoutMethod,
+          accountIdentifier: withdrawalDestination.trim(),
+        });
+      }
       const result = createWithdrawalRequest({
         creatorId: creatorKey,
         amount: amountNum,
@@ -440,7 +475,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
         reloadFinancialData();
         showFeedback(
           "success",
-          `Demande de virement de ${formatCurrency(amountNum, activeCurrency)} transmise avec succès !`
+          `Demande de virement de ${formatCurrency(amountNum, activeCurrency)} transmise avec succès !`,
         );
       } else {
         setWithdrawalError(result.error || "Échec de l'envoi de la demande de virement.");
@@ -467,7 +502,10 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     savePayoutMethod(creatorKey, newConfig);
     setCreatorPayoutConfigured(true);
     setIsAddMethodModalOpen(false);
-    showFeedback("success", "Moyen de retrait configuré avec succès ! Vos retraits sont débloqués.");
+    showFeedback(
+      "success",
+      "Moyen de retrait configuré avec succès ! Vos retraits sont débloqués.",
+    );
   };
 
   // Fast forward clearance (testing / demonstration)
@@ -476,7 +514,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     forceClearAllPendingFunds(creatorKey, pendingIds);
     showFeedback(
       "info",
-      "Période de compensation terminée : l'ensemble des fonds en attente est désormais disponible pour retrait !"
+      "Période de compensation terminée : l'ensemble des fonds en attente est désormais disponible pour retrait !",
     );
   };
 
@@ -492,8 +530,11 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     if (payoutMethods.length > 0) {
       const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
       setSelectedMethodId(defaultM.id);
+      setWithdrawalDestination(defaultM.accountIdentifier);
     }
-    setWithdrawalAmount(balance.availableBalance > 0 ? balance.availableBalance.toString() : "50000");
+    setWithdrawalAmount(
+      balance.availableBalance > 0 ? balance.availableBalance.toString() : "50000",
+    );
     setIsPayoutModalOpen(true);
   };
 
@@ -506,8 +547,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             notification.type === "success"
               ? "bg-emerald-950/90 border-emerald-500/40 text-emerald-200"
               : notification.type === "error"
-              ? "bg-rose-950/90 border-rose-500/40 text-rose-200"
-              : "bg-sky-950/90 border-sky-500/40 text-sky-200"
+                ? "bg-rose-950/90 border-rose-500/40 text-rose-200"
+                : "bg-sky-950/90 border-sky-500/40 text-sky-200"
           }`}
         >
           {notification.type === "success" ? (
@@ -545,8 +586,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   .concat(
                     transactions.map(
                       (t) =>
-                        `${t.id},${t.customerName},${t.customerEmail},${t.productName},${t.countryName},${t.amountGrossFormatted},${t.feeAmountFormatted},${t.amountNetFormatted},${t.status},${t.date}`
-                    )
+                        `${t.id},${t.customerName},${t.customerEmail},${t.productName},${t.countryName},${t.amountGrossFormatted},${t.feeAmountFormatted},${t.amountNetFormatted},${t.status},${t.date}`,
+                    ),
                   )
                   .join("\n");
               const encodedUri = encodeURI(csvContent);
@@ -649,9 +690,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-5 space-y-2 relative overflow-hidden group">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="font-semibold text-white">
-                  {isCompanyContext
-                    ? `Solde total — ${contextName}`
-                    : "Solde total — Personnel"}
+                  {isCompanyContext ? `Solde total — ${contextName}` : "Solde total — Personnel"}
                 </span>
                 <Wallet className="size-4 text-emerald-400" />
               </div>
@@ -706,7 +745,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 )}
               </div>
             </div>
-
           </div>
 
           {/* DÉCOMPOSITION DU SOLDE SELON LE CONTEXTE */}
@@ -844,15 +882,15 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                             w.status === "completed"
                               ? "bg-emerald-500/20 text-emerald-400"
                               : w.status === "processing"
-                              ? "bg-sky-500/20 text-sky-400"
-                              : "bg-amber-500/20 text-amber-400"
+                                ? "bg-sky-500/20 text-sky-400"
+                                : "bg-amber-500/20 text-amber-400"
                           }`}
                         >
                           {w.status === "completed"
                             ? "Versé"
                             : w.status === "processing"
-                            ? "En cours"
-                            : "En attente"}
+                              ? "En cours"
+                              : "En attente"}
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-400">Réf: {w.referenceNumber}</div>
@@ -937,14 +975,18 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     >
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="font-medium text-white">{tx.date}</div>
-                        <div className="text-[10px] font-mono text-zinc-500">#{tx.id.substring(0, 12)}</div>
+                        <div className="text-[10px] font-mono text-zinc-500">
+                          #{tx.id.substring(0, 12)}
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="font-semibold text-white flex items-center gap-1.5">
                           <span>{tx.customerName}</span>
                           <span className="text-[10px]">{tx.countryFlag}</span>
                         </div>
-                        <div className="text-[10px] font-mono text-zinc-400">{tx.customerEmail}</div>
+                        <div className="text-[10px] font-mono text-zinc-400">
+                          {tx.customerEmail}
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 max-w-xs truncate text-zinc-200 font-medium">
                         {tx.productName}
@@ -1030,7 +1072,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             <div>
               <h3 className="text-base font-bold text-white">Demandes de Virement de Fonds</h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Retirez vos fonds disponibles vers votre compte Wave, Orange Money, MTN MoMo ou compte bancaire.
+                Retirez vos fonds disponibles vers votre compte Wave, Orange Money, MTN MoMo ou
+                compte bancaire.
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -1174,8 +1217,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             <div>
               <h3 className="text-base font-bold text-white">Comptes de Retrait Enregistrés</h3>
               <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
-                Ajoutez vos comptes Wave, Orange Money, MTN MoMo ou vos coordonnées bancaires (IBAN/RIB).
-                Ces comptes sont utilisés exclusivement pour vous verser vos fonds gagnés.
+                Ajoutez vos comptes Wave, Orange Money, MTN MoMo ou vos coordonnées bancaires
+                (IBAN/RIB). Ces comptes sont utilisés exclusivement pour vous verser vos fonds
+                gagnés.
               </p>
             </div>
             <button
@@ -1211,7 +1255,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-white">{method.label}</h4>
-                      <span className="text-[10px] text-zinc-400">{method.country || "Afrique de l'Ouest"}</span>
+                      <span className="text-[10px] text-zinc-400">
+                        {method.country || "Afrique de l'Ouest"}
+                      </span>
                     </div>
                   </div>
 
@@ -1239,7 +1285,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Identifiant :</span>
-                    <span className="font-mono font-bold text-white">{method.accountIdentifier}</span>
+                    <span className="font-mono font-bold text-white">
+                      {method.accountIdentifier}
+                    </span>
                   </div>
                   {method.bankName && (
                     <div className="flex justify-between">
@@ -1276,7 +1324,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 <h4 className="text-sm font-bold text-white">Aucun moyen de retrait configuré</h4>
                 <p className="text-xs text-zinc-400 max-w-md mx-auto">
                   Vos ventes continuent normalement et vos fonds s'accumulent en toute sécurité.
-                  Renseignez un compte Wave, Orange Money, MTN ou bancaire pour demander vos virements.
+                  Renseignez un compte Wave, Orange Money, MTN ou bancaire pour demander vos
+                  virements.
                 </p>
                 <button
                   onClick={() => setIsAddMethodModalOpen(true)}
@@ -1296,7 +1345,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Vérification d'Identité Créateur (KYC)</h4>
+                  <h4 className="text-sm font-bold text-white">
+                    Vérification d'Identité Créateur (KYC)
+                  </h4>
                   <p className="text-xs text-zinc-400 mt-0.5">
                     Conforme aux normes de conformité bancaire BCEAO & UEMOA.
                   </p>
@@ -1342,7 +1393,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <ArrowUpRight className="size-5 text-emerald-400" />
-              <h3 className="text-base font-bold text-white">Demande de Virement de vos Fonds</h3>
+              <h3 className="text-base font-bold text-white">Demande de retrait</h3>
             </div>
             <button
               onClick={() => {
@@ -1368,14 +1419,14 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   <strong className="text-emerald-400 font-mono">
                     {formatCurrency(balance.availableBalance, activeCurrency)}
                   </strong>
-                  . Pour demander un virement, vous devez d'abord renseigner votre compte Mobile Money
-                  (Wave, Orange, MTN) ou vos coordonnées bancaires.
+                  . Pour demander un virement, vous devez d'abord renseigner votre compte Mobile
+                  Money (Wave, Orange, MTN) ou vos coordonnées bancaires.
                 </p>
               </div>
 
               <div className="bg-white/[0.03] p-3 rounded-xl border border-white/5 text-xs text-zinc-400 text-left">
-                ℹ️ Vos ventes continuent normalement. Vous pouvez configurer votre compte de retrait à
-                tout moment pour libérer vos virements.
+                ℹ️ Vos ventes continuent normalement. Vous pouvez configurer votre compte de retrait
+                à tout moment pour libérer vos virements.
               </div>
 
               <div className="pt-2 flex gap-2">
@@ -1408,7 +1459,10 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               <h4 className="text-base font-bold text-white">Demande de Virement Transmise !</h4>
               <p className="text-xs text-zinc-300">
                 <strong className="font-mono text-emerald-400">
-                  {formatCurrency(withdrawalSuccess.amount, withdrawalSuccess.currency as CurrencyCode)}
+                  {formatCurrency(
+                    withdrawalSuccess.amount,
+                    withdrawalSuccess.currency as CurrencyCode,
+                  )}
                 </strong>{" "}
                 ont été transmis vers votre compte {withdrawalSuccess.payoutMethodLabel}.
               </p>
@@ -1438,7 +1492,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-semibold text-zinc-300">Montant à virer</label>
+                  <label className="text-xs font-semibold text-zinc-300">Montant du retrait</label>
                   <span className="text-[11px] text-zinc-400">
                     Disponible :{" "}
                     <strong className="text-emerald-400 font-mono">
@@ -1462,6 +1516,17 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   </span>
                 </div>
 
+                <p className="mt-1 text-[10px] text-zinc-500">
+                  Minimum{" "}
+                  {formatCurrency(
+                    activeCurrency === "EUR"
+                      ? MIN_WITHDRAWAL_AMOUNT_EUR
+                      : MIN_WITHDRAWAL_AMOUNT_XOF,
+                    activeCurrency,
+                  )}{" "}
+                  · Maximum {formatCurrency(balance.availableBalance, activeCurrency)}
+                </p>
+
                 {/* Quick percentage buttons */}
                 <div className="flex items-center gap-2 mt-2">
                   {[0.25, 0.5, 0.75, 1.0].map((ratio) => {
@@ -1481,26 +1546,68 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                  Compte de destination
+                <label className="mb-2 block text-xs font-semibold text-zinc-300">
+                  Choisissez la méthode de retrait
                 </label>
-                <select
-                  value={selectedMethodId}
-                  onChange={(e) => setSelectedMethodId(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-xs text-white outline-none cursor-pointer"
-                >
-                  {payoutMethods.map((method) => (
-                    <option key={method.id} value={method.id}>
-                      {method.label} ({method.accountIdentifier}) · {method.accountHolder}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  {payoutMethods.map((method) => {
+                    const label = withdrawalMethodLabels[method.type] || method.label;
+                    const initials = label.slice(0, 2).toUpperCase();
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMethodId(method.id);
+                          setWithdrawalDestination(method.accountIdentifier);
+                        }}
+                        className={`flex items-center gap-2 rounded-xl border p-3 text-left transition-all ${selectedMethodId === method.id ? "border-emerald-400 bg-emerald-400/10" : "border-white/10 bg-[#16181f] hover:border-white/25"}`}
+                      >
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[10px] font-black text-white">
+                          {initials}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-bold text-white">
+                            {label}
+                          </span>
+                          <span className="block truncate text-[10px] text-zinc-500">
+                            {method.accountIdentifier}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {selectedPayoutMethod && (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-zinc-300">
+                    {selectedPayoutMethod.type.startsWith("bank")
+                      ? "RIB / IBAN"
+                      : "Numéro de téléphone"}
+                  </label>
+                  <input
+                    type="text"
+                    value={withdrawalDestination}
+                    onChange={(event) => setWithdrawalDestination(event.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-500"
+                    placeholder={
+                      selectedPayoutMethod.type.startsWith("bank")
+                        ? "RIB ou IBAN"
+                        : "Numéro Mobile Money"
+                    }
+                    required
+                  />
+                </div>
+              )}
 
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 text-xs text-zinc-400 space-y-1.5">
                 <div className="flex justify-between">
                   <span>Frais de virement :</span>
-                  <span className="text-emerald-400 font-mono font-bold">0 FCFA (Pris en charge)</span>
+                  <span className="text-emerald-400 font-mono font-bold">
+                    0 {activeCurrency} (Pris en charge)
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Délai estimé :</span>
@@ -1584,13 +1691,17 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 <option value="orange_money">🇨🇮 / 🇸🇳 Orange Money</option>
                 <option value="mtn_momo">🌍 MTN MoMo (Bénin, Cameroun, Côte d'Ivoire)</option>
                 <option value="moov_money">🌍 Moov Money Flooz</option>
-                <option value="bank_uemoa">🌍 Virement Bancaire UEMOA (Ecobank, Coris, UBA, SG)</option>
+                <option value="bank_uemoa">
+                  🌍 Virement Bancaire UEMOA (Ecobank, Coris, UBA, SG)
+                </option>
                 <option value="crypto_usdt">🪙 USDT (Réseau TRC-20)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-zinc-300 font-semibold mb-1">Nom ou libellé du compte</label>
+              <label className="block text-zinc-300 font-semibold mb-1">
+                Nom ou libellé du compte
+              </label>
               <input
                 type="text"
                 value={newMethodLabel}
@@ -1618,8 +1729,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 {newMethodType.includes("bank")
                   ? "Numéro IBAN / RIB complet (24 caractères)"
                   : newMethodType.includes("crypto")
-                  ? "Adresse Wallet USDT (TRC-20)"
-                  : "Numéro de téléphone Mobile Money avec indicatif (+225...)"}
+                    ? "Adresse Wallet USDT (TRC-20)"
+                    : "Numéro de téléphone Mobile Money avec indicatif (+225...)"}
               </label>
               <input
                 type="text"
@@ -1629,8 +1740,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   newMethodType.includes("bank")
                     ? "CI093 01234 56789012345 67"
                     : newMethodType.includes("crypto")
-                    ? "TYDzsxdhP4WshT..."
-                    : "+225 07 88 99 00 11"
+                      ? "TYDzsxdhP4WshT..."
+                      : "+225 07 88 99 00 11"
                 }
                 className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 font-mono text-white outline-none focus:border-emerald-500"
                 required
@@ -1721,18 +1832,24 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Moyen de paiement utilisé</span>
-                <span className="font-semibold text-emerald-400">{selectedTx.paymentMethodLabel}</span>
+                <span className="font-semibold text-emerald-400">
+                  {selectedTx.paymentMethodLabel}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Montant brut payé par le client</span>
-                <span className="font-mono font-bold text-white">{selectedTx.amountGrossFormatted}</span>
+                <span className="font-mono font-bold text-white">
+                  {selectedTx.amountGrossFormatted}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Frais de plateforme (3%)</span>
                 <span className="font-mono text-zinc-400">-{selectedTx.feeAmountFormatted}</span>
               </div>
               <div className="flex justify-between py-2 bg-emerald-500/10 p-2 rounded-xl">
-                <span className="font-semibold text-emerald-300">Montant net crédité au créateur :</span>
+                <span className="font-semibold text-emerald-300">
+                  Montant net crédité au créateur :
+                </span>
                 <span className="font-mono font-bold text-emerald-400 text-sm">
                   +{selectedTx.amountNetFormatted}
                 </span>
@@ -1780,7 +1897,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             <div className="space-y-3 text-xs">
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Référence Virement</span>
-                <span className="font-mono font-bold text-white">{selectedWithdrawal.referenceNumber}</span>
+                <span className="font-mono font-bold text-white">
+                  {selectedWithdrawal.referenceNumber}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Date de demande</span>
@@ -1791,12 +1910,17 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Montant versé</span>
                 <span className="font-mono font-bold text-emerald-400 text-sm">
-                  {formatCurrency(selectedWithdrawal.amount, selectedWithdrawal.currency as CurrencyCode)}
+                  {formatCurrency(
+                    selectedWithdrawal.amount,
+                    selectedWithdrawal.currency as CurrencyCode,
+                  )}
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Moyen de destination</span>
-                <span className="font-semibold text-white">{selectedWithdrawal.payoutMethodLabel}</span>
+                <span className="font-semibold text-white">
+                  {selectedWithdrawal.payoutMethodLabel}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Titulaire</span>
@@ -1813,15 +1937,15 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     selectedWithdrawal.status === "completed"
                       ? "text-emerald-400"
                       : selectedWithdrawal.status === "processing"
-                      ? "text-sky-400"
-                      : "text-amber-400"
+                        ? "text-sky-400"
+                        : "text-amber-400"
                   }`}
                 >
                   {selectedWithdrawal.status === "completed"
                     ? "Versé avec succès"
                     : selectedWithdrawal.status === "processing"
-                    ? "En cours de traitement"
-                    : "En attente"}
+                      ? "En cours de traitement"
+                      : "En attente"}
                 </span>
               </div>
             </div>
@@ -1859,7 +1983,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <Plus className="size-5 text-emerald-400" />
-              <h3 className="text-base font-bold text-white font-heading">Enregistrer une Vente Manuelle</h3>
+              <h3 className="text-base font-bold text-white font-heading">
+                Enregistrer une Vente Manuelle
+              </h3>
             </div>
             <button
               onClick={() => setIsNewSaleModalOpen(false)}
@@ -1933,7 +2059,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             </div>
 
             <div>
-              <label className="block font-medium text-zinc-400 mb-1">Moyen de paiement client</label>
+              <label className="block font-medium text-zinc-400 mb-1">
+                Moyen de paiement client
+              </label>
               <select
                 value={salePaymentMethod}
                 onChange={(e) => setSalePaymentMethod(e.target.value)}
@@ -1949,7 +2077,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             </div>
 
             <div>
-              <label className="block font-medium text-zinc-400 mb-1">Localisation de l'acheteur</label>
+              <label className="block font-medium text-zinc-400 mb-1">
+                Localisation de l'acheteur
+              </label>
               <input
                 type="text"
                 value={saleLocation}
