@@ -18,14 +18,24 @@ import {
   Eye,
   X,
   Smartphone,
+  Lock,
+  RotateCcw,
 } from "lucide-react";
 import { AccountSettingsModal } from "../common/AccountSettingsModal";
-import { getUserProfile, updateUserProfile, isCreatorPayoutConfigured } from "../../services/dbService";
+import {
+  getUserProfile,
+  updateUserProfile,
+  isCreatorPayoutConfigured,
+} from "../../services/dbService";
 import { getSavedCompanies, updateCompanyBranding } from "../../utils/companyStorage";
 import { updateSubscriptionBranding } from "../../utils/subscriptionsStorage";
 import { CurrencySelector } from "./CurrencySelector";
 import { CurrencyCode } from "../../utils/currency";
-import { DIAL_CODE_CONFIGS, validatePhoneNumber, normalizePhoneNumber } from "../../utils/phoneValidationRules";
+import {
+  DIAL_CODE_CONFIGS,
+  validatePhoneNumber,
+  normalizePhoneNumber,
+} from "../../utils/phoneValidationRules";
 
 interface SettingsViewProps {
   lang?: "fr" | "en";
@@ -51,7 +61,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   activeCompanyName,
 }) => {
   const [activeTab, setActiveTab] = useState<"account" | "store">(initialTab);
-  const [companySettingsSection, setCompanySettingsSection] = useState<"menu" | "general" | "payment">("menu");
+  const [companySettingsSection, setCompanySettingsSection] = useState<
+    "menu" | "general" | "payment"
+  >("menu");
 
   useEffect(() => {
     if (activeTab === "store") setCompanySettingsSection("menu");
@@ -61,19 +73,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const isCompanyContext = !!activeCompanyId && activeCompanyId !== "personnel";
 
   // Enterprise Settings State
-  const defaultCompanyName = user.name ? `${user.name.toLowerCase().replace(/\s+/g, "_")}` : "mon_entreprise";
+  const defaultCompanyName = user.name
+    ? `${user.name.toLowerCase().replace(/\s+/g, "_")}`
+    : "mon_entreprise";
   const [storeName, setStoreName] = useState(defaultCompanyName);
-  const [storeTagline, setStoreTagline] = useState("Vente de produits digitaux, formations & accès VIP");
+  const [storeTagline, setStoreTagline] = useState(
+    "Vente de produits digitaux, formations & accès VIP",
+  );
   const [supportEmail, setSupportEmail] = useState(user.email || "support@mansa.app");
   const [storeCurrency, setStoreCurrency] = useState("XOF");
-  const [payoutMethod, setPayoutMethod] = useState<"wave" | "orange_momo" | "bank_uemoa" | "bank_cemac" | "crypto">("wave");
-  
+  const [payoutMethod, setPayoutMethod] = useState<
+    "wave" | "orange_momo" | "bank_uemoa" | "bank_cemac" | "crypto"
+  >("wave");
+
   // Enterprise Banner & Profile Photo State
   const [companyBanner, setCompanyBanner] = useState<string>(
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=85"
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=85",
   );
   const [companyLogo, setCompanyLogo] = useState<string>(
-    "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"
+    "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
   );
 
   const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -86,17 +104,60 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [waveDialCode, setWaveDialCode] = useState("+225");
   const [wavePhoneNumber, setWavePhoneNumber] = useState("0700000000");
   const [waveAccountName, setWaveAccountName] = useState(user.name || "");
-  const [waveVerificationStatus, setWaveVerificationStatus] = useState<"not_configured" | "pending" | "configured">("not_configured");
+  const [waveVerificationStatus, setWaveVerificationStatus] = useState<
+    "not_configured" | "pending" | "configured"
+  >("not_configured");
+  const [paymentCategory, setPaymentCategory] = useState<
+    "all" | "card" | "transfers" | "wallet" | "other"
+  >("all");
+  const [includeDefaultPaymentMethods, setIncludeDefaultPaymentMethods] = useState(true);
 
   const waveCountryOptions = Object.values(DIAL_CODE_CONFIGS).filter((country) =>
-    country.operators.some((operator) => operator.id === "wave")
+    country.operators.some((operator) => operator.id === "wave"),
   );
   const waveValidation = validatePhoneNumber(waveDialCode, "wave", wavePhoneNumber, storeCurrency);
-  
+  const paymentMethods = [
+    { id: "wave", name: "Wave", category: "wallet", action: "Configurer", color: "#1DC3FD" },
+    {
+      id: "orange",
+      name: "Orange Money",
+      category: "wallet",
+      action: "Configurer",
+      color: "#FF7900",
+    },
+    {
+      id: "mtn",
+      name: "MTN Mobile Money",
+      category: "wallet",
+      action: "Configurer",
+      color: "#FFCC00",
+    },
+    { id: "moov", name: "Moov Money", category: "wallet", action: "Configurer", color: "#005BAA" },
+    {
+      id: "card",
+      name: "Carte bancaire",
+      category: "card",
+      action: "Configurer",
+      color: "#2563EB",
+    },
+    {
+      id: "bank",
+      name: "Virement bancaire",
+      category: "transfers",
+      action: "Vérifier l’identité",
+      color: "#8B5CF6",
+    },
+  ];
+  const visiblePaymentMethods = paymentMethods.filter(
+    (method) => paymentCategory === "all" || method.category === paymentCategory,
+  );
+
   // African Bank Account Details
   const [bankName, setBankName] = useState("Ecobank Côte d'Ivoire / UEMOA");
   const [bankIbanRib, setBankIbanRib] = useState("CI059 01001 12345678901 45");
-  const [bankAccountHolder, setBankAccountHolder] = useState(`${user.name.toUpperCase()} ENTREPRISE`);
+  const [bankAccountHolder, setBankAccountHolder] = useState(
+    `${user.name.toUpperCase()} ENTREPRISE`,
+  );
 
   // Loading & Feedback States
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -116,7 +177,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           // STRICT ENTERPRISE ISOLATION:
           // Read from specific company settings first
           const isolatedRaw = localStorage.getItem(`mansa_company_settings_${activeCompanyId}`);
-          let isolated = isolatedRaw ? JSON.parse(isolatedRaw) : null;
+          const isolated = isolatedRaw ? JSON.parse(isolatedRaw) : null;
 
           // If not in isolated cache, search in user companies
           const userCompanies = getSavedCompanies(userKey);
@@ -131,7 +192,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             if (target.payoutMethod) setPayoutMethod(target.payoutMethod);
             if (target.momoNumber) setMomoNumber(target.momoNumber);
             if (target.momoName) setMomoName(target.momoName);
-            if (target.payoutVerificationStatus) setWaveVerificationStatus(target.payoutVerificationStatus);
+            if (target.payoutVerificationStatus)
+              setWaveVerificationStatus(target.payoutVerificationStatus);
             if (target.bankName) setBankName(target.bankName);
             if (target.bankIbanRib) setBankIbanRib(target.bankIbanRib);
             if (target.bankAccountHolder) setBankAccountHolder(target.bankAccountHolder);
@@ -152,7 +214,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               if (profile.payoutMethod) setPayoutMethod(profile.payoutMethod);
               if (profile.momoNumber) setMomoNumber(profile.momoNumber);
               if (profile.momoName) setMomoName(profile.momoName);
-              if (profile.payoutVerificationStatus) setWaveVerificationStatus(profile.payoutVerificationStatus);
+              if (profile.payoutVerificationStatus)
+                setWaveVerificationStatus(profile.payoutVerificationStatus);
               if (profile.bankName) setBankName(profile.bankName);
               if (profile.bankIbanRib) setBankIbanRib(profile.bankIbanRib);
               if (profile.bankAccountHolder) setBankAccountHolder(profile.bankAccountHolder);
@@ -165,7 +228,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             }
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn("Failed to load settings:", err);
       } finally {
         if (isMounted) setIsLoadingProfile(false);
@@ -235,7 +298,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         localStorage.setItem(
           `mansa_company_settings_${activeCompanyId}`,
-          JSON.stringify(companySettings)
+          JSON.stringify(companySettings),
         );
 
         const currentCompanies = getSavedCompanies(userKey);
@@ -264,12 +327,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         });
 
         window.dispatchEvent(
-          new CustomEvent("mansa_companies_updated", { detail: updatedCompanies })
+          new CustomEvent("mansa_companies_updated", { detail: updatedCompanies }),
         );
         window.dispatchEvent(
           new CustomEvent("mansa_company_branding_changed", {
             detail: { companyId: activeCompanyId, branding: companySettings },
-          })
+          }),
         );
       } else {
         // Personal profile save
@@ -300,15 +363,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         window.dispatchEvent(
           new CustomEvent("mansa_profile_updated", {
             detail: updatedProfile,
-          })
+          }),
         );
       }
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 4000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Enterprise settings save error:", err);
-      setSaveError(err.message || "Erreur lors de l'enregistrement des paramètres.");
+      setSaveError(
+        err instanceof Error ? err.message : "Erreur lors de l'enregistrement des paramètres.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -316,7 +381,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      
       {/* Header with Settings Switcher Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -326,11 +390,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 ? isCompanyContext
                   ? `Paramètres de l'Entreprise — ${storeName || activeCompanyName}`
                   : lang === "fr"
-                  ? "Paramètres de l'Entreprise"
-                  : "Enterprise Settings"
+                    ? "Paramètres de l'Entreprise"
+                    : "Enterprise Settings"
                 : lang === "fr"
-                ? "Paramètres du Compte"
-                : "Account Settings"}
+                  ? "Paramètres du Compte"
+                  : "Account Settings"}
             </h1>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
@@ -338,8 +402,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               ? companySettingsSection === "menu"
                 ? "Choisissez une rubrique pour configurer votre entreprise."
                 : companySettingsSection === "general"
-                ? "Configurez l'identité et la présentation de votre entreprise."
-                : "Configurez vos moyens de versement et vos coordonnées financières."
+                  ? "Configurez l'identité et la présentation de votre entreprise."
+                  : "Configurez vos moyens de versement et vos coordonnées financières."
               : "Gérez votre profil public Mansa, votre bio, votre identifiant et vos préférences d'affichage."}
           </p>
         </div>
@@ -385,44 +449,51 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           lang={lang}
           initialTab="profil"
         />
-      ) : (
-        /* ========================================================================= */
-        /* MODE 2: PARAMÈTRES DE L'ENTREPRISE MANSA */
-        /* ========================================================================= */
-        companySettingsSection === "menu" ? (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-5 sm:p-6">
-              <div className="flex items-center gap-2 pb-4 border-b border-white/5">
-                <Building2 className="size-4 text-[#00D26A]" />
-                <h2 className="text-sm font-bold text-white">Paramètres de l'entreprise</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setCompanySettingsSection("general")}
-                  className="group flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] p-4 text-left transition-all hover:border-[#00D26A]/60 hover:bg-[#00D26A]/5"
-                >
-                  <span>
-                    <span className="block text-sm font-bold text-white">Général</span>
-                    <span className="mt-1 block text-xs text-zinc-400">Identité, vitrine, logo, bannière et devise</span>
+      ) : /* ========================================================================= */
+      /* MODE 2: PARAMÈTRES DE L'ENTREPRISE MANSA */
+      /* ========================================================================= */
+      companySettingsSection === "menu" ? (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-5 sm:p-6">
+            <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+              <Building2 className="size-4 text-[#00D26A]" />
+              <h2 className="text-sm font-bold text-white">Paramètres de l'entreprise</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setCompanySettingsSection("general")}
+                className="group flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] p-4 text-left transition-all hover:border-[#00D26A]/60 hover:bg-[#00D26A]/5"
+              >
+                <span>
+                  <span className="block text-sm font-bold text-white">Général</span>
+                  <span className="mt-1 block text-xs text-zinc-400">
+                    Identité, vitrine, logo, bannière et devise
                   </span>
-                  <span className="text-lg text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#00D26A]">›</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCompanySettingsSection("payment")}
-                  className="group flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] p-4 text-left transition-all hover:border-[#00D26A]/60 hover:bg-[#00D26A]/5"
-                >
-                  <span>
-                    <span className="block text-sm font-bold text-white">Paiement</span>
-                    <span className="mt-1 block text-xs text-zinc-400">Versements, Mobile Money et coordonnées bancaires</span>
+                </span>
+                <span className="text-lg text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#00D26A]">
+                  ›
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompanySettingsSection("payment")}
+                className="group flex items-center justify-between rounded-xl border border-white/10 bg-[#14161b] p-4 text-left transition-all hover:border-[#00D26A]/60 hover:bg-[#00D26A]/5"
+              >
+                <span>
+                  <span className="block text-sm font-bold text-white">Paiement</span>
+                  <span className="mt-1 block text-xs text-zinc-400">
+                    Versements, Mobile Money et coordonnées bancaires
                   </span>
-                  <span className="text-lg text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#00D26A]">›</span>
-                </button>
-              </div>
+                </span>
+                <span className="text-lg text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-[#00D26A]">
+                  ›
+                </span>
+              </button>
             </div>
           </div>
-        ) : (
+        </div>
+      ) : (
         <form onSubmit={handleSave} className="space-y-6">
           {isLoadingProfile && (
             <div className="flex items-center gap-2 text-xs text-zinc-400 p-2">
@@ -454,413 +525,456 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               ← Paramètres
             </button>
             <span className="text-xs text-zinc-600">/</span>
-            <span className="text-xs font-semibold text-[#00D26A]">{companySettingsSection === "general" ? "Général" : "Paiement"}</span>
+            <span className="text-xs font-semibold text-[#00D26A]">
+              {companySettingsSection === "general" ? "Général" : "Paiement"}
+            </span>
           </div>
 
           {/* 1. Identity & Branding */}
           {companySettingsSection === "general" && (
-          <>
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-white/5">
-              <Building2 className="size-4 text-[#00D26A]" />
-              <h3 className="text-sm font-bold text-white">Identité de l'Entreprise & Vitrine</h3>
-            </div>
+            <>
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-white/5">
+                  <Building2 className="size-4 text-[#00D26A]" />
+                  <h3 className="text-sm font-bold text-white">
+                    Identité de l'Entreprise & Vitrine
+                  </h3>
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <label className="block text-zinc-300 font-semibold mb-1">Nom de l'entreprise</label>
-                <input
-                  type="text"
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                  placeholder="Nom de l'entreprise"
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-300 font-semibold mb-1">Email du support client</label>
-                <input
-                  type="email"
-                  value={supportEmail}
-                  onChange={(e) => setSupportEmail(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-300 font-semibold mb-1">Description de la vitrine & Slogan</label>
-                <input
-                  type="text"
-                  value={storeTagline}
-                  onChange={(e) => setStoreTagline(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 2. Visual Branding: Bannière et Photo de profil de l'entreprise */}
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5 flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <Camera className="size-4 text-[#00D26A]" />
-                <h3 className="text-sm font-bold text-white">Bannière & Photo de Profil de l'Entreprise</h3>
-              </div>
-            </div>
-
-            {/* LIVE PREVIEW COMPOSITE (Banner + Overlayed Profile Photo) */}
-            <div className="space-y-2">
-              <label className="block text-xs text-zinc-300 font-semibold">
-                Aperçu en direct de votre marque
-              </label>
-              <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden border border-white/10 bg-[#14161f] shadow-inner group">
-                <img
-                  src={companyBanner || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=85"}
-                  alt="Aperçu de la bannière"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
-
-                {/* Profile Photo Overlaid */}
-                <div className="absolute bottom-3 left-4 flex items-end gap-3 z-10">
-                  <div className="relative size-16 sm:size-20 rounded-2xl border-2 border-black bg-[#121316] shadow-xl overflow-hidden shrink-0">
-                    <img
-                      src={companyLogo || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"}
-                      alt="Aperçu du logo"
-                      className="size-full object-cover"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-300 font-semibold mb-1">
+                      Nom de l'entreprise
+                    </label>
+                    <input
+                      type="text"
+                      value={storeName}
+                      onChange={(e) => setStoreName(e.target.value)}
+                      placeholder="Nom de l'entreprise"
+                      className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                      required
                     />
-                    <span className="absolute bottom-1 right-1 size-2.5 rounded-full bg-emerald-400 ring-2 ring-black" />
                   </div>
-                  <div className="text-white drop-shadow-md pb-0.5">
-                    <h4 className="text-sm font-bold tracking-tight">{storeName || "Mon Entreprise"}</h4>
-                    <p className="text-[11px] text-zinc-300 line-clamp-1">{storeTagline || "Slogan ou description de l'entreprise"}</p>
+
+                  <div>
+                    <label className="block text-zinc-300 font-semibold mb-1">
+                      Email du support client
+                    </label>
+                    <input
+                      type="email"
+                      value={supportEmail}
+                      onChange={(e) => setSupportEmail(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-300 font-semibold mb-1">
+                      Description de la vitrine & Slogan
+                    </label>
+                    <input
+                      type="text"
+                      value={storeTagline}
+                      onChange={(e) => setStoreTagline(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Visual Branding: Bannière et Photo de profil de l'entreprise */}
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-white/5 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Camera className="size-4 text-[#00D26A]" />
+                    <h3 className="text-sm font-bold text-white">
+                      Bannière & Photo de Profil de l'Entreprise
+                    </h3>
                   </div>
                 </div>
 
-                <div className="absolute top-2.5 right-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/15 text-[10px] text-zinc-300 font-mono">
-                  Aperçu temps réel
-                </div>
-              </div>
-            </div>
+                {/* LIVE PREVIEW COMPOSITE (Banner + Overlayed Profile Photo) */}
+                <div className="space-y-2">
+                  <label className="block text-xs text-zinc-300 font-semibold">
+                    Aperçu en direct de votre marque
+                  </label>
+                  <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden border border-white/10 bg-[#14161f] shadow-inner group">
+                    <img
+                      src={
+                        companyBanner ||
+                        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=85"
+                      }
+                      alt="Aperçu de la bannière"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
 
-            {/* BANNER CONFIGURATION */}
-            <div className="p-4 rounded-xl bg-[#14151a] border border-white/5 space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="size-4 text-emerald-400" />
-                  <span className="text-xs font-bold text-white">Bannière de l'entreprise (1800 x 600 recommandé)</span>
-                </div>
-                {/* Upload Trigger Button */}
-                <div>
-                  <input
-                    ref={bannerFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => bannerFileInputRef.current?.click()}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Upload className="size-3" />
-                    <span>Téléverser une image</span>
-                  </button>
-                </div>
-              </div>
+                    {/* Profile Photo Overlaid */}
+                    <div className="absolute bottom-3 left-4 flex items-end gap-3 z-10">
+                      <div className="relative size-16 sm:size-20 rounded-2xl border-2 border-black bg-[#121316] shadow-xl overflow-hidden shrink-0">
+                        <img
+                          src={
+                            companyLogo ||
+                            "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"
+                          }
+                          alt="Aperçu du logo"
+                          className="size-full object-cover"
+                        />
+                        <span className="absolute bottom-1 right-1 size-2.5 rounded-full bg-emerald-400 ring-2 ring-black" />
+                      </div>
+                      <div className="text-white drop-shadow-md pb-0.5">
+                        <h4 className="text-sm font-bold tracking-tight">
+                          {storeName || "Mon Entreprise"}
+                        </h4>
+                        <p className="text-[11px] text-zinc-300 line-clamp-1">
+                          {storeTagline || "Slogan ou description de l'entreprise"}
+                        </p>
+                      </div>
+                    </div>
 
-              {/* Quick Presets for Banner */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider block">
-                  Ou choisir une bannière premium prédéfinie :
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    {
-                      label: "Trading & Finance",
-                      url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=85",
-                    },
-                    {
-                      label: "Émeraude Prestige",
-                      url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=85",
-                    },
-                    {
-                      label: "Cyber Studio",
-                      url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=85",
-                    },
-                    {
-                      label: "Minimaliste Dark",
-                      url: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1800&q=85",
-                    },
-                  ].map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => setCompanyBanner(preset.url)}
-                      className={`relative h-12 rounded-lg overflow-hidden border transition-all text-left p-1.5 cursor-pointer ${
-                        companyBanner === preset.url
-                          ? "border-[#00D26A] ring-1 ring-[#00D26A]"
-                          : "border-white/10 hover:border-white/30"
-                      }`}
-                    >
-                      <img src={preset.url} alt={preset.label} className="absolute inset-0 size-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 hover:bg-black/40 transition-colors" />
-                      <span className="relative z-10 text-[10px] font-bold text-white drop-shadow block line-clamp-1">
-                        {preset.label}
+                    <div className="absolute top-2.5 right-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/15 text-[10px] text-zinc-300 font-mono">
+                      Aperçu temps réel
+                    </div>
+                  </div>
+                </div>
+
+                {/* BANNER CONFIGURATION */}
+                <div className="p-4 rounded-xl bg-[#14151a] border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="size-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-white">
+                        Bannière de l'entreprise (1800 x 600 recommandé)
                       </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+                    </div>
+                    {/* Upload Trigger Button */}
+                    <div>
+                      <input
+                        ref={bannerFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBannerUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => bannerFileInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Upload className="size-3" />
+                        <span>Téléverser une image</span>
+                      </button>
+                    </div>
+                  </div>
 
-            {/* PROFILE PHOTO / LOGO CONFIGURATION */}
-            <div className="p-4 rounded-xl bg-[#14151a] border border-white/5 space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <User className="size-4 text-emerald-400" />
-                  <span className="text-xs font-bold text-white">Photo de profil / Logo de l'entreprise</span>
+                  {/* Quick Presets for Banner */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider block">
+                      Ou choisir une bannière premium prédéfinie :
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        {
+                          label: "Trading & Finance",
+                          url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=85",
+                        },
+                        {
+                          label: "Émeraude Prestige",
+                          url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1800&q=85",
+                        },
+                        {
+                          label: "Cyber Studio",
+                          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=85",
+                        },
+                        {
+                          label: "Minimaliste Dark",
+                          url: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1800&q=85",
+                        },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setCompanyBanner(preset.url)}
+                          className={`relative h-12 rounded-lg overflow-hidden border transition-all text-left p-1.5 cursor-pointer ${
+                            companyBanner === preset.url
+                              ? "border-[#00D26A] ring-1 ring-[#00D26A]"
+                              : "border-white/10 hover:border-white/30"
+                          }`}
+                        >
+                          <img
+                            src={preset.url}
+                            alt={preset.label}
+                            className="absolute inset-0 size-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/60 hover:bg-black/40 transition-colors" />
+                          <span className="relative z-10 text-[10px] font-bold text-white drop-shadow block line-clamp-1">
+                            {preset.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                {/* Upload Trigger Button */}
-                <div>
-                  <input
-                    ref={logoFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => logoFileInputRef.current?.click()}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Upload className="size-3" />
-                    <span>Téléverser une photo</span>
-                  </button>
-                </div>
-              </div>
 
-              {/* Quick Presets for Logo */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider block">
-                  Ou choisir un logo/avatar prédéfini :
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    {
-                      label: "Portrait Dirigeant",
-                      url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
-                    },
-                    {
-                      label: "Monogramme Abstrait",
-                      url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80",
-                    },
-                    {
-                      label: "Tech Venture",
-                      url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-                    },
-                  ].map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => setCompanyLogo(preset.url)}
-                      className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all text-left cursor-pointer bg-[#0d0e12] ${
-                        companyLogo === preset.url
-                          ? "border-[#00D26A] bg-[#00D26A]/10"
-                          : "border-white/10 hover:border-white/30"
-                      }`}
-                    >
-                      <img src={preset.url} alt={preset.label} className="size-8 rounded-lg object-cover shrink-0" />
-                      <span className="text-[10px] font-semibold text-zinc-200 line-clamp-1">
-                        {preset.label}
+                {/* PROFILE PHOTO / LOGO CONFIGURATION */}
+                <div className="p-4 rounded-xl bg-[#14151a] border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <User className="size-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-white">
+                        Photo de profil / Logo de l'entreprise
                       </span>
-                    </button>
-                  ))}
+                    </div>
+                    {/* Upload Trigger Button */}
+                    <div>
+                      <input
+                        ref={logoFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => logoFileInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Upload className="size-3" />
+                        <span>Téléverser une photo</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Presets for Logo */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider block">
+                      Ou choisir un logo/avatar prédéfini :
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        {
+                          label: "Portrait Dirigeant",
+                          url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
+                        },
+                        {
+                          label: "Monogramme Abstrait",
+                          url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80",
+                        },
+                        {
+                          label: "Tech Venture",
+                          url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+                        },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setCompanyLogo(preset.url)}
+                          className={`flex items-center gap-2 p-1.5 rounded-lg border transition-all text-left cursor-pointer bg-[#0d0e12] ${
+                            companyLogo === preset.url
+                              ? "border-[#00D26A] bg-[#00D26A]/10"
+                              : "border-white/10 hover:border-white/30"
+                          }`}
+                        >
+                          <img
+                            src={preset.url}
+                            alt={preset.label}
+                            className="size-8 rounded-lg object-cover shrink-0"
+                          />
+                          <span className="text-[10px] font-semibold text-zinc-200 line-clamp-1">
+                            {preset.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          </>
+            </>
           )}
 
           {companySettingsSection === "payment" && (
-          <>
-          {/* 3. African Banking & Mobile Money Payouts */}
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5 flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <CreditCard className="size-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white">Moyens de Paiement Acceptés & Virements Mobile Money</h3>
-              </div>
-            </div>
+            <>
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-4 sm:p-6 space-y-5">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="size-5 text-white" />
+                  <h3 className="text-2xl font-bold text-white">Méthodes de paiement</h3>
+                </div>
 
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 leading-relaxed">
-              <strong>Condition obligatoire :</strong> Conformément à la politique Mansa, vos produits ne peuvent être marqués comme <strong>Visibles</strong> par les acheteurs tant que vous n'avez pas renseigné vos coordonnées de versement ci-dessous pour encaisser vos gains.
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <label className="block text-zinc-300 font-semibold">Mode de versement principal de vos gains</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: "wave", title: "Wave Mobile Money (CI / SN)", desc: "Transfert instantané gratuit 0% frais", flag: "🇨🇮 🇸🇳" },
-                  { id: "orange_momo", title: "Orange Money / MTN MoMo", desc: "Versement direct sur votre portefeuille", flag: "🇨🇲 🇧🇯 🇬🇳" },
-                  { id: "bank_uemoa", title: "Virement Bancaire (RIB / IBAN)", desc: "Ecobank, Coris, UBA, SGCI, NSIA...", flag: "🌍 UEMOA" },
-                ].map((m) => (
-                  <div
-                    key={m.id}
-                    onClick={() => {
-                      setPayoutMethod(m.id as any);
-                      if (m.id === "wave") {
-                        setIsWaveConfigOpen(true);
-                      }
-                    }}
-                    className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                      payoutMethod === m.id
-                        ? "border-[#00D26A] bg-[#00D26A]/10 text-white"
-                        : "border-white/10 bg-[#121316] text-zinc-400 hover:text-white"
-                    }`}
+                <div className="flex items-center justify-between gap-4 rounded-2xl bg-[#292929] p-4 sm:p-5">
+                  <div>
+                    <p className="text-base font-semibold text-white">
+                      Inclure les méthodes de paiement par défaut
+                    </p>
+                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-400">
+                      Activer automatiquement les nouvelles méthodes de paiement dès qu'elles sont
+                      disponibles.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={includeDefaultPaymentMethods}
+                    onClick={() => setIncludeDefaultPaymentMethods((value) => !value)}
+                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${includeDefaultPaymentMethods ? "bg-blue-600" : "bg-zinc-600"}`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold block text-xs">{m.title}</span>
-                      <span>{m.flag}</span>
-                    </div>
-                    <span className="text-[10px] opacity-75 block">{m.desc}</span>
-                    {m.id === "wave" && waveVerificationStatus === "pending" && (
-                      <span className="mt-2 inline-flex rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
-                        Vérification en attente
-                      </span>
-                    )}
-                    {m.id === "wave" && waveVerificationStatus === "configured" && (
-                      <span className="mt-2 inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                        Configuré
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Mobile Money Details fields */}
-              {payoutMethod === "orange_momo" && (
-                <div className="mt-3 p-4 rounded-xl bg-[#16181f] border border-white/5 space-y-3">
-                  <h4 className="font-bold text-white text-xs">Coordonnées du Portefeuille Mobile Money :</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-zinc-400 mb-1">Numéro Mobile Money de retrait</label>
-                      <input
-                        type="text"
-                        value={momoNumber}
-                        onChange={(e) => setMomoNumber(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-[#101114] p-2 text-white font-mono text-xs outline-none focus:border-[#00D26A]"
-                        placeholder="+225 07 00 00 00 00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-zinc-400 mb-1">Nom du titulaire du compte</label>
-                      <input
-                        type="text"
-                        value={momoName}
-                        onChange={(e) => setMomoName(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-[#101114] p-2 text-white text-xs outline-none focus:border-[#00D26A]"
-                      />
-                    </div>
-                  </div>
+                    <span
+                      className={`absolute top-1 size-5 rounded-full bg-white transition-transform ${includeDefaultPaymentMethods ? "translate-x-6" : "translate-x-1"}`}
+                    />
+                  </button>
                 </div>
-              )}
 
-              {/* Bank Account Details fields */}
-              {payoutMethod === "bank_uemoa" && (
-                <div className="mt-3 p-4 rounded-xl bg-[#16181f] border border-white/5 space-y-3">
-                  <h4 className="font-bold text-white text-xs">Coordonnées Bancaires Africaines (RIB / IBAN) :</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-zinc-400 mb-1">Banque partenaire</label>
-                      <select
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-[#101114] p-2 text-white text-xs outline-none cursor-pointer"
+                <div className="overflow-x-auto border-b border-white/10">
+                  <div className="flex min-w-max items-end gap-7">
+                    {[
+                      ["all", "Tout"],
+                      ["card", "Carte"],
+                      ["transfers", "Versements"],
+                      ["wallet", "Portefeuille"],
+                      ["other", "Autres"],
+                    ].map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() =>
+                          setPaymentCategory(
+                            id as "all" | "card" | "transfers" | "wallet" | "other",
+                          )
+                        }
+                        className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${paymentCategory === id ? "border-blue-500 text-white" : "border-transparent text-zinc-500 hover:text-zinc-200"}`}
                       >
-                        <option>Ecobank (UEMOA / CEMAC)</option>
-                        <option>Coris Bank International</option>
-                        <option>Société Générale (SGCI / SGS)</option>
-                        <option>United Bank for Africa (UBA)</option>
-                        <option>NSIA Banque</option>
-                        <option>Bank of Africa (BOA)</option>
-                        <option>Attijariwafa Bank</option>
-                        <option>Rawbank (RDC)</option>
-                        <option>Zenith Bank / GTBank (Nigeria)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] text-zinc-400 mb-1">Titulaire du compte bancaire</label>
-                      <input
-                        type="text"
-                        value={bankAccountHolder}
-                        onChange={(e) => setBankAccountHolder(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-[#101114] p-2 text-white text-xs outline-none focus:border-[#00D26A]"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] text-zinc-400 mb-1">Numéro RIB / IBAN</label>
-                      <input
-                        type="text"
-                        value={bankIbanRib}
-                        onChange={(e) => setBankIbanRib(e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-[#101114] p-2 text-white font-mono text-xs outline-none focus:border-[#00D26A]"
-                      />
-                    </div>
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          </>
+                <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#292929]">
+                  {visiblePaymentMethods.map((method, index) => {
+                    const isWave = method.id === "wave";
+                    const actionLabel =
+                      isWave && waveVerificationStatus === "pending"
+                        ? "Vérification en attente"
+                        : method.action;
+                    return (
+                      <div
+                        key={method.id}
+                        className={`flex items-center gap-3 px-4 py-4 sm:px-5 ${index > 0 ? "border-t border-white/[0.08]" : ""}`}
+                      >
+                        <Lock className="size-5 shrink-0 text-zinc-600" />
+                        <span
+                          className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white"
+                          style={{ backgroundColor: method.color }}
+                        >
+                          {method.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-base font-medium text-white">
+                          {method.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isWave) {
+                              setPayoutMethod("wave");
+                              setIsWaveConfigOpen(true);
+                            } else if (
+                              method.id === "orange" ||
+                              method.id === "mtn" ||
+                              method.id === "moov"
+                            ) {
+                              setPayoutMethod("orange_momo");
+                            } else if (method.id === "bank") {
+                              setPayoutMethod("bank_uemoa");
+                            }
+                          }}
+                          className={`shrink-0 text-right text-sm font-semibold transition-colors ${isWave && waveVerificationStatus === "pending" ? "text-amber-300" : "text-white hover:text-[#00D26A]"}`}
+                        >
+                          {actionLabel}
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {visiblePaymentMethods.length === 0 && (
+                    <div className="p-8 text-center text-sm text-zinc-500">
+                      Aucune méthode dans cette catégorie.
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentCategory("all");
+                      setIncludeDefaultPaymentMethods(true);
+                      setPayoutMethod("wave");
+                      setWaveVerificationStatus("not_configured");
+                    }}
+                    className="flex items-center gap-2 text-xs font-semibold text-zinc-400 transition-colors hover:text-white"
+                  >
+                    <RotateCcw className="size-3.5" /> Restaurer les paramètres par défaut
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCompanySettingsSection("menu")}
+                      className="rounded-xl bg-[#292929] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#383838]"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+                    >
+                      Enregistrer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           {companySettingsSection === "general" && (
-          <>
-          {/* 3. African Currencies & Pricing */}
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-white/5">
-              <Globe className="size-4 text-purple-400" />
-              <h3 className="text-sm font-bold text-white">Devise Principale de l'Entreprise</h3>
-            </div>
+            <>
+              {/* 3. African Currencies & Pricing */}
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-6 space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-white/5">
+                  <Globe className="size-4 text-purple-400" />
+                  <h3 className="text-sm font-bold text-white">
+                    Devise Principale de l'Entreprise
+                  </h3>
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <label className="block text-zinc-300 font-semibold mb-2">Devise par défaut de vos produits</label>
-                <div className="flex items-center gap-3">
-                  <CurrencySelector
-                    currentCurrency={storeCurrency as CurrencyCode}
-                    onSelectCurrency={(c) => setStoreCurrency(c)}
-                    variant="pill"
-                    lang={lang}
-                  />
-                  <span className="text-[11px] text-zinc-400 font-mono">
-                    ({storeCurrency})
-                  </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-300 font-semibold mb-2">
+                      Devise par défaut de vos produits
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <CurrencySelector
+                        currentCurrency={storeCurrency as CurrencyCode}
+                        onSelectCurrency={(c) => setStoreCurrency(c)}
+                        variant="pill"
+                        lang={lang}
+                      />
+                      <span className="text-[11px] text-zinc-400 font-mono">({storeCurrency})</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-300 font-semibold mb-1">
+                      Conversion automatique en direct
+                    </label>
+                    <div className="p-2.5 rounded-xl bg-[#16181f] border border-white/5 text-zinc-300 flex items-center justify-between">
+                      <span>Multi-devises Mansa</span>
+                      <span className="text-emerald-400 font-bold font-mono">
+                        Actif pour tous les pays
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-zinc-300 font-semibold mb-1">Conversion automatique en direct</label>
-                <div className="p-2.5 rounded-xl bg-[#16181f] border border-white/5 text-zinc-300 flex items-center justify-between">
-                  <span>Multi-devises Mansa</span>
-                  <span className="text-emerald-400 font-bold font-mono">Actif pour tous les pays</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          </>
+            </>
           )}
 
           {isWaveConfigOpen && (
@@ -873,7 +987,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white">Configurer Wave</h3>
-                      <p className="mt-0.5 text-xs text-zinc-400">Ajoutez le compte qui recevra vos versements.</p>
+                      <p className="mt-0.5 text-xs text-zinc-400">
+                        Ajoutez le compte qui recevra vos versements.
+                      </p>
                     </div>
                   </div>
                   <button
@@ -907,25 +1023,41 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                   <div>
                     <label className="mb-1 block font-semibold text-zinc-300">Numéro Wave</label>
-                    <div className={`flex items-center rounded-lg border bg-[#101114] ${waveValidation.isValid ? "border-emerald-500/70" : "border-white/10"}`}>
-                      <span className="border-r border-white/10 px-3 py-2.5 font-mono text-zinc-400">{waveDialCode}</span>
+                    <div
+                      className={`flex items-center rounded-lg border bg-[#101114] ${waveValidation.isValid ? "border-emerald-500/70" : "border-white/10"}`}
+                    >
+                      <span className="border-r border-white/10 px-3 py-2.5 font-mono text-zinc-400">
+                        {waveDialCode}
+                      </span>
                       <input
                         type="tel"
                         inputMode="numeric"
                         value={wavePhoneNumber}
-                        onChange={(event) => setWavePhoneNumber(normalizePhoneNumber(event.target.value, waveDialCode))}
-                        placeholder={DIAL_CODE_CONFIGS[waveDialCode]?.operators.find((operator) => operator.id === "wave")?.format || "07 XX XX XX XX"}
+                        onChange={(event) =>
+                          setWavePhoneNumber(normalizePhoneNumber(event.target.value, waveDialCode))
+                        }
+                        placeholder={
+                          DIAL_CODE_CONFIGS[waveDialCode]?.operators.find(
+                            (operator) => operator.id === "wave",
+                          )?.format || "07 XX XX XX XX"
+                        }
                         className="min-w-0 flex-1 bg-transparent px-3 py-2.5 font-mono text-white outline-none placeholder:text-zinc-600"
                       />
                     </div>
                     {wavePhoneNumber && !waveValidation.isValid && (
-                      <p className="mt-1 text-[10px] text-red-300">{waveValidation.errorMessage || "Numéro Wave invalide."}</p>
+                      <p className="mt-1 text-[10px] text-red-300">
+                        {waveValidation.errorMessage || "Numéro Wave invalide."}
+                      </p>
                     )}
-                    {waveValidation.isValid && <p className="mt-1 text-[10px] text-emerald-300">Numéro Wave valide.</p>}
+                    {waveValidation.isValid && (
+                      <p className="mt-1 text-[10px] text-emerald-300">Numéro Wave valide.</p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="mb-1 block font-semibold text-zinc-300">Nom du titulaire</label>
+                    <label className="mb-1 block font-semibold text-zinc-300">
+                      Nom du titulaire
+                    </label>
                     <input
                       type="text"
                       value={waveAccountName}
@@ -974,38 +1106,38 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4 border-t border-white/10">
-            <button
-              type="button"
-              onClick={onLogout}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold cursor-pointer transition-colors"
-            >
-              <LogOut className="size-3.5" />
-              <span>Se déconnecter</span>
-            </button>
+          {companySettingsSection !== "payment" && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={onLogout}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold cursor-pointer transition-colors"
+              >
+                <LogOut className="size-3.5" />
+                <span>Se déconnecter</span>
+              </button>
 
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="flex items-center gap-2 rounded-xl bg-[#00D26A] hover:bg-[#10E47A] disabled:opacity-50 disabled:cursor-not-allowed text-black px-6 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  <span>Enregistrement...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="size-4" />
-                  <span>Enregistrer les modifications</span>
-                </>
-              )}
-            </button>
-          </div>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="flex items-center gap-2 rounded-xl bg-[#00D26A] hover:bg-[#10E47A] disabled:opacity-50 disabled:cursor-not-allowed text-black px-6 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Enregistrement...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    <span>Enregistrer les modifications</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </form>
-        )
       )}
-
     </div>
   );
 };
