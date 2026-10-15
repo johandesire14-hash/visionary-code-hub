@@ -134,7 +134,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   const [withdrawalAmount, setWithdrawalAmount] = useState<string>("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
   const [withdrawalDestination, setWithdrawalDestination] = useState<string>("");
-  const [withdrawalCountry, setWithdrawalCountry] = useState("Côte d'Ivoire");
+  const [withdrawalCountry, setWithdrawalCountry] = useState("");
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
@@ -455,6 +455,11 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
       return;
     }
 
+    if (!withdrawalCountry.trim()) {
+      setWithdrawalError("Veuillez renseigner le pays du compte de retrait.");
+      return;
+    }
+
     if (amountNum > balance.availableBalance) {
       setWithdrawalError(
         `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`,
@@ -481,6 +486,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
         savePayoutMethod(creatorKey, {
           ...selectedPayoutMethod,
           accountIdentifier: withdrawalDestination.trim(),
+          country: withdrawalCountry.trim(),
         });
       }
       const result = createWithdrawalRequest({
@@ -551,7 +557,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     setWithdrawalStep("methods");
     setWithdrawalCategory("all");
     setIncludeDefaultWithdrawalMethods(true);
-    setWithdrawalCountry("Côte d'Ivoire");
+    setWithdrawalCountry("");
     if (payoutMethods.length > 0) {
       const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
       setSelectedMethodId(defaultM.id);
@@ -1527,7 +1533,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                         if (configured) {
                           setSelectedMethodId(configured.id);
                           setWithdrawalDestination(configured.accountIdentifier);
-                          setWithdrawalCountry(configured.country || "Côte d'Ivoire");
+                          setWithdrawalCountry(configured.country || "");
                           setWithdrawalError(null);
                           setWithdrawalStep("form");
                         } else {
@@ -1550,7 +1556,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                             label: method.name,
                             accountHolder: profile?.momoName || user?.displayName || "",
                             accountIdentifier: "",
-                            country: "Côte d'Ivoire",
+                            country: "",
                             isVerified: false,
                             isDefault: payoutMethods.length === 0,
                             createdAt: new Date().toISOString(),
@@ -1559,7 +1565,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                           savePayoutMethod(creatorKey, draftMethod);
                           setSelectedMethodId(draftMethod.id);
                           setWithdrawalDestination("");
-                          setWithdrawalCountry("Côte d'Ivoire");
+                          setWithdrawalCountry("");
                           setWithdrawalStep("form");
                         }
                       }}
@@ -1711,18 +1717,14 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               {selectedPayoutMethod && (
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
-                  <select
+                  <input
+                    type="text"
                     value={withdrawalCountry}
                     onChange={(event) => setWithdrawalCountry(event.target.value)}
                     className="mb-3 w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
-                  >
-                    <option>Côte d'Ivoire</option>
-                    <option>Sénégal</option>
-                    <option>Bénin</option>
-                    <option>Togo</option>
-                    <option>Cameroun</option>
-                    <option>Ghana</option>
-                  </select>
+                    placeholder="Ex. Côte d'Ivoire, Sénégal..."
+                    required
+                  />
                   <label className="mb-1 block text-xs font-semibold text-zinc-300">
                     {selectedPayoutMethod.type.startsWith("bank")
                       ? "RIB / IBAN"
