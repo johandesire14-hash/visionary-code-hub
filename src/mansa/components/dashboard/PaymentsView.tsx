@@ -1425,51 +1425,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             </button>
           </div>
 
-          {/* CAS 1: AUCUN MOYEN DE RETRAIT CONFIGURÉ */}
-          {!hasWithdrawalConfigured ? (
-            <div className="py-4 space-y-4 text-center">
-              <div className="size-12 mx-auto rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                <AlertTriangle className="size-6" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">Moyen de retrait non configuré</h4>
-                <p className="text-xs text-zinc-300 mt-1.5 leading-relaxed">
-                  Votre solde disponible est de{" "}
-                  <strong className="text-emerald-400 font-mono">
-                    {formatCurrency(balance.availableBalance, activeCurrency)}
-                  </strong>
-                  . Pour demander un virement, vous devez d'abord renseigner votre compte Mobile
-                  Money (Wave, Orange, MTN) ou vos coordonnées bancaires.
-                </p>
-              </div>
-
-              <div className="bg-white/[0.03] p-3 rounded-xl border border-white/5 text-xs text-zinc-400 text-left">
-                ℹ️ Vos ventes continuent normalement. Vous pouvez configurer votre compte de retrait
-                à tout moment pour libérer vos virements.
-              </div>
-
-              <div className="pt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsPayoutModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white cursor-pointer"
-                >
-                  Fermer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPayoutModalOpen(false);
-                    setActiveTab("payout_methods");
-                    setIsAddMethodModalOpen(true);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all cursor-pointer shadow-md"
-                >
-                  Configurer mon compte
-                </button>
-              </div>
-            </div>
-          ) : withdrawalSuccess ? (
+          {withdrawalSuccess ? (
             /* CAS 2: VIREMENT RÉUSSI */
             <div className="py-6 text-center space-y-3">
               <div className="flex size-14 mx-auto items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
@@ -1567,9 +1523,20 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                           setWithdrawalDestination(configured.accountIdentifier);
                           setWithdrawalError(null);
                         } else {
-                          setWithdrawalError(
-                            `Configurez d'abord ${method.name} dans vos moyens de retrait.`,
-                          );
+                          const supportedType = [
+                            "wave",
+                            "orange_money",
+                            "mtn_momo",
+                            "moov_money",
+                            "bank_uemoa",
+                          ].includes(method.id)
+                            ? (method.id as PayoutMethodType)
+                            : "wave";
+                          setNewMethodType(supportedType);
+                          setNewMethodLabel(method.name);
+                          setIsPayoutModalOpen(false);
+                          setActiveTab("payout_methods");
+                          setIsAddMethodModalOpen(true);
                         }
                       }}
                       className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index > 0 ? "border-t border-white/[0.08]" : ""} ${selected ? "bg-emerald-500/10" : "hover:bg-white/[0.04]"}`}
