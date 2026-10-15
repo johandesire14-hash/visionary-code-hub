@@ -111,6 +111,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     "all" | "card" | "transfers" | "wallet" | "other"
   >("all");
   const [includeDefaultPaymentMethods, setIncludeDefaultPaymentMethods] = useState(true);
+  const [paymentConfigMethod, setPaymentConfigMethod] = useState<string | null>(null);
+  const [paymentConfigDialCode, setPaymentConfigDialCode] = useState("+225");
+  const [paymentConfigPhone, setPaymentConfigPhone] = useState("");
+  const [paymentConfigName, setPaymentConfigName] = useState(user.name || "");
+  const [paymentVerificationStatuses, setPaymentVerificationStatuses] = useState<
+    Record<string, "not_configured" | "pending" | "configured">
+  >({});
 
   const waveCountryOptions = Object.values(DIAL_CODE_CONFIGS).filter((country) =>
     country.operators.some((operator) => operator.id === "wave"),
@@ -151,6 +158,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const visiblePaymentMethods = paymentMethods.filter(
     (method) => paymentCategory === "all" || method.category === paymentCategory,
   );
+  const selectedPaymentMethod = paymentMethods.find((method) => method.id === paymentConfigMethod);
+  const selectedMobileOperator =
+    selectedPaymentMethod && ["orange", "mtn", "moov"].includes(selectedPaymentMethod.id)
+      ? selectedPaymentMethod.id
+      : null;
+  const paymentConfigCountries = selectedMobileOperator
+    ? Object.values(DIAL_CODE_CONFIGS).filter((country) =>
+        country.operators.some((operator) => operator.id === selectedMobileOperator),
+      )
+    : [];
+  const paymentConfigValidation = selectedMobileOperator
+    ? validatePhoneNumber(
+        paymentConfigDialCode,
+        selectedMobileOperator,
+        paymentConfigPhone,
+        storeCurrency,
+      )
+    : { isValid: true };
 
   // African Bank Account Details
   const [bankName, setBankName] = useState("Ecobank Côte d'Ivoire / UEMOA");
@@ -855,7 +880,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     const actionLabel =
                       isWave && waveVerificationStatus === "pending"
                         ? "Vérification en attente"
-                        : method.action;
+                        : paymentVerificationStatuses[method.id] === "pending"
+                          ? "Vérification en attente"
+                          : method.action;
                     return (
                       <div
                         key={method.id}
@@ -877,17 +904,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             if (isWave) {
                               setPayoutMethod("wave");
                               setIsWaveConfigOpen(true);
-                            } else if (
-                              method.id === "orange" ||
-                              method.id === "mtn" ||
-                              method.id === "moov"
-                            ) {
-                              setPayoutMethod("orange_momo");
-                            } else if (method.id === "bank") {
-                              setPayoutMethod("bank_uemoa");
+                            } else {
+                              setPaymentConfigMethod(method.id);
+                              setPaymentConfigPhone("");
+                              setPaymentConfigName(user.name || "");
+                              if (method.category === "wallet") {
+                                setPaymentConfigDialCode(
+                                  method.id === "orange" ||
+                                    method.id === "mtn" ||
+                                    method.id === "moov"
+                                    ? "+225"
+                                    : "+225",
+                                );
+                              }
                             }
                           }}
-                          className={`shrink-0 text-right text-sm font-semibold transition-colors ${isWave && waveVerificationStatus === "pending" ? "text-amber-300" : "text-white hover:text-[#00D26A]"}`}
+                          className={`shrink-0 text-right text-sm font-semibold transition-colors ${(isWave && waveVerificationStatus === "pending") || paymentVerificationStatuses[method.id] === "pending" ? "text-amber-300" : "text-white hover:text-[#00D26A]"}`}
                         >
                           {actionLabel}
                         </button>
@@ -975,6 +1007,202 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
             </>
+          )}
+
+          {paymentConfigMethod && selectedPaymentMethod && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
+                <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex size-10 items-center justify-center rounded-xl text-xs font-black text-white"
+                      style={{ backgroundColor: selectedPaymentMethod.color }}
+                    >
+                      {selectedPaymentMethod.name.slice(0, 2).toUpperCase()}
+                    </span>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        Configurer {selectedPaymentMethod.name}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-zinc-400">
+                        Renseignez les informations nécessaires pour activer cette méthode.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfigMethod(null)}
+                    aria-label="Fermer la configuration"
+                    className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-4 text-xs">
+                  {selectedMobileOperator && (
+                    <>
+                      <div>
+                        <label className="mb-1 block font-semibold text-zinc-300">Pays</label>
+                        <select
+                          value={paymentConfigDialCode}
+                          onChange={(event) => {
+                            setPaymentConfigDialCode(event.target.value);
+                            setPaymentConfigPhone("");
+                          }}
+                          className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                        >
+                          {paymentConfigCountries.map((country) => (
+                            <option key={country.dialCode} value={country.dialCode}>
+                              {country.countryName} ({country.dialCode})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block font-semibold text-zinc-300">
+                          Numéro {selectedPaymentMethod.name}
+                        </label>
+                        <div
+                          className={`flex items-center rounded-lg border bg-[#101114] ${paymentConfigValidation.isValid ? "border-emerald-500/70" : "border-white/10"}`}
+                        >
+                          <span className="border-r border-white/10 px-3 py-2.5 font-mono text-zinc-400">
+                            {paymentConfigDialCode}
+                          </span>
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            value={paymentConfigPhone}
+                            onChange={(event) =>
+                              setPaymentConfigPhone(
+                                normalizePhoneNumber(event.target.value, paymentConfigDialCode),
+                              )
+                            }
+                            placeholder={
+                              DIAL_CODE_CONFIGS[paymentConfigDialCode]?.operators.find(
+                                (operator) => operator.id === selectedMobileOperator,
+                              )?.format
+                            }
+                            className="min-w-0 flex-1 bg-transparent px-3 py-2.5 font-mono text-white outline-none placeholder:text-zinc-600"
+                          />
+                        </div>
+                        {paymentConfigPhone && !paymentConfigValidation.isValid && (
+                          <p className="mt-1 text-[10px] text-red-300">
+                            {paymentConfigValidation.errorMessage || "Numéro invalide."}
+                          </p>
+                        )}
+                        {paymentConfigValidation.isValid && paymentConfigPhone && (
+                          <p className="mt-1 text-[10px] text-emerald-300">Numéro valide.</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="mb-1 block font-semibold text-zinc-300">
+                          Nom du titulaire
+                        </label>
+                        <input
+                          type="text"
+                          value={paymentConfigName}
+                          onChange={(event) => setPaymentConfigName(event.target.value)}
+                          placeholder="Nom associé au compte"
+                          className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {selectedPaymentMethod.id === "bank" && (
+                    <>
+                      <div>
+                        <label className="mb-1 block font-semibold text-zinc-300">
+                          Banque partenaire
+                        </label>
+                        <select
+                          value={bankName}
+                          onChange={(event) => setBankName(event.target.value)}
+                          className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none"
+                        >
+                          <option>Ecobank (UEMOA / CEMAC)</option>
+                          <option>Coris Bank International</option>
+                          <option>Société Générale (SGCI / SGS)</option>
+                          <option>United Bank for Africa (UBA)</option>
+                          <option>NSIA Banque</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block font-semibold text-zinc-300">
+                          Titulaire du compte
+                        </label>
+                        <input
+                          type="text"
+                          value={bankAccountHolder}
+                          onChange={(event) => setBankAccountHolder(event.target.value)}
+                          className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block font-semibold text-zinc-300">RIB / IBAN</label>
+                        <input
+                          type="text"
+                          value={bankIbanRib}
+                          onChange={(event) => setBankIbanRib(event.target.value)}
+                          className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 font-mono text-white outline-none focus:border-[#00D26A]"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {selectedPaymentMethod.id === "card" && (
+                    <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-zinc-300">
+                      <p className="font-semibold text-white">Vérification du compte marchand</p>
+                      <p className="leading-relaxed text-zinc-400">
+                        La connexion sécurisée du prestataire carte bancaire sera nécessaire avant
+                        d’accepter les paiements.
+                      </p>
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" className="accent-[#00D26A]" /> J’autorise la
+                        vérification de mon identité
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2 border-t border-white/10 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentConfigMethod(null)}
+                      className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      disabled={
+                        (Boolean(selectedMobileOperator) &&
+                          (!paymentConfigValidation.isValid || !paymentConfigName.trim())) ||
+                        (selectedPaymentMethod.id === "bank" &&
+                          (!bankIbanRib.trim() || !bankAccountHolder.trim()))
+                      }
+                      onClick={() => {
+                        if (selectedMobileOperator) {
+                          setPayoutMethod("orange_momo");
+                          setMomoNumber(`${paymentConfigDialCode} ${paymentConfigPhone}`);
+                          setMomoName(paymentConfigName.trim());
+                        } else if (selectedPaymentMethod.id === "bank") {
+                          setPayoutMethod("bank_uemoa");
+                        }
+                        setPaymentVerificationStatuses((current) => ({
+                          ...current,
+                          [selectedPaymentMethod.id]: "pending",
+                        }));
+                        setPaymentConfigMethod(null);
+                      }}
+                      className="rounded-xl bg-[#00D26A] px-4 py-2.5 text-xs font-bold text-black transition-colors hover:bg-[#10E47A] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Continuer la vérification
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {isWaveConfigOpen && (
