@@ -238,6 +238,33 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
       (withdrawalCategory === "all" || method.category === withdrawalCategory) &&
       (method.countries.includes(withdrawalCountry) || method.countries.includes("Tous les pays")),
   );
+  const selectWithdrawalMethod = (method: (typeof withdrawalMethodCatalog)[number]) => {
+    const configured = payoutMethods.find((item) => item.type === method.id);
+    if (configured) {
+      setSelectedMethodId(configured.id);
+      setWithdrawalDestination(configured.accountIdentifier);
+      setWithdrawalCountry(configured.country || withdrawalCountry);
+      setWithdrawalError(null);
+      setWithdrawalStep("form");
+      return;
+    }
+    const draftMethod: PayoutMethodConfig = {
+      id: `payout-${method.id}-${Date.now()}`,
+      type: method.id as PayoutMethodType,
+      label: method.name,
+      accountHolder: profile?.momoName || user?.displayName || "",
+      accountIdentifier: "",
+      country: withdrawalCountry,
+      isVerified: false,
+      isDefault: payoutMethods.length === 0,
+      createdAt: new Date().toISOString(),
+    };
+    setPayoutMethods((current) => [...current, draftMethod]);
+    savePayoutMethod(creatorKey, draftMethod);
+    setSelectedMethodId(draftMethod.id);
+    setWithdrawalDestination("");
+    setWithdrawalStep("form");
+  };
 
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
@@ -1531,7 +1558,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </button>
             </div>
           ) : withdrawalStep === "methods" ? (
-            <div className="space-y-4">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-4 sm:p-6 space-y-5">
               <div className="flex items-center gap-2">
                 <CreditCard className="size-5 text-white" />
                 <h3 className="text-2xl font-bold text-white">Méthodes de retrait</h3>
@@ -1559,7 +1586,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 </select>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#292929] p-4">
+              <div className="flex items-center justify-between gap-4 rounded-2xl bg-[#292929] p-4 sm:p-5">
                 <div>
                   <p className="text-sm font-semibold text-white">
                     Inclure les méthodes de retrait par défaut
@@ -1582,7 +1609,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </div>
 
               <div className="overflow-x-auto border-b border-white/10">
-                <div className="flex min-w-max items-end gap-6">
+                <div className="flex min-w-max items-end gap-7">
                   {[
                     ["all", "Tout"],
                     ["card", "Carte"],
@@ -1614,46 +1641,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     <button
                       key={method.id}
                       type="button"
-                      onClick={() => {
-                        if (configured) {
-                          setSelectedMethodId(configured.id);
-                          setWithdrawalDestination(configured.accountIdentifier);
-                          setWithdrawalCountry(configured.country || withdrawalCountry);
-                          setWithdrawalError(null);
-                          setWithdrawalStep("form");
-                        } else {
-                          const supportedType = [
-                            "wave",
-                            "orange_money",
-                            "mtn_momo",
-                            "moov_money",
-                            "bank_uemoa",
-                            "bank_cemac",
-                            "bank_sepa",
-                            "paypal",
-                            "crypto_usdt",
-                          ].includes(method.id)
-                            ? (method.id as PayoutMethodType)
-                            : "wave";
-                          const draftMethod: PayoutMethodConfig = {
-                            id: `payout-${supportedType}-${Date.now()}`,
-                            type: supportedType,
-                            label: method.name,
-                            accountHolder: profile?.momoName || user?.displayName || "",
-                            accountIdentifier: "",
-                            country: withdrawalCountry,
-                            isVerified: false,
-                            isDefault: payoutMethods.length === 0,
-                            createdAt: new Date().toISOString(),
-                          };
-                          setPayoutMethods((current) => [...current, draftMethod]);
-                          savePayoutMethod(creatorKey, draftMethod);
-                          setSelectedMethodId(draftMethod.id);
-                          setWithdrawalDestination("");
-                          setWithdrawalCountry(withdrawalCountry);
-                          setWithdrawalStep("form");
-                        }
-                      }}
+                      onClick={() => selectWithdrawalMethod(method)}
                       className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index > 0 ? "border-t border-white/[0.08]" : ""} ${selected ? "bg-emerald-500/10" : "hover:bg-white/[0.04]"}`}
                     >
                       <Lock className="size-5 shrink-0 text-zinc-600" />
