@@ -471,6 +471,16 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
       return;
     }
 
+    if (!withdrawalCountry.trim()) {
+      setWithdrawalError("Veuillez sélectionner le pays du retrait.");
+      return;
+    }
+
+    if (!withdrawalDestination.trim()) {
+      setWithdrawalError("Veuillez renseigner le numéro du compte à créditer.");
+      return;
+    }
+
     if (amountNum > balance.availableBalance) {
       setWithdrawalError(
         `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`,
@@ -489,6 +499,17 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
 
     setIsSubmittingWithdrawal(true);
     setTimeout(() => {
+      if (
+        selectedPayoutMethod &&
+        (withdrawalDestination.trim() !== selectedPayoutMethod.accountIdentifier ||
+          withdrawalCountry !== selectedPayoutMethod.country)
+      ) {
+        savePayoutMethod(creatorKey, {
+          ...selectedPayoutMethod,
+          accountIdentifier: withdrawalDestination.trim(),
+          country: withdrawalCountry.trim(),
+        });
+      }
       const result = createWithdrawalRequest({
         creatorId: creatorKey,
         amount: amountNum,
@@ -1647,15 +1668,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               )}
 
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-semibold text-zinc-300">Montant du retrait</label>
-                  <span className="text-[11px] text-zinc-400">
-                    Disponible :{" "}
-                    <strong className="text-emerald-400 font-mono">
-                      {formatCurrency(balance.availableBalance, activeCurrency)}
-                    </strong>
-                  </span>
-                </div>
+                <label className="mb-1 block text-xs font-semibold text-zinc-300">Montant du retrait</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -1672,31 +1685,48 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   </span>
                 </div>
 
-                <p className="mt-1 text-[10px] text-zinc-500">
-                  Minimum{" "}
-                  {formatCurrency(
-                    activeCurrency === "EUR"
-                      ? MIN_WITHDRAWAL_AMOUNT_EUR
-                      : MIN_WITHDRAWAL_AMOUNT_XOF,
-                    activeCurrency,
-                  )}{" "}
-                  · Maximum {formatCurrency(balance.availableBalance, activeCurrency)}
-                </p>
+              </div>
 
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
+                <select
+                  value={withdrawalCountry}
+                  onChange={(event) => setWithdrawalCountry(event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
+                >
+                  {withdrawalCountryOptions.map((country) => (
+                    <option key={country.dialCode} value={country.countryName}>
+                      {country.countryName} ({country.dialCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-zinc-300">
+                  {selectedPayoutMethod?.type.startsWith("bank")
+                    ? "Numéro RIB / IBAN"
+                    : "Numéro de téléphone"}
+                </label>
+                <input
+                  type="text"
+                  value={withdrawalDestination}
+                  onChange={(event) => setWithdrawalDestination(event.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-500"
+                  placeholder={
+                    selectedPayoutMethod?.type.startsWith("bank")
+                      ? "RIB ou IBAN"
+                      : "Numéro Mobile Money"
+                  }
+                  required
+                />
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
-                  type="button"
-                  onClick={() => setIsPayoutModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white cursor-pointer"
-                >
-                  Annuler
-                </button>
-                <button
                   type="submit"
                   disabled={isSubmittingWithdrawal || balance.availableBalance < 5000}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black text-xs font-bold transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black text-xs font-bold transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
                 >
                   {isSubmittingWithdrawal ? (
                     <RefreshCw className="size-4 animate-spin" />
