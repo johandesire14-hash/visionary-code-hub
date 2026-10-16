@@ -1,4 +1,6 @@
 // @ts-nocheck
+// Règle projet : appliquer exactement chaque demande, vérifier et tester le parcours réel,
+// puis corriger et retester jusqu'à obtenir le comportement demandé.
 import React, { useState, useEffect, useMemo } from "react";
 import {
   CreditCard,
@@ -39,6 +41,7 @@ import {
   FirestoreTransaction,
 } from "../../services/dbService";
 import { CurrencyCode, formatCurrency } from "../../utils/currency";
+import { DIAL_CODE_CONFIGS } from "../../utils/phoneValidationRules";
 import { isCreatorPayoutConfigured, setCreatorPayoutConfigured } from "../../utils/payoutConfig";
 import { ContextualLocationPrompt } from "../common/ContextualLocationPrompt";
 import {
@@ -156,6 +159,13 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     crypto_usdt: "USDT",
     paypal: "PayPal",
   };
+  const withdrawalOperatorIds: Record<string, string> = {
+    wave: "wave",
+    orange_money: "orange",
+    mtn_momo: "mtn",
+    moov_money: "moov",
+  };
+  const withdrawalCountryOptions = Object.values(DIAL_CODE_CONFIGS);
   const withdrawalMethodCatalog = [
     { id: "wave", name: "Wave", category: "wallet", color: "#1DC3FD" },
     { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
@@ -165,8 +175,22 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     { id: "bank_uemoa", name: "Virement bancaire", category: "transfers", color: "#8B5CF6" },
   ];
   const visibleWithdrawalMethods = withdrawalMethodCatalog.filter(
-    (method) => withdrawalCategory === "all" || method.category === withdrawalCategory,
+    (method) => {
+      if (withdrawalCategory !== "all" && method.category !== withdrawalCategory) return false;
+      const operatorId = withdrawalOperatorIds[method.id];
+      if (!operatorId) return true;
+      return withdrawalCountryOptions.some((country) =>
+        country.countryName === withdrawalCountry &&
+        country.operators.some((operator) => operator.id === operatorId),
+      );
+    },
   );
+  const newMethodOperatorId = withdrawalOperatorIds[newMethodType];
+  const newMethodCountryOptions = newMethodOperatorId
+    ? withdrawalCountryOptions.filter((country) =>
+        country.operators.some((operator) => operator.id === newMethodOperatorId),
+      )
+    : withdrawalCountryOptions;
 
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
@@ -1459,6 +1483,28 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 <h3 className="text-2xl font-bold text-white">Méthodes de retrait</h3>
               </div>
 
+              <div className="rounded-2xl border border-white/[0.08] bg-[#292929] p-4">
+                <label className="mb-1 block text-sm font-semibold text-white">Pays</label>
+                <p className="mb-2 text-xs text-zinc-400">
+                  Les méthodes disponibles correspondent aux opérateurs de ce pays.
+                </p>
+                <select
+                  value={withdrawalCountry}
+                  onChange={(event) => {
+                    setWithdrawalCountry(event.target.value);
+                    setSelectedMethodId("");
+                    setWithdrawalError(null);
+                  }}
+                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
+                >
+                  {withdrawalCountryOptions.map((country) => (
+                    <option key={country.dialCode} value={country.countryName}>
+                      {country.countryName} ({country.dialCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#292929] p-4">
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -1473,7 +1519,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   role="switch"
                   aria-checked={includeDefaultWithdrawalMethods}
                   onClick={() => setIncludeDefaultWithdrawalMethods((value) => !value)}
-                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${includeDefaultWithdrawalMethods ? "bg-blue-600" : "bg-zinc-600"}`}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${includeDefaultWithdrawalMethods ? "bg-emerald-500" : "bg-zinc-600"}`}
                 >
                   <span
                     className={`absolute top-1 size-5 rounded-full bg-white transition-transform ${includeDefaultWithdrawalMethods ? "translate-x-6" : "translate-x-1"}`}
@@ -1498,7 +1544,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                           id as "all" | "card" | "transfers" | "wallet" | "other",
                         )
                       }
-                      className={`border-b-2 px-1 pb-3 text-xs font-semibold transition-colors ${withdrawalCategory === id ? "border-blue-500 text-white" : "border-transparent text-zinc-500 hover:text-zinc-200"}`}
+                      className={`border-b-2 px-1 pb-3 text-xs font-semibold transition-colors ${withdrawalCategory === id ? "border-emerald-500 text-white" : "border-transparent text-zinc-500 hover:text-zinc-200"}`}
                     >
                       {label}
                     </button>
@@ -1526,7 +1572,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                           setNewMethodLabel(method.name);
                           setNewMethodHolder(profile?.momoName || user?.displayName || "");
                           setNewMethodIdentifier("");
-                          setNewMethodCountry("Côte d'Ivoire");
+                          setNewMethodCountry(withdrawalCountry);
                           setIsPayoutModalOpen(false);
                           setIsAddMethodModalOpen(true);
                         }
@@ -1583,7 +1629,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     type="button"
                     disabled={!selectedMethodId}
                     onClick={() => setWithdrawalStep("form")}
-                    className="rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl bg-emerald-500 px-3 py-2.5 text-xs font-semibold text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Enregistrer
                   </button>
@@ -1700,6 +1746,13 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 onChange={(e) => {
                   const val = e.target.value as PayoutMethodType;
                   setNewMethodType(val);
+                  const operatorId = withdrawalOperatorIds[val];
+                  const firstCountry = operatorId
+                    ? withdrawalCountryOptions.find((country) =>
+                        country.operators.some((operator) => operator.id === operatorId),
+                      )
+                    : undefined;
+                  if (firstCountry) setNewMethodCountry(firstCountry.countryName);
                   if (val === "wave") setNewMethodLabel("Wave Côte d'Ivoire");
                   else if (val === "orange_money") setNewMethodLabel("Orange Money Côte d'Ivoire");
                   else if (val === "mtn_momo") setNewMethodLabel("MTN Mobile Money");
@@ -1710,10 +1763,10 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 }}
                 className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none cursor-pointer"
               >
-                <option value="wave">🇨🇮 Wave Côte d'Ivoire (Instantané)</option>
-                <option value="orange_money">🇨🇮 / 🇸🇳 Orange Money</option>
-                <option value="mtn_momo">🌍 MTN MoMo (Bénin, Cameroun, Côte d'Ivoire)</option>
-                <option value="moov_money">🌍 Moov Money Flooz</option>
+                <option value="wave">Wave</option>
+                <option value="orange_money">Orange Money</option>
+                <option value="mtn_momo">MTN Mobile Money</option>
+                <option value="moov_money">Moov Money</option>
                 <option value="bank_uemoa">
                   🌍 Virement Bancaire UEMOA (Ecobank, Coris, UBA, SG)
                 </option>
@@ -1728,13 +1781,11 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 onChange={(e) => setNewMethodCountry(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none cursor-pointer"
               >
-                <option value="Côte d'Ivoire">Côte d'Ivoire (+225)</option>
-                <option value="Sénégal">Sénégal (+221)</option>
-                <option value="Bénin">Bénin (+229)</option>
-                <option value="Togo">Togo (+228)</option>
-                <option value="Cameroun">Cameroun (+237)</option>
-                <option value="Ghana">Ghana (+233)</option>
-                <option value="France">France (+33)</option>
+                {newMethodCountryOptions.map((country) => (
+                  <option key={country.dialCode} value={country.countryName}>
+                    {country.countryName} ({country.dialCode})
+                  </option>
+                ))}
               </select>
             </div>
 
