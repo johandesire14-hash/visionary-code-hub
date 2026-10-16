@@ -36,6 +36,7 @@ import {
   type AccountPaymentSettings,
 } from "../../services/dbService";
 import { CustomerPurchasesView } from "../dashboard/CustomerPurchasesView";
+import { AccountPortfolioTab } from "./AccountPortfolioTab";
 import { useModalDismiss } from "../../hooks/useModalDismiss";
 import { siteUrl } from "@/lib/site";
 import {
@@ -1147,17 +1148,11 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           {/* 8. TAB: PORTEFEUILLE */}
           {/* ================================================================= */}
           {activeTab === "portefeuille" && (
-            <div className="space-y-4 text-xs">
-              <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-[#14161b] to-[#1a1e28] p-5">
-                <span className="text-zinc-400 text-[11px] block mb-1">Solde disponible au retrait</span>
-                <div className="text-2xl font-black text-white font-mono mb-3">
-                  485 000 FCFA <span className="text-xs text-zinc-400 font-sans">($795.00)</span>
-                </div>
-                <button className="px-4 py-2 rounded-xl bg-[#00D26A] text-black font-bold text-xs cursor-pointer hover:bg-emerald-400 transition-colors">
-                  Demander un virement Wave
-                </button>
-              </div>
-            </div>
+            <AccountPortfolioTab
+              creatorId={user?.uid || user?.email || "creator-default"}
+              accountHolder={user?.name || ""}
+              currency={accountPaymentCurrency}
+            />
           )}
 
           {/* ================================================================= */}

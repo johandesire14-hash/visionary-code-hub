@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { ModalOverlay } from "../common/ModalOverlay";
+import { WithdrawalRequestModal } from "../common/WithdrawalRequestModal";
 import {
   subscribeToCreatorTransactions,
   createRealTransaction,
@@ -57,15 +58,12 @@ import {
   removePayoutMethod,
   setDefaultPayoutMethod,
   getWithdrawalHistory,
-  createWithdrawalRequest,
   isWithdrawalConfigured,
   verifyWithdrawalEligibility,
   forceClearAllPendingFunds,
   getCreatorKycStatus,
   saveCreatorKycStatus,
   FINANCIAL_EVENTS,
-  MIN_WITHDRAWAL_AMOUNT_XOF,
-  MIN_WITHDRAWAL_AMOUNT_EUR,
 } from "../../utils/creatorFinancialEngine";
 
 interface PaymentTransaction {
@@ -100,7 +98,6 @@ interface PaymentsViewProps {
 type FinancialTab = "overview" | "sales" | "withdrawals" | "payout_methods";
 
 const DEFAULT_WITHDRAWAL_COUNTRY = DIAL_CODE_CONFIGS["+225"].countryName;
-const normalizeCountryName = (name: string) => name.replace(/[‘’]/g, "'").toLowerCase();
 
 export const PaymentsView: React.FC<PaymentsViewProps> = ({
   lang = "fr",
@@ -131,38 +128,15 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
 
   // Modals & Drawers
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
+  const [preferredWithdrawalMethodId, setPreferredWithdrawalMethodId] = useState<
+    string | undefined
+  >();
   const [isNewSaleModalOpen, setIsNewSaleModalOpen] = useState(false);
   const [isAddMethodModalOpen, setIsAddMethodModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<PaymentTransaction | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRequest | null>(null);
 
-  // Withdrawal form inside modal
-  const [withdrawalAmount, setWithdrawalAmount] = useState<string>("");
-  const [selectedMethodId, setSelectedMethodId] = useState<string>("");
-  const [withdrawalMethodType, setWithdrawalMethodType] = useState<PayoutMethodType | null>(null);
-  const [withdrawalDestination, setWithdrawalDestination] = useState<string>("");
-  const [withdrawalCountry, setWithdrawalCountry] = useState(DEFAULT_WITHDRAWAL_COUNTRY);
-  const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
-  const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
-  const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
-  const [withdrawalStep, setWithdrawalStep] = useState<"methods" | "form">("methods");
-  const [withdrawalCategory, setWithdrawalCategory] = useState<
-    "all" | "card" | "transfers" | "wallet" | "other"
-  >("all");
-  const [includeDefaultWithdrawalMethods, setIncludeDefaultWithdrawalMethods] = useState(true);
-
-  const selectedPayoutMethod = payoutMethods.find((method) => method.id === selectedMethodId);
-  const withdrawalMethodLabels: Record<string, string> = {
-    wave: "Wave",
-    orange_money: "Orange Money",
-    mtn_momo: "MTN Mobile Money",
-    moov_money: "Moov Money",
-    bank_uemoa: "Virement bancaire",
-    bank_cemac: "Virement bancaire",
-    bank_sepa: "Virement bancaire",
-    crypto_usdt: "USDT",
-    paypal: "PayPal",
-  };
+  // Shared withdrawal dialog uses these values in the separate saved-method editor.
   const withdrawalOperatorIds: Record<string, string> = {
     wave: "wave",
     orange_money: "orange",
@@ -170,39 +144,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     moov_money: "moov",
   };
   const withdrawalCountryOptions = Object.values(DIAL_CODE_CONFIGS);
-  const directMobileMoneyMethodId = withdrawalMethodType && withdrawalOperatorIds[withdrawalMethodType]
-    ? withdrawalMethodType
-    : undefined;
-  const isDirectMobileMoneyWithdrawal = Boolean(
-    directMobileMoneyMethodId && selectedMethodId.startsWith("direct-mobile-money:"),
-  );
-  const directMobileMoneyOperatorId = directMobileMoneyMethodId
-    ? withdrawalOperatorIds[directMobileMoneyMethodId]
-    : undefined;
-  const directMobileMoneyCountryOptions = directMobileMoneyOperatorId
-    ? withdrawalCountryOptions.filter((country) =>
-        country.operators.some((operator) => operator.id === directMobileMoneyOperatorId),
-      )
-    : [];
-  const withdrawalMethodCatalog = [
-    { id: "wave", name: "Wave", category: "wallet", color: "#1DC3FD" },
-    { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
-    { id: "mtn_momo", name: "MTN Mobile Money", category: "wallet", color: "#FFCC00" },
-    { id: "moov_money", name: "Moov Money", category: "wallet", color: "#005BAA" },
-    { id: "visa_mastercard", name: "Carte bancaire", category: "card", color: "#2563EB" },
-    { id: "bank_uemoa", name: "Virement bancaire", category: "transfers", color: "#8B5CF6" },
-  ];
-  const visibleWithdrawalMethods = withdrawalMethodCatalog.filter(
-    (method) => {
-      if (withdrawalCategory !== "all" && method.category !== withdrawalCategory) return false;
-      const operatorId = withdrawalOperatorIds[method.id];
-      if (!operatorId) return true;
-      return withdrawalCountryOptions.some((country) =>
-        normalizeCountryName(country.countryName) === normalizeCountryName(withdrawalCountry) &&
-        country.operators.some((operator) => operator.id === operatorId),
-      );
-    },
-  );
+
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
   const [newMethodLabel, setNewMethodLabel] = useState("Wave Côte d'Ivoire");
@@ -471,123 +413,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     showFeedback("success", "Nouvelle vente enregistrée et créditée à votre solde créateur !");
   };
 
-  // Handle Withdrawal Request Submission
-  const handleSubmitWithdrawal = (e: React.FormEvent) => {
-    e.preventDefault();
-    setWithdrawalError(null);
-
-    const amountNum = parseFloat(withdrawalAmount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setWithdrawalError("Veuillez saisir un montant de virement valide.");
-      return;
-    }
-
-    const targetMethodId = selectedMethodId || payoutMethods[0]?.id;
-    if (!targetMethodId) {
-      setWithdrawalError("Veuillez sélectionner ou configurer un compte de retrait.");
-      return;
-    }
-
-    if (!withdrawalCountry.trim()) {
-      setWithdrawalError("Veuillez sélectionner le pays du retrait.");
-      return;
-    }
-
-    if (!withdrawalDestination.trim()) {
-      setWithdrawalError("Veuillez renseigner le numéro du compte à créditer.");
-      return;
-    }
-
-    if (amountNum > balance.availableBalance) {
-      setWithdrawalError(
-        `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`,
-      );
-      return;
-    }
-
-    const minAmount =
-      activeCurrency === "EUR" ? MIN_WITHDRAWAL_AMOUNT_EUR : MIN_WITHDRAWAL_AMOUNT_XOF;
-    if (amountNum < minAmount) {
-      setWithdrawalError(
-        `Le montant minimum de retrait est de ${formatCurrency(minAmount, activeCurrency)}.`,
-      );
-      return;
-    }
-
-    let oneTimeMobileMoneyPayoutMethod: PayoutMethodConfig | undefined;
-    if (isDirectMobileMoneyWithdrawal && directMobileMoneyMethodId) {
-      const mobileMoneyCountry = directMobileMoneyCountryOptions.find(
-        (country) =>
-          normalizeCountryName(country.countryName) === normalizeCountryName(withdrawalCountry),
-      );
-      if (!mobileMoneyCountry) {
-        setWithdrawalError("Ce moyen de retrait n'est pas disponible dans le pays sélectionné.");
-        return;
-      }
-
-      const dialCodeDigits = mobileMoneyCountry.dialCode.replace(/\D/g, "");
-      const enteredPhoneDigits = withdrawalDestination.replace(/\D/g, "");
-      const nationalPhoneDigits = enteredPhoneDigits.startsWith(dialCodeDigits)
-        ? enteredPhoneDigits.slice(dialCodeDigits.length)
-        : enteredPhoneDigits;
-
-      if (!nationalPhoneDigits) {
-        setWithdrawalError("Veuillez saisir le numéro de téléphone à créditer.");
-        return;
-      }
-
-      const methodName =
-        withdrawalMethodCatalog.find((method) => method.id === directMobileMoneyMethodId)?.name ??
-        withdrawalMethodLabels[directMobileMoneyMethodId] ??
-        directMobileMoneyMethodId;
-      oneTimeMobileMoneyPayoutMethod = {
-        id: `mobile-money-direct-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        type: directMobileMoneyMethodId,
-        label: `${methodName} ${mobileMoneyCountry.countryName}`,
-        accountHolder: profile?.momoName || user?.displayName || "",
-        accountIdentifier: `${mobileMoneyCountry.dialCode} ${nationalPhoneDigits}`,
-        country: mobileMoneyCountry.countryName,
-        isVerified: false,
-        isDefault: false,
-        createdAt: new Date().toISOString(),
-      };
-    }
-
-    setIsSubmittingWithdrawal(true);
-    setTimeout(() => {
-      if (
-        selectedPayoutMethod &&
-        (withdrawalDestination.trim() !== selectedPayoutMethod.accountIdentifier ||
-          withdrawalCountry !== selectedPayoutMethod.country)
-      ) {
-        savePayoutMethod(creatorKey, {
-          ...selectedPayoutMethod,
-          accountIdentifier: withdrawalDestination.trim(),
-          country: withdrawalCountry.trim(),
-        });
-      }
-      const result = createWithdrawalRequest({
-        creatorId: creatorKey,
-        amount: amountNum,
-        currency: activeCurrency,
-        payoutMethodId: oneTimeMobileMoneyPayoutMethod?.id ?? targetMethodId,
-        payoutMethod: oneTimeMobileMoneyPayoutMethod,
-      });
-
-      setIsSubmittingWithdrawal(false);
-      if (result.success && result.request) {
-        setWithdrawalSuccess(result.request);
-        reloadFinancialData();
-        showFeedback(
-          "success",
-          `Demande de virement de ${formatCurrency(amountNum, activeCurrency)} transmise avec succès !`,
-        );
-      } else {
-        setWithdrawalError(result.error || "Échec de l'envoi de la demande de virement.");
-      }
-    }, 900);
-  };
-
   // Handle Save New Payout Method
   const handleSaveNewMethod = (e: React.FormEvent) => {
     e.preventDefault();
@@ -605,16 +430,13 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     };
 
     savePayoutMethod(creatorKey, newConfig);
+    setPreferredWithdrawalMethodId(newConfig.id);
     setPayoutMethods((current) => [
       ...current.filter((method) => method.type !== newConfig.type),
       newConfig,
     ]);
-    setSelectedMethodId(newConfig.id);
-    setWithdrawalCountry(newConfig.country);
-    setWithdrawalDestination(newConfig.accountIdentifier);
     setCreatorPayoutConfigured(true);
     setIsAddMethodModalOpen(false);
-    setWithdrawalStep("form");
     setIsPayoutModalOpen(true);
     showFeedback(
       "success",
@@ -637,23 +459,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     setTimeout(() => setNotification(null), 4000);
   };
 
-  // Open withdrawal dialog with checks
+  // Open the shared withdrawal dialog.
   const handleOpenWithdrawalDialog = () => {
-    setWithdrawalError(null);
-    setWithdrawalSuccess(null);
-    setWithdrawalStep("methods");
-    setWithdrawalMethodType(null);
-    setWithdrawalCategory("all");
-    setIncludeDefaultWithdrawalMethods(true);
-    setWithdrawalCountry(DEFAULT_WITHDRAWAL_COUNTRY);
-    if (payoutMethods.length > 0) {
-      const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
-      setSelectedMethodId(defaultM.id);
-      setWithdrawalDestination(defaultM.accountIdentifier);
-    }
-    setWithdrawalAmount(
-      balance.availableBalance > 0 ? balance.availableBalance.toString() : "50000",
-    );
+    setPreferredWithdrawalMethodId(undefined);
     setIsPayoutModalOpen(true);
   };
 
@@ -1497,352 +1305,37 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL: DEMANDE DE VIREMENT (WITHDRAWAL) */}
-      {/* ========================================================================= */}
-      <ModalOverlay
+      <WithdrawalRequestModal
         isOpen={isPayoutModalOpen}
-        onClose={() => {
-          setIsPayoutModalOpen(false);
-          setWithdrawalSuccess(null);
+        onClose={() => setIsPayoutModalOpen(false)}
+        creatorId={creatorKey}
+        accountHolder={profile?.momoName || user?.displayName || ""}
+        currency={activeCurrency}
+        balance={balance}
+        payoutMethods={payoutMethods}
+        preferredPayoutMethodId={preferredWithdrawalMethodId}
+        onPayoutMethodsChange={setPayoutMethods}
+        onConfigureMethod={({ type, label, country }) => {
+          setNewMethodType(type);
+          setNewMethodLabel(label);
+          setNewMethodHolder(profile?.momoName || user?.displayName || "");
+          setNewMethodIdentifier("");
+          setNewMethodCountry(country);
+          setIsAddMethodModalOpen(true);
         }}
-        contentClassName="max-w-md mx-auto"
-      >
-        <div className="w-full rounded-2xl border border-white/10 bg-[#121316] p-6 shadow-2xl space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div className="flex items-center gap-2">
-              <ArrowUpRight className="size-5 text-emerald-400" />
-              <h3 className="text-base font-bold text-white">Demande de retrait</h3>
-            </div>
-            <button
-              onClick={() => {
-                setIsPayoutModalOpen(false);
-                setWithdrawalSuccess(null);
-              }}
-              className="text-zinc-400 hover:text-white cursor-pointer"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
-          {withdrawalSuccess ? (
-            /* CAS 2: VIREMENT RÉUSSI */
-            <div className="py-6 text-center space-y-3">
-              <div className="flex size-14 mx-auto items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                <CheckCircle2 className="size-8" />
-              </div>
-              <h4 className="text-base font-bold text-white">Demande de Virement Transmise !</h4>
-              <p className="text-xs text-zinc-300">
-                <strong className="font-mono text-emerald-400">
-                  {formatCurrency(
-                    withdrawalSuccess.amount,
-                    withdrawalSuccess.currency as CurrencyCode,
-                  )}
-                </strong>{" "}
-                ont été transmis vers votre compte {withdrawalSuccess.payoutMethodLabel}.
-              </p>
-              <div className="p-3 bg-black/40 rounded-xl border border-white/5 text-[11px] font-mono text-zinc-400">
-                Réf: {withdrawalSuccess.referenceNumber}
-              </div>
-              <button
-                onClick={() => {
-                  setIsPayoutModalOpen(false);
-                  setWithdrawalSuccess(null);
-                  setActiveTab("withdrawals");
-                }}
-                className="w-full mt-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all cursor-pointer"
-              >
-                Consulter mes virements
-              </button>
-            </div>
-          ) : withdrawalStep === "methods" ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <CreditCard className="size-5 text-white" />
-                <h3 className="text-2xl font-bold text-white">Méthodes de retrait</h3>
-              </div>
-
-              <div className="rounded-2xl border border-white/[0.08] bg-[#292929] p-4">
-                <label className="mb-1 block text-sm font-semibold text-white">Pays</label>
-                <p className="mb-2 text-xs text-zinc-400">
-                  Les méthodes disponibles correspondent aux opérateurs de ce pays.
-                </p>
-                <select
-                  value={withdrawalCountry}
-                  onChange={(event) => {
-                    setWithdrawalCountry(event.target.value);
-                    setSelectedMethodId("");
-                    setWithdrawalError(null);
-                  }}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
-                >
-                  {withdrawalCountryOptions.map((country) => (
-                    <option key={country.dialCode} value={country.countryName}>
-                      {country.countryName} ({country.dialCode})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#292929] p-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    Inclure les méthodes de retrait par défaut
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-                    Activer automatiquement les nouvelles méthodes de retrait disponibles.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={includeDefaultWithdrawalMethods}
-                  onClick={() => setIncludeDefaultWithdrawalMethods((value) => !value)}
-                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${includeDefaultWithdrawalMethods ? "bg-emerald-500" : "bg-zinc-600"}`}
-                >
-                  <span
-                    className={`absolute top-1 size-5 rounded-full bg-white transition-transform ${includeDefaultWithdrawalMethods ? "translate-x-6" : "translate-x-1"}`}
-                  />
-                </button>
-              </div>
-
-              <div className="overflow-x-auto border-b border-white/10">
-                <div className="flex min-w-max items-end gap-6">
-                  {[
-                    ["all", "Tout"],
-                    ["card", "Carte"],
-                    ["transfers", "Versements"],
-                    ["wallet", "Portefeuille"],
-                    ["other", "Autres"],
-                  ].map(([id, label]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() =>
-                        setWithdrawalCategory(
-                          id as "all" | "card" | "transfers" | "wallet" | "other",
-                        )
-                      }
-                      className={`border-b-2 px-1 pb-3 text-xs font-semibold transition-colors ${withdrawalCategory === id ? "border-emerald-500 text-white" : "border-transparent text-zinc-500 hover:text-zinc-200"}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#292929]">
-                {visibleWithdrawalMethods.map((method, index) => {
-                  const configured = payoutMethods.find((item) => item.type === method.id);
-                  const selected = selectedMethodId === configured?.id;
-                  return (
-                    <button
-                      key={method.id}
-                      type="button"
-                      onClick={() => {
-                        if (withdrawalOperatorIds[method.id]) {
-                          const supportedCountries = withdrawalCountryOptions.filter((country) =>
-                            country.operators.some(
-                              (operator) => operator.id === withdrawalOperatorIds[method.id],
-                            ),
-                          );
-                          const selectedCountry =
-                            supportedCountries.find(
-                              (country) =>
-                                normalizeCountryName(country.countryName) ===
-                                normalizeCountryName(withdrawalCountry),
-                            ) ??
-                            supportedCountries.find((country) => country.countryCode === "CI") ??
-                            supportedCountries[0];
-                          setSelectedMethodId(`direct-mobile-money:${method.id}`);
-                          setWithdrawalMethodType(method.id as PayoutMethodType);
-                          setWithdrawalAmount("");
-                          setWithdrawalDestination("");
-                          setWithdrawalCountry(
-                            selectedCountry?.countryName || DEFAULT_WITHDRAWAL_COUNTRY,
-                          );
-                          setWithdrawalError(null);
-                          setWithdrawalStep("form");
-                        } else if (configured) {
-                          setSelectedMethodId(configured.id);
-                          setWithdrawalMethodType(configured.type);
-                          setWithdrawalDestination(configured.accountIdentifier);
-                          setWithdrawalCountry(configured.country || DEFAULT_WITHDRAWAL_COUNTRY);
-                          setWithdrawalError(null);
-                          setWithdrawalStep("form");
-                        } else {
-                          setNewMethodType(method.id as PayoutMethodType);
-                          setNewMethodLabel(method.name);
-                          setNewMethodHolder(profile?.momoName || user?.displayName || "");
-                          setNewMethodIdentifier("");
-                          setNewMethodCountry(withdrawalCountry);
-                          setIsPayoutModalOpen(false);
-                          setIsAddMethodModalOpen(true);
-                        }
-                      }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index > 0 ? "border-t border-white/[0.08]" : ""} ${selected ? "bg-emerald-500/10" : "hover:bg-white/[0.04]"}`}
-                    >
-                      <Lock className="size-5 shrink-0 text-zinc-600" />
-                      <span
-                        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-white"
-                        style={{ backgroundColor: method.color }}
-                      >
-                        {method.name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
-                        {method.name}
-                      </span>
-                      <span
-                        className={`shrink-0 text-xs font-semibold ${selected ? "text-emerald-300" : configured ? "text-white" : "text-zinc-500"}`}
-                      >
-                        {selected ? "Sélectionné" : configured ? "Sélectionner" : "Configurer"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {withdrawalError && (
-                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
-                  {withdrawalError}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWithdrawalCategory("all");
-                    setIncludeDefaultWithdrawalMethods(true);
-                    setSelectedMethodId("");
-                  }}
-                  className="text-[11px] font-semibold text-zinc-400 transition-colors hover:text-white"
-                >
-                  Restaurer les paramètres par défaut
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsPayoutModalOpen(false)}
-                    className="rounded-xl bg-[#292929] px-3 py-2.5 text-xs font-semibold text-white hover:bg-[#383838]"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!selectedMethodId}
-                    onClick={() => setWithdrawalStep("form")}
-                    className="rounded-xl bg-emerald-500 px-3 py-2.5 text-xs font-semibold text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Enregistrer
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* CAS 3: FORMULAIRE DE RETRAIT NORMAL */
-            <form onSubmit={handleSubmitWithdrawal} className="space-y-4">
-              {withdrawalError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="size-4 shrink-0 text-rose-400" />
-                  <span>{withdrawalError}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-zinc-300">Montant du retrait</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min={5000}
-                    max={balance.availableBalance}
-                    value={withdrawalAmount}
-                    onChange={(e) => setWithdrawalAmount(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#16181f] pl-4 pr-16 py-2.5 font-mono text-sm text-white focus:border-emerald-500 outline-none"
-                    placeholder="50000"
-                    required
-                  />
-                  <span className="absolute right-3.5 top-3 font-mono text-xs text-zinc-400 font-bold">
-                    {activeCurrency}
-                  </span>
-                </div>
-
-              </div>
-
-              {isDirectMobileMoneyWithdrawal ? (
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">
-                    Indicatif téléphonique
-                  </label>
-                  <select
-                    value={withdrawalCountry}
-                    onChange={(event) => setWithdrawalCountry(event.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
-                  >
-                    {directMobileMoneyCountryOptions.map((country) => (
-                      <option key={country.dialCode} value={country.countryName}>
-                        {country.flag} {country.countryName} ({country.dialCode})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
-                  <select
-                    value={withdrawalCountry}
-                    onChange={(event) => setWithdrawalCountry(event.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
-                  >
-                    {withdrawalCountryOptions.map((country) => (
-                      <option key={country.dialCode} value={country.countryName}>
-                        {country.countryName} ({country.dialCode})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-zinc-300">
-                  {selectedPayoutMethod?.type.startsWith("bank")
-                    ? "Numéro RIB / IBAN"
-                    : "Numéro de téléphone"}
-                </label>
-                <input
-                  type="text"
-                  value={withdrawalDestination}
-                  onChange={(event) => setWithdrawalDestination(event.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-500"
-                  placeholder={
-                    isDirectMobileMoneyWithdrawal
-                      ? "Numéro sans indicatif"
-                      : selectedPayoutMethod?.type.startsWith("bank")
-                        ? "RIB ou IBAN"
-                        : "Numéro Mobile Money"
-                  }
-                  required
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={isSubmittingWithdrawal || balance.availableBalance < 5000}
-                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black text-xs font-bold transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
-                >
-                  {isSubmittingWithdrawal ? (
-                    <RefreshCw className="size-4 animate-spin" />
-                  ) : (
-                    <ArrowUpRight className="size-4" />
-                  )}
-                  <span>Confirmer</span>
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </ModalOverlay>
+        onRequestCreated={(request) => {
+          reloadFinancialData();
+          showFeedback(
+            "success",
+            `Demande de virement de ${formatCurrency(request.amount, activeCurrency)} transmise avec succès !`,
+          );
+        }}
+        onSuccessContinue={() => {
+          setIsPayoutModalOpen(false);
+          setActiveTab("withdrawals");
+        }}
+        successActionLabel="Consulter mes virements"
+      />
 
       {/* ========================================================================= */}
       {/* MODAL: AJOUTER UN MOYEN DE RETRAIT */}
@@ -1860,7 +1353,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 <h3 className="text-base font-bold text-white">
                   Configurer {newMethodType === "wave" ? "Wave" : newMethodLabel}
                 </h3>
-                <p className="mt-1 text-xs text-zinc-400">Ajoutez le compte qui recevra vos versements.</p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Ajoutez le compte qui recevra vos versements.
+                </p>
               </div>
             </div>
             <button
@@ -1952,9 +1447,9 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   ? "Numéro Wave"
                   : newMethodType.includes("bank")
                     ? "Numéro IBAN / RIB complet (24 caractères)"
-                  : newMethodType.includes("crypto")
-                    ? "Adresse Wallet USDT (TRC-20)"
-                    : "Numéro de téléphone Mobile Money avec indicatif (+225...)"}
+                    : newMethodType.includes("crypto")
+                      ? "Adresse Wallet USDT (TRC-20)"
+                      : "Numéro de téléphone Mobile Money avec indicatif (+225...)"}
               </label>
               <input
                 type="text"
