@@ -134,7 +134,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   const [withdrawalAmount, setWithdrawalAmount] = useState<string>("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
   const [withdrawalDestination, setWithdrawalDestination] = useState<string>("");
-  const [withdrawalCountry, setWithdrawalCountry] = useState("");
+  const [withdrawalCountry, setWithdrawalCountry] = useState("Côte d'Ivoire");
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
@@ -157,18 +157,86 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     paypal: "PayPal",
   };
   const withdrawalMethodCatalog = [
-    { id: "wave", name: "Wave", category: "wallet", color: "#1DC3FD" },
-    { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
-    { id: "mtn_momo", name: "MTN Mobile Money", category: "wallet", color: "#FFCC00" },
-    { id: "moov_money", name: "Moov Money", category: "wallet", color: "#005BAA" },
-    { id: "bank_uemoa", name: "Virement bancaire", category: "transfers", color: "#8B5CF6" },
-    { id: "bank_cemac", name: "Virement bancaire CEMAC", category: "transfers", color: "#7C3AED" },
-    { id: "bank_sepa", name: "Virement bancaire SEPA", category: "transfers", color: "#6366F1" },
-    { id: "paypal", name: "PayPal", category: "other", color: "#0070BA" },
-    { id: "crypto_usdt", name: "USDT", category: "other", color: "#26A17B" },
+    {
+      id: "wave",
+      name: "Wave",
+      category: "wallet",
+      color: "#1DC3FD",
+      countries: ["Côte d'Ivoire", "Sénégal"],
+    },
+    {
+      id: "orange_money",
+      name: "Orange Money",
+      category: "wallet",
+      color: "#FF7900",
+      countries: ["Côte d'Ivoire", "Sénégal", "Bénin", "Togo", "Cameroun"],
+    },
+    {
+      id: "mtn_momo",
+      name: "MTN Mobile Money",
+      category: "wallet",
+      color: "#FFCC00",
+      countries: ["Bénin", "Cameroun", "Côte d'Ivoire", "Ghana"],
+    },
+    {
+      id: "moov_money",
+      name: "Moov Money",
+      category: "wallet",
+      color: "#005BAA",
+      countries: ["Côte d'Ivoire", "Bénin", "Togo"],
+    },
+    {
+      id: "bank_uemoa",
+      name: "Virement bancaire UEMOA",
+      category: "transfers",
+      color: "#8B5CF6",
+      countries: ["Côte d'Ivoire", "Sénégal", "Bénin", "Togo"],
+    },
+    {
+      id: "bank_cemac",
+      name: "Virement bancaire CEMAC",
+      category: "transfers",
+      color: "#7C3AED",
+      countries: ["Cameroun"],
+    },
+    {
+      id: "bank_sepa",
+      name: "Virement bancaire SEPA",
+      category: "transfers",
+      color: "#6366F1",
+      countries: ["France", "Belgique", "Allemagne", "Espagne"],
+    },
+    {
+      id: "paypal",
+      name: "PayPal",
+      category: "other",
+      color: "#0070BA",
+      countries: ["Tous les pays"],
+    },
+    {
+      id: "crypto_usdt",
+      name: "USDT",
+      category: "other",
+      color: "#26A17B",
+      countries: ["Tous les pays"],
+    },
+  ];
+  const withdrawalCountries = [
+    "Côte d'Ivoire",
+    "Sénégal",
+    "Bénin",
+    "Togo",
+    "Cameroun",
+    "Ghana",
+    "France",
+    "Belgique",
+    "Allemagne",
+    "Espagne",
   ];
   const visibleWithdrawalMethods = withdrawalMethodCatalog.filter(
-    (method) => withdrawalCategory === "all" || method.category === withdrawalCategory,
+    (method) =>
+      (withdrawalCategory === "all" || method.category === withdrawalCategory) &&
+      (method.countries.includes(withdrawalCountry) || method.countries.includes("Tous les pays")),
   );
 
   // New Payout Method Form
@@ -455,11 +523,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
       return;
     }
 
-    if (!withdrawalCountry.trim()) {
-      setWithdrawalError("Veuillez renseigner le pays du compte de retrait.");
-      return;
-    }
-
     if (amountNum > balance.availableBalance) {
       setWithdrawalError(
         `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`,
@@ -557,7 +620,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     setWithdrawalStep("methods");
     setWithdrawalCategory("all");
     setIncludeDefaultWithdrawalMethods(true);
-    setWithdrawalCountry("");
+    setWithdrawalCountry("Côte d'Ivoire");
     if (payoutMethods.length > 0) {
       const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
       setSelectedMethodId(defaultM.id);
@@ -1474,6 +1537,28 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 <h3 className="text-2xl font-bold text-white">Méthodes de retrait</h3>
               </div>
 
+              <div className="rounded-2xl border border-white/[0.08] bg-[#292929] p-4">
+                <label className="mb-1 block text-sm font-semibold text-white">
+                  Pays du compte de retrait
+                </label>
+                <p className="mb-2 text-xs text-zinc-400">
+                  Les méthodes affichées dépendent du pays sélectionné.
+                </p>
+                <select
+                  value={withdrawalCountry}
+                  onChange={(event) => {
+                    setWithdrawalCountry(event.target.value);
+                    setSelectedMethodId("");
+                    setWithdrawalError(null);
+                  }}
+                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+                >
+                  {withdrawalCountries.map((country) => (
+                    <option key={country}>{country}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#292929] p-4">
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -1533,7 +1618,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                         if (configured) {
                           setSelectedMethodId(configured.id);
                           setWithdrawalDestination(configured.accountIdentifier);
-                          setWithdrawalCountry(configured.country || "");
+                          setWithdrawalCountry(configured.country || withdrawalCountry);
                           setWithdrawalError(null);
                           setWithdrawalStep("form");
                         } else {
@@ -1556,7 +1641,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                             label: method.name,
                             accountHolder: profile?.momoName || user?.displayName || "",
                             accountIdentifier: "",
-                            country: "",
+                            country: withdrawalCountry,
                             isVerified: false,
                             isDefault: payoutMethods.length === 0,
                             createdAt: new Date().toISOString(),
@@ -1565,7 +1650,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                           savePayoutMethod(creatorKey, draftMethod);
                           setSelectedMethodId(draftMethod.id);
                           setWithdrawalDestination("");
-                          setWithdrawalCountry("");
+                          setWithdrawalCountry(withdrawalCountry);
                           setWithdrawalStep("form");
                         }
                       }}
@@ -1716,15 +1801,12 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
 
               {selectedPayoutMethod && (
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
-                  <input
-                    type="text"
-                    value={withdrawalCountry}
-                    onChange={(event) => setWithdrawalCountry(event.target.value)}
-                    className="mb-3 w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
-                    placeholder="Ex. Côte d'Ivoire, Sénégal..."
-                    required
-                  />
+                  <label className="mb-1 block text-xs font-semibold text-zinc-300">
+                    Pays sélectionné
+                  </label>
+                  <div className="mb-3 w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-zinc-300">
+                    {withdrawalCountry}
+                  </div>
                   <label className="mb-1 block text-xs font-semibold text-zinc-300">
                     {selectedPayoutMethod.type.startsWith("bank")
                       ? "RIB / IBAN"
