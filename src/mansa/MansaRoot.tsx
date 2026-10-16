@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode, StrictMode } from "react";
 import { Moon, Sun } from "lucide-react";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
+import { safeStorage } from "./utils/storage";
 
 interface Props {
   children: React.ReactNode;
@@ -99,7 +100,7 @@ export default function MansaRoot() {
   const [isDark, setIsDark] = React.useState(false);
 
   React.useEffect(() => {
-    const storedTheme = window.localStorage.getItem("afhub-theme");
+    const storedTheme = safeStorage.getItem("afhub-theme");
     const nextIsDark = storedTheme === "dark";
     setIsDark(nextIsDark);
     document.documentElement.classList.toggle("dark", nextIsDark);
@@ -109,7 +110,7 @@ export default function MansaRoot() {
   const toggleTheme = () => {
     const nextIsDark = !isDark;
     setIsDark(nextIsDark);
-    window.localStorage.setItem("afhub-theme", nextIsDark ? "dark" : "light");
+    safeStorage.setItem("afhub-theme", nextIsDark ? "dark" : "light");
     document.documentElement.classList.toggle("dark", nextIsDark);
     document.documentElement.style.colorScheme = nextIsDark ? "dark" : "light";
   };

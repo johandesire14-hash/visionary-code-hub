@@ -21,7 +21,6 @@ import {
   Check,
   LogOut,
   Smartphone,
-  Plus,
   ExternalLink,
   Trash2,
   Key,
@@ -31,10 +30,24 @@ import {
   LifeBuoy,
   Loader2,
 } from "lucide-react";
-import { getUserProfile, updateUserProfile } from "../../services/dbService";
+import {
+  getUserProfile,
+  updateUserProfile,
+  type AccountPaymentSettings,
+} from "../../services/dbService";
 import { CustomerPurchasesView } from "../dashboard/CustomerPurchasesView";
 import { useModalDismiss } from "../../hooks/useModalDismiss";
 import { siteUrl } from "@/lib/site";
+import {
+  DIAL_CODE_CONFIGS,
+  normalizePhoneNumber,
+  validatePhoneNumber,
+} from "../../utils/phoneValidationRules";
+import {
+  DEFAULT_PAYMENT_METHODS,
+  PaymentMethodsTemplate,
+  type PaymentMethodCategory,
+} from "./PaymentMethodsTemplate";
 
 export type AccountSettingsTab =
   | "profil"
@@ -63,6 +76,12 @@ interface AccountSettingsModalProps {
   initialTab?: AccountSettingsTab;
   isModal?: boolean;
 }
+
+const createDefaultAccountPaymentSettings = (): AccountPaymentSettings => ({
+  includeDefaultPaymentMethods: true,
+  paymentVerificationStatuses: {},
+  methods: {},
+});
 
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   isOpen = true,
@@ -105,11 +124,47 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [googleConnected, setGoogleConnected] = useState(true);
   const [xConnected, setXConnected] = useState(false);
 
+  // Personal account payment settings are stored on the user profile, not on any company.
+  const [accountPaymentCategory, setAccountPaymentCategory] =
+    useState<PaymentMethodCategory>("all");
+  const [accountPaymentSettings, setAccountPaymentSettings] = useState<AccountPaymentSettings>(
+    createDefaultAccountPaymentSettings,
+  );
+  const [accountPaymentConfigMethod, setAccountPaymentConfigMethod] = useState<string | null>(null);
+  const [accountPaymentCurrency, setAccountPaymentCurrency] = useState("XOF");
+  const [accountPaymentConfigDraft, setAccountPaymentConfigDraft] = useState({
+    dialCode: "+225",
+    phone: "",
+    accountName: user.name || "",
+    bankName: "Ecobank (UEMOA / CEMAC)",
+    bankIbanRib: "",
+    bankAccountHolder: user.name || "",
+    identityAuthorized: false,
+  });
+  const [isSavingAccountPayments, setIsSavingAccountPayments] = useState(false);
+  const [accountPaymentSaveSuccess, setAccountPaymentSaveSuccess] = useState(false);
+  const [accountPaymentSaveError, setAccountPaymentSaveError] = useState<string | null>(null);
+
   // Load existing profile from Firestore on mount
   useEffect(() => {
     let isMounted = true;
     const loadProfile = async () => {
       if (!userId) return;
+      setAccountPaymentSettings(createDefaultAccountPaymentSettings());
+      setAccountPaymentCategory("all");
+      setAccountPaymentConfigMethod(null);
+      setAccountPaymentCurrency("XOF");
+      setAccountPaymentSaveSuccess(false);
+      setAccountPaymentSaveError(null);
+      setAccountPaymentConfigDraft({
+        dialCode: "+225",
+        phone: "",
+        accountName: user.name || "",
+        bankName: "Ecobank (UEMOA / CEMAC)",
+        bankIbanRib: "",
+        bankAccountHolder: user.name || "",
+        identityAuthorized: false,
+      });
       setIsLoadingProfile(true);
       try {
         const profile = await getUserProfile(userId);
@@ -125,6 +180,18 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             setShowOwnedBusinesses(profile.showOwnedWhops);
           }
           if (profile.showJoinedWhops !== undefined) setShowJoinedWhops(profile.showJoinedWhops);
+          if (profile.storeCurrency || profile.currency) {
+            setAccountPaymentCurrency(profile.storeCurrency || profile.currency);
+          }
+          if (profile.accountPaymentSettings) {
+            setAccountPaymentSettings({
+              includeDefaultPaymentMethods:
+                profile.accountPaymentSettings.includeDefaultPaymentMethods ?? true,
+              paymentVerificationStatuses:
+                profile.accountPaymentSettings.paymentVerificationStatuses ?? {},
+              methods: profile.accountPaymentSettings.methods ?? {},
+            });
+          }
         }
       } catch (err: any) {
         console.error("Failed to load user profile from Firestore:", err);
@@ -137,7 +204,111 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [userId, user.name]);
+
+  const selectedAccountPaymentMethod = DEFAULT_PAYMENT_METHODS.find(
+    (method) => method.id === accountPaymentConfigMethod,
+  );
+  const accountMobileOperator =
+    selectedAccountPaymentMethod &&
+    ["wave", "orange", "mtn", "moov"].includes(selectedAccountPaymentMethod.id)
+    ? selectedAccountPaymentMethod.id
+    : null;
+  const accountPaymentCountries = accountMobileOperator
+    ? Object.values(DIAL_CODE_CONFIGS).filter((country) =>
+        country.operators.some((operator) => operator.id === accountMobileOperator),
+      )
+    : [];
+  const accountPaymentValidation = accountMobileOperator
+    ? validatePhoneNumber(
+        accountPaymentConfigDraft.dialCode,
+        accountMobileOperator,
+        accountPaymentConfigDraft.phone,
+        accountPaymentCurrency,
+      )
+    : { isValid: true };
+  const accountPaymentTemplateMethods = DEFAULT_PAYMENT_METHODS.map((method) => ({
+    ...method,
+    pending: accountPaymentSettings.paymentVerificationStatuses[method.id] === "pending",
+  }));
+
+  const handleConfigureAccountPaymentMethod = (methodId: string) => {
+    const existing = accountPaymentSettings.methods[methodId] || {};
+    const operatorId = ["wave", "orange", "mtn", "moov"].includes(methodId) ? methodId : null;
+    const supportedCountries = operatorId
+      ? Object.values(DIAL_CODE_CONFIGS).filter((country) =>
+          country.operators.some((operator) => operator.id === operatorId),
+        )
+      : [];
+    const dialCode =
+      supportedCountries.find((country) => country.dialCode === existing.dialCode)?.dialCode ??
+      supportedCountries.find((country) => country.dialCode === "+225")?.dialCode ??
+      supportedCountries[0]?.dialCode ??
+      "+225";
+
+    setAccountPaymentConfigDraft({
+      dialCode,
+      phone: existing.phone || "",
+      accountName: existing.accountName || user.name || "",
+      bankName: existing.bankName || "Ecobank (UEMOA / CEMAC)",
+      bankIbanRib: existing.bankIbanRib || "",
+      bankAccountHolder: existing.bankAccountHolder || user.name || "",
+      identityAuthorized: existing.identityAuthorized || false,
+    });
+    setAccountPaymentSaveError(null);
+    setAccountPaymentConfigMethod(methodId);
+  };
+
+  const handleConfirmAccountPaymentMethod = () => {
+    if (!selectedAccountPaymentMethod) return;
+
+    const methodId = selectedAccountPaymentMethod.id;
+    const methodConfig = accountMobileOperator
+      ? {
+          dialCode: accountPaymentConfigDraft.dialCode,
+          phone: normalizePhoneNumber(
+            accountPaymentConfigDraft.phone,
+            accountPaymentConfigDraft.dialCode,
+          ),
+          accountName: accountPaymentConfigDraft.accountName.trim(),
+        }
+      : methodId === "bank"
+        ? {
+            bankName: accountPaymentConfigDraft.bankName,
+            bankIbanRib: accountPaymentConfigDraft.bankIbanRib.trim(),
+            bankAccountHolder: accountPaymentConfigDraft.bankAccountHolder.trim(),
+          }
+        : { identityAuthorized: accountPaymentConfigDraft.identityAuthorized };
+
+    setAccountPaymentSettings((current) => ({
+      ...current,
+      methods: { ...current.methods, [methodId]: methodConfig },
+      paymentVerificationStatuses: {
+        ...current.paymentVerificationStatuses,
+        [methodId]: "pending",
+      },
+    }));
+    setAccountPaymentConfigMethod(null);
+  };
+
+  const handleSaveAccountPaymentSettings = async () => {
+    setIsSavingAccountPayments(true);
+    setAccountPaymentSaveError(null);
+    setAccountPaymentSaveSuccess(false);
+    try {
+      await updateUserProfile(userId, { accountPaymentSettings });
+      setAccountPaymentSaveSuccess(true);
+      setTimeout(() => setAccountPaymentSaveSuccess(false), 3500);
+    } catch (err: unknown) {
+      setAccountPaymentSaveError(
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de l'enregistrement des méthodes de paiement.",
+      );
+    } finally {
+      setIsSavingAccountPayments(false);
+    }
+  };
 
   if (isModal && !isOpen) return null;
 
@@ -709,24 +880,266 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           {/* 7. TAB: MÉTHODES DE PAIEMENT */}
           {/* ================================================================= */}
           {activeTab === "paiements" && (
-            <div className="space-y-3 text-xs">
-              <div className="rounded-xl border border-white/[0.08] bg-[#14161b] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                    <CreditCard className="size-4" />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-white block">Wave Mobile Money CI</span>
-                    <span className="text-[11px] text-zinc-400">•• 44 • Par défaut</span>
+            <div className="space-y-4">
+              {accountPaymentSaveSuccess && (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-400">
+                  Les méthodes de paiement du compte ont été enregistrées.
+                </div>
+              )}
+              {accountPaymentSaveError && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-semibold text-red-400">
+                  {accountPaymentSaveError}
+                </div>
+              )}
+              <PaymentMethodsTemplate
+                methods={accountPaymentTemplateMethods}
+                includeDefaultPaymentMethods={accountPaymentSettings.includeDefaultPaymentMethods}
+                onToggleDefaultPaymentMethods={() =>
+                  setAccountPaymentSettings((current) => ({
+                    ...current,
+                    includeDefaultPaymentMethods: !current.includeDefaultPaymentMethods,
+                  }))
+                }
+                paymentCategory={accountPaymentCategory}
+                onPaymentCategoryChange={setAccountPaymentCategory}
+                onConfigure={(method) => handleConfigureAccountPaymentMethod(method.id)}
+                onRestoreDefaults={() => {
+                  setAccountPaymentCategory("all");
+                  setAccountPaymentSettings(createDefaultAccountPaymentSettings());
+                  setAccountPaymentSaveError(null);
+                  setAccountPaymentSaveSuccess(false);
+                }}
+                onSave={handleSaveAccountPaymentSettings}
+                isSaving={isSavingAccountPayments}
+              />
+
+              {accountPaymentConfigMethod && selectedAccountPaymentMethod && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+                  <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
+                    <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="flex size-10 items-center justify-center rounded-xl text-xs font-black text-white"
+                          style={{ backgroundColor: selectedAccountPaymentMethod.color }}
+                        >
+                          {selectedAccountPaymentMethod.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div>
+                          <h3 className="text-base font-bold text-white">
+                            Configurer {selectedAccountPaymentMethod.name}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-zinc-400">
+                            Renseignez les informations nécessaires pour activer cette méthode.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAccountPaymentConfigMethod(null)}
+                        aria-label="Fermer la configuration"
+                        className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+
+                    <div className="mt-4 space-y-4 text-xs">
+                      {accountMobileOperator && (
+                        <>
+                          <div>
+                            <label className="mb-1 block font-semibold text-zinc-300">Pays</label>
+                            <select
+                              value={accountPaymentConfigDraft.dialCode}
+                              onChange={(event) =>
+                                setAccountPaymentConfigDraft((current) => ({
+                                  ...current,
+                                  dialCode: event.target.value,
+                                  phone: "",
+                                }))
+                              }
+                              className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                            >
+                              {accountPaymentCountries.map((country) => (
+                                <option key={country.dialCode} value={country.dialCode}>
+                                  {country.countryName} ({country.dialCode})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="mb-1 block font-semibold text-zinc-300">
+                              Numéro {selectedAccountPaymentMethod.name}
+                            </label>
+                            <div
+                              className={`flex items-center rounded-lg border bg-[#101114] ${accountPaymentValidation.isValid ? "border-emerald-500/70" : "border-white/10"}`}
+                            >
+                              <span className="border-r border-white/10 px-3 py-2.5 font-mono text-zinc-400">
+                                {accountPaymentConfigDraft.dialCode}
+                              </span>
+                              <input
+                                type="tel"
+                                inputMode="numeric"
+                                value={accountPaymentConfigDraft.phone}
+                                onChange={(event) =>
+                                  setAccountPaymentConfigDraft((current) => ({
+                                    ...current,
+                                    phone: normalizePhoneNumber(
+                                      event.target.value,
+                                      current.dialCode,
+                                    ),
+                                  }))
+                                }
+                                placeholder={
+                                  DIAL_CODE_CONFIGS[
+                                    accountPaymentConfigDraft.dialCode
+                                  ]?.operators.find(
+                                    (operator) => operator.id === accountMobileOperator,
+                                  )?.format
+                                }
+                                className="min-w-0 flex-1 bg-transparent px-3 py-2.5 font-mono text-white outline-none placeholder:text-zinc-600"
+                              />
+                            </div>
+                            {accountPaymentConfigDraft.phone &&
+                              !accountPaymentValidation.isValid && (
+                                <p className="mt-1 text-[10px] text-red-300">
+                                  {accountPaymentValidation.errorMessage || "Numéro invalide."}
+                                </p>
+                              )}
+                          </div>
+                          <div>
+                            <label className="mb-1 block font-semibold text-zinc-300">
+                              Nom du titulaire
+                            </label>
+                            <input
+                              type="text"
+                              value={accountPaymentConfigDraft.accountName}
+                              onChange={(event) =>
+                                setAccountPaymentConfigDraft((current) => ({
+                                  ...current,
+                                  accountName: event.target.value,
+                                }))
+                              }
+                              placeholder="Nom associé au compte"
+                              className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {selectedAccountPaymentMethod.id === "bank" && (
+                        <>
+                          <div>
+                            <label className="mb-1 block font-semibold text-zinc-300">
+                              Banque partenaire
+                            </label>
+                            <select
+                              value={accountPaymentConfigDraft.bankName}
+                              onChange={(event) =>
+                                setAccountPaymentConfigDraft((current) => ({
+                                  ...current,
+                                  bankName: event.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none"
+                            >
+                              <option>Ecobank (UEMOA / CEMAC)</option>
+                              <option>Coris Bank International</option>
+                              <option>Société Générale (SGCI / SGS)</option>
+                              <option>United Bank for Africa (UBA)</option>
+                              <option>NSIA Banque</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="mb-1 block font-semibold text-zinc-300">
+                              Titulaire du compte
+                            </label>
+                            <input
+                              type="text"
+                              value={accountPaymentConfigDraft.bankAccountHolder}
+                              onChange={(event) =>
+                                setAccountPaymentConfigDraft((current) => ({
+                                  ...current,
+                                  bankAccountHolder: event.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 text-white outline-none focus:border-[#00D26A]"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block font-semibold text-zinc-300">
+                              RIB / IBAN
+                            </label>
+                            <input
+                              type="text"
+                              value={accountPaymentConfigDraft.bankIbanRib}
+                              onChange={(event) =>
+                                setAccountPaymentConfigDraft((current) => ({
+                                  ...current,
+                                  bankIbanRib: event.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-white/10 bg-[#101114] p-2.5 font-mono text-white outline-none focus:border-[#00D26A]"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {selectedAccountPaymentMethod.id === "card" && (
+                        <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-zinc-300">
+                          <p className="font-semibold text-white">
+                            Vérification du compte marchand
+                          </p>
+                          <p className="leading-relaxed text-zinc-400">
+                            La connexion sécurisée du prestataire carte bancaire sera nécessaire
+                            avant d’accepter les paiements.
+                          </p>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={accountPaymentConfigDraft.identityAuthorized}
+                              onChange={(event) =>
+                                setAccountPaymentConfigDraft((current) => ({
+                                  ...current,
+                                  identityAuthorized: event.target.checked,
+                                }))
+                              }
+                              className="accent-[#00D26A]"
+                            />
+                            J’autorise la vérification de mon identité
+                          </label>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end gap-2 border-t border-white/10 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => setAccountPaymentConfigMethod(null)}
+                          className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="button"
+                          disabled={
+                            (Boolean(accountMobileOperator) &&
+                              (!accountPaymentValidation.isValid ||
+                                !accountPaymentConfigDraft.accountName.trim())) ||
+                            (selectedAccountPaymentMethod.id === "bank" &&
+                              (!accountPaymentConfigDraft.bankIbanRib.trim() ||
+                                !accountPaymentConfigDraft.bankAccountHolder.trim())) ||
+                            (selectedAccountPaymentMethod.id === "card" &&
+                              !accountPaymentConfigDraft.identityAuthorized)
+                          }
+                          onClick={handleConfirmAccountPaymentMethod}
+                          className="rounded-xl bg-[#00D26A] px-4 py-2.5 text-xs font-bold text-black transition-colors hover:bg-[#10E47A] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Continuer la vérification
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Actif</span>
-              </div>
-
-              <button className="w-full py-2.5 rounded-xl border border-dashed border-white/10 hover:border-white/20 text-zinc-400 hover:text-white flex items-center justify-center gap-2 cursor-pointer">
-                <Plus className="size-3.5" />
-                <span>Ajouter une méthode de paiement</span>
-              </button>
+              )}
             </div>
           )}
 

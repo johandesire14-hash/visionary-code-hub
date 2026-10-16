@@ -99,6 +99,9 @@ interface PaymentsViewProps {
 
 type FinancialTab = "overview" | "sales" | "withdrawals" | "payout_methods";
 
+const DEFAULT_WITHDRAWAL_COUNTRY = DIAL_CODE_CONFIGS["+225"].countryName;
+const normalizeCountryName = (name: string) => name.replace(/[‘’]/g, "'").toLowerCase();
+
 export const PaymentsView: React.FC<PaymentsViewProps> = ({
   lang = "fr",
   currency = "XAF" as CurrencyCode,
@@ -136,8 +139,9 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   // Withdrawal form inside modal
   const [withdrawalAmount, setWithdrawalAmount] = useState<string>("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
+  const [withdrawalMethodType, setWithdrawalMethodType] = useState<PayoutMethodType | null>(null);
   const [withdrawalDestination, setWithdrawalDestination] = useState<string>("");
-  const [withdrawalCountry, setWithdrawalCountry] = useState("Côte d'Ivoire");
+  const [withdrawalCountry, setWithdrawalCountry] = useState(DEFAULT_WITHDRAWAL_COUNTRY);
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalRequest | null>(null);
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
@@ -166,6 +170,20 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     moov_money: "moov",
   };
   const withdrawalCountryOptions = Object.values(DIAL_CODE_CONFIGS);
+  const directMobileMoneyMethodId = withdrawalMethodType && withdrawalOperatorIds[withdrawalMethodType]
+    ? withdrawalMethodType
+    : undefined;
+  const isDirectMobileMoneyWithdrawal = Boolean(
+    directMobileMoneyMethodId && selectedMethodId.startsWith("direct-mobile-money:"),
+  );
+  const directMobileMoneyOperatorId = directMobileMoneyMethodId
+    ? withdrawalOperatorIds[directMobileMoneyMethodId]
+    : undefined;
+  const directMobileMoneyCountryOptions = directMobileMoneyOperatorId
+    ? withdrawalCountryOptions.filter((country) =>
+        country.operators.some((operator) => operator.id === directMobileMoneyOperatorId),
+      )
+    : [];
   const withdrawalMethodCatalog = [
     { id: "wave", name: "Wave", category: "wallet", color: "#1DC3FD" },
     { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
@@ -180,18 +198,11 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
       const operatorId = withdrawalOperatorIds[method.id];
       if (!operatorId) return true;
       return withdrawalCountryOptions.some((country) =>
-        country.countryName === withdrawalCountry &&
+        normalizeCountryName(country.countryName) === normalizeCountryName(withdrawalCountry) &&
         country.operators.some((operator) => operator.id === operatorId),
       );
     },
   );
-  const newMethodOperatorId = withdrawalOperatorIds[newMethodType];
-  const newMethodCountryOptions = newMethodOperatorId
-    ? withdrawalCountryOptions.filter((country) =>
-        country.operators.some((operator) => operator.id === newMethodOperatorId),
-      )
-    : withdrawalCountryOptions;
-
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
   const [newMethodLabel, setNewMethodLabel] = useState("Wave Côte d'Ivoire");
@@ -200,7 +211,13 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
   );
   const [newMethodIdentifier, setNewMethodIdentifier] = useState("+225 07 88 99 00 11");
   const [newMethodBank, setNewMethodBank] = useState("");
-  const [newMethodCountry, setNewMethodCountry] = useState("Côte d'Ivoire");
+  const [newMethodCountry, setNewMethodCountry] = useState(DEFAULT_WITHDRAWAL_COUNTRY);
+  const newMethodOperatorId = withdrawalOperatorIds[newMethodType];
+  const newMethodCountryOptions = newMethodOperatorId
+    ? withdrawalCountryOptions.filter((country) =>
+        country.operators.some((operator) => operator.id === newMethodOperatorId),
+      )
+    : withdrawalCountryOptions;
 
   // Feedback notifications
   const [notification, setNotification] = useState<{
@@ -497,6 +514,45 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
       return;
     }
 
+    let oneTimeMobileMoneyPayoutMethod: PayoutMethodConfig | undefined;
+    if (isDirectMobileMoneyWithdrawal && directMobileMoneyMethodId) {
+      const mobileMoneyCountry = directMobileMoneyCountryOptions.find(
+        (country) =>
+          normalizeCountryName(country.countryName) === normalizeCountryName(withdrawalCountry),
+      );
+      if (!mobileMoneyCountry) {
+        setWithdrawalError("Ce moyen de retrait n'est pas disponible dans le pays sélectionné.");
+        return;
+      }
+
+      const dialCodeDigits = mobileMoneyCountry.dialCode.replace(/\D/g, "");
+      const enteredPhoneDigits = withdrawalDestination.replace(/\D/g, "");
+      const nationalPhoneDigits = enteredPhoneDigits.startsWith(dialCodeDigits)
+        ? enteredPhoneDigits.slice(dialCodeDigits.length)
+        : enteredPhoneDigits;
+
+      if (!nationalPhoneDigits) {
+        setWithdrawalError("Veuillez saisir le numéro de téléphone à créditer.");
+        return;
+      }
+
+      const methodName =
+        withdrawalMethodCatalog.find((method) => method.id === directMobileMoneyMethodId)?.name ??
+        withdrawalMethodLabels[directMobileMoneyMethodId] ??
+        directMobileMoneyMethodId;
+      oneTimeMobileMoneyPayoutMethod = {
+        id: `mobile-money-direct-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        type: directMobileMoneyMethodId,
+        label: `${methodName} ${mobileMoneyCountry.countryName}`,
+        accountHolder: profile?.momoName || user?.displayName || "",
+        accountIdentifier: `${mobileMoneyCountry.dialCode} ${nationalPhoneDigits}`,
+        country: mobileMoneyCountry.countryName,
+        isVerified: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
     setIsSubmittingWithdrawal(true);
     setTimeout(() => {
       if (
@@ -514,7 +570,8 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
         creatorId: creatorKey,
         amount: amountNum,
         currency: activeCurrency,
-        payoutMethodId: targetMethodId,
+        payoutMethodId: oneTimeMobileMoneyPayoutMethod?.id ?? targetMethodId,
+        payoutMethod: oneTimeMobileMoneyPayoutMethod,
       });
 
       setIsSubmittingWithdrawal(false);
@@ -585,9 +642,10 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     setWithdrawalError(null);
     setWithdrawalSuccess(null);
     setWithdrawalStep("methods");
+    setWithdrawalMethodType(null);
     setWithdrawalCategory("all");
     setIncludeDefaultWithdrawalMethods(true);
-    setWithdrawalCountry("Côte d'Ivoire");
+    setWithdrawalCountry(DEFAULT_WITHDRAWAL_COUNTRY);
     if (payoutMethods.length > 0) {
       const defaultM = payoutMethods.find((m) => m.isDefault) || payoutMethods[0];
       setSelectedMethodId(defaultM.id);
@@ -1582,10 +1640,34 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                       key={method.id}
                       type="button"
                       onClick={() => {
-                        if (configured) {
+                        if (withdrawalOperatorIds[method.id]) {
+                          const supportedCountries = withdrawalCountryOptions.filter((country) =>
+                            country.operators.some(
+                              (operator) => operator.id === withdrawalOperatorIds[method.id],
+                            ),
+                          );
+                          const selectedCountry =
+                            supportedCountries.find(
+                              (country) =>
+                                normalizeCountryName(country.countryName) ===
+                                normalizeCountryName(withdrawalCountry),
+                            ) ??
+                            supportedCountries.find((country) => country.countryCode === "CI") ??
+                            supportedCountries[0];
+                          setSelectedMethodId(`direct-mobile-money:${method.id}`);
+                          setWithdrawalMethodType(method.id as PayoutMethodType);
+                          setWithdrawalAmount("");
+                          setWithdrawalDestination("");
+                          setWithdrawalCountry(
+                            selectedCountry?.countryName || DEFAULT_WITHDRAWAL_COUNTRY,
+                          );
+                          setWithdrawalError(null);
+                          setWithdrawalStep("form");
+                        } else if (configured) {
                           setSelectedMethodId(configured.id);
+                          setWithdrawalMethodType(configured.type);
                           setWithdrawalDestination(configured.accountIdentifier);
-                          setWithdrawalCountry(configured.country || "Côte d'Ivoire");
+                          setWithdrawalCountry(configured.country || DEFAULT_WITHDRAWAL_COUNTRY);
                           setWithdrawalError(null);
                           setWithdrawalStep("form");
                         } else {
@@ -1687,20 +1769,39 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
 
               </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
-                <select
-                  value={withdrawalCountry}
-                  onChange={(event) => setWithdrawalCountry(event.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
-                >
-                  {withdrawalCountryOptions.map((country) => (
-                    <option key={country.dialCode} value={country.countryName}>
-                      {country.countryName} ({country.dialCode})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {isDirectMobileMoneyWithdrawal ? (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-zinc-300">
+                    Indicatif téléphonique
+                  </label>
+                  <select
+                    value={withdrawalCountry}
+                    onChange={(event) => setWithdrawalCountry(event.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
+                  >
+                    {directMobileMoneyCountryOptions.map((country) => (
+                      <option key={country.dialCode} value={country.countryName}>
+                        {country.flag} {country.countryName} ({country.dialCode})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-zinc-300">Pays</label>
+                  <select
+                    value={withdrawalCountry}
+                    onChange={(event) => setWithdrawalCountry(event.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
+                  >
+                    {withdrawalCountryOptions.map((country) => (
+                      <option key={country.dialCode} value={country.countryName}>
+                        {country.countryName} ({country.dialCode})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-zinc-300">
@@ -1714,9 +1815,11 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   onChange={(event) => setWithdrawalDestination(event.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-500"
                   placeholder={
-                    selectedPayoutMethod?.type.startsWith("bank")
-                      ? "RIB ou IBAN"
-                      : "Numéro Mobile Money"
+                    isDirectMobileMoneyWithdrawal
+                      ? "Numéro sans indicatif"
+                      : selectedPayoutMethod?.type.startsWith("bank")
+                        ? "RIB ou IBAN"
+                        : "Numéro Mobile Money"
                   }
                   required
                 />

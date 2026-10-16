@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import {
-  CreditCard,
   Globe,
   Save,
   CheckCircle2,
@@ -18,10 +17,12 @@ import {
   Eye,
   X,
   Smartphone,
-  Lock,
-  RotateCcw,
 } from "lucide-react";
 import { AccountSettingsModal } from "../common/AccountSettingsModal";
+import {
+  DEFAULT_PAYMENT_METHODS,
+  PaymentMethodsTemplate,
+} from "../common/PaymentMethodsTemplate";
 import {
   getUserProfile,
   updateUserProfile,
@@ -123,41 +124,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     country.operators.some((operator) => operator.id === "wave"),
   );
   const waveValidation = validatePhoneNumber(waveDialCode, "wave", wavePhoneNumber, storeCurrency);
-  const paymentMethods = [
-    { id: "wave", name: "Wave", category: "wallet", action: "Configurer", color: "#1DC3FD" },
-    {
-      id: "orange",
-      name: "Orange Money",
-      category: "wallet",
-      action: "Configurer",
-      color: "#FF7900",
-    },
-    {
-      id: "mtn",
-      name: "MTN Mobile Money",
-      category: "wallet",
-      action: "Configurer",
-      color: "#FFCC00",
-    },
-    { id: "moov", name: "Moov Money", category: "wallet", action: "Configurer", color: "#005BAA" },
-    {
-      id: "card",
-      name: "Carte bancaire",
-      category: "card",
-      action: "Configurer",
-      color: "#2563EB",
-    },
-    {
-      id: "bank",
-      name: "Virement bancaire",
-      category: "transfers",
-      action: "Vérifier l’identité",
-      color: "#8B5CF6",
-    },
-  ];
-  const visiblePaymentMethods = paymentMethods.filter(
-    (method) => paymentCategory === "all" || method.category === paymentCategory,
-  );
+  const paymentMethods = DEFAULT_PAYMENT_METHODS;
   const selectedPaymentMethod = paymentMethods.find((method) => method.id === paymentConfigMethod);
   const selectedMobileOperator =
     selectedPaymentMethod && ["orange", "mtn", "moov"].includes(selectedPaymentMethod.id)
@@ -176,6 +143,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         storeCurrency,
       )
     : { isValid: true };
+  const templatePaymentMethods = paymentMethods.map((method) => ({
+    ...method,
+    pending:
+      (method.id === "wave" && waveVerificationStatus === "pending") ||
+      paymentVerificationStatuses[method.id] === "pending",
+  }));
 
   // African Bank Account Details
   const [bankName, setBankName] = useState("Ecobank Côte d'Ivoire / UEMOA");
@@ -194,6 +167,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   useEffect(() => {
     let isMounted = true;
     const loadSettings = async () => {
+      setPayoutMethod("wave");
+      setMomoNumber("");
+      setMomoName(user.name || "");
+      setWaveVerificationStatus("not_configured");
+      setWaveDialCode("+225");
+      setWavePhoneNumber("");
+      setWaveAccountName(user.name || "");
+      setPaymentCategory("all");
+      setIncludeDefaultPaymentMethods(true);
+      setPaymentConfigMethod(null);
+      setPaymentConfigDialCode("+225");
+      setPaymentConfigPhone("");
+      setPaymentConfigName(user.name || "");
+      setPaymentVerificationStatuses({});
+      setBankName("Ecobank Côte d'Ivoire / UEMOA");
+      setBankIbanRib("");
+      setBankAccountHolder(`${user.name.toUpperCase()} ENTREPRISE`);
+      setIsWaveConfigOpen(false);
       setIsLoadingProfile(true);
       try {
         const userKey = user.uid || user.email || "default";
@@ -215,10 +206,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             setSupportEmail(target.supportEmail || user.email || "");
             if (target.primaryCurrency) setStoreCurrency(target.primaryCurrency);
             if (target.payoutMethod) setPayoutMethod(target.payoutMethod);
-            if (target.momoNumber) setMomoNumber(target.momoNumber);
-            if (target.momoName) setMomoName(target.momoName);
+            if (target.momoNumber) {
+              setMomoNumber(target.momoNumber);
+              if (target.payoutMethod === "wave") {
+                const savedWaveDialCode = Object.keys(DIAL_CODE_CONFIGS).find((dialCode) =>
+                  target.momoNumber.startsWith(dialCode),
+                );
+                if (savedWaveDialCode) {
+                  setWaveDialCode(savedWaveDialCode);
+                  setWavePhoneNumber(
+                    normalizePhoneNumber(
+                      target.momoNumber.replace(savedWaveDialCode, "").trim(),
+                      savedWaveDialCode,
+                    ),
+                  );
+                }
+              }
+            }
+            if (target.momoName) {
+              setMomoName(target.momoName);
+              if (target.payoutMethod === "wave") setWaveAccountName(target.momoName);
+            }
             if (target.payoutVerificationStatus)
               setWaveVerificationStatus(target.payoutVerificationStatus);
+            if (typeof target.includeDefaultPaymentMethods === "boolean") {
+              setIncludeDefaultPaymentMethods(target.includeDefaultPaymentMethods);
+            }
+            if (target.paymentVerificationStatuses) {
+              setPaymentVerificationStatuses(target.paymentVerificationStatuses);
+            }
             if (target.bankName) setBankName(target.bankName);
             if (target.bankIbanRib) setBankIbanRib(target.bankIbanRib);
             if (target.bankAccountHolder) setBankAccountHolder(target.bankAccountHolder);
@@ -316,6 +332,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           momoNumber: momoNumber.trim(),
           momoName: momoName.trim(),
           payoutVerificationStatus: waveVerificationStatus,
+          includeDefaultPaymentMethods,
+          paymentVerificationStatuses,
           bankName,
           bankIbanRib: bankIbanRib.trim(),
           bankAccountHolder: bankAccountHolder.trim(),
@@ -820,149 +838,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           {companySettingsSection === "payment" && (
             <>
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-4 sm:p-6 space-y-5">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="size-5 text-white" />
-                  <h3 className="text-2xl font-bold text-white">Méthodes de paiement</h3>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 rounded-2xl bg-[#292929] p-4 sm:p-5">
-                  <div>
-                    <p className="text-base font-semibold text-white">
-                      Inclure les méthodes de paiement par défaut
-                    </p>
-                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-zinc-400">
-                      Activer automatiquement les nouvelles méthodes de paiement dès qu'elles sont
-                      disponibles.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={includeDefaultPaymentMethods}
-                    onClick={() => setIncludeDefaultPaymentMethods((value) => !value)}
-                    className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${includeDefaultPaymentMethods ? "bg-blue-600" : "bg-zinc-600"}`}
-                  >
-                    <span
-                      className={`absolute top-1 size-5 rounded-full bg-white transition-transform ${includeDefaultPaymentMethods ? "translate-x-6" : "translate-x-1"}`}
-                    />
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto border-b border-white/10">
-                  <div className="flex min-w-max items-end gap-7">
-                    {[
-                      ["all", "Tout"],
-                      ["card", "Carte"],
-                      ["transfers", "Versements"],
-                      ["wallet", "Portefeuille"],
-                      ["other", "Autres"],
-                    ].map(([id, label]) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() =>
-                          setPaymentCategory(
-                            id as "all" | "card" | "transfers" | "wallet" | "other",
-                          )
-                        }
-                        className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${paymentCategory === id ? "border-blue-500 text-white" : "border-transparent text-zinc-500 hover:text-zinc-200"}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#292929]">
-                  {visiblePaymentMethods.map((method, index) => {
-                    const isWave = method.id === "wave";
-                    const actionLabel =
-                      isWave && waveVerificationStatus === "pending"
-                        ? "Vérification en attente"
-                        : paymentVerificationStatuses[method.id] === "pending"
-                          ? "Vérification en attente"
-                          : method.action;
-                    return (
-                      <div
-                        key={method.id}
-                        className={`flex items-center gap-3 px-4 py-4 sm:px-5 ${index > 0 ? "border-t border-white/[0.08]" : ""}`}
-                      >
-                        <Lock className="size-5 shrink-0 text-zinc-600" />
-                        <span
-                          className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white"
-                          style={{ backgroundColor: method.color }}
-                        >
-                          {method.name.slice(0, 2).toUpperCase()}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-base font-medium text-white">
-                          {method.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isWave) {
-                              setPayoutMethod("wave");
-                              setIsWaveConfigOpen(true);
-                            } else {
-                              setPaymentConfigMethod(method.id);
-                              setPaymentConfigPhone("");
-                              setPaymentConfigName(user.name || "");
-                              if (method.category === "wallet") {
-                                setPaymentConfigDialCode(
-                                  method.id === "orange" ||
-                                    method.id === "mtn" ||
-                                    method.id === "moov"
-                                    ? "+225"
-                                    : "+225",
-                                );
-                              }
-                            }
-                          }}
-                          className={`shrink-0 text-right text-sm font-semibold transition-colors ${(isWave && waveVerificationStatus === "pending") || paymentVerificationStatuses[method.id] === "pending" ? "text-amber-300" : "text-white hover:text-[#00D26A]"}`}
-                        >
-                          {actionLabel}
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {visiblePaymentMethods.length === 0 && (
-                    <div className="p-8 text-center text-sm text-zinc-500">
-                      Aucune méthode dans cette catégorie.
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPaymentCategory("all");
-                      setIncludeDefaultPaymentMethods(true);
-                      setPayoutMethod("wave");
-                      setWaveVerificationStatus("not_configured");
-                    }}
-                    className="flex items-center gap-2 text-xs font-semibold text-zinc-400 transition-colors hover:text-white"
-                  >
-                    <RotateCcw className="size-3.5" /> Restaurer les paramètres par défaut
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setCompanySettingsSection("menu")}
-                      className="rounded-xl bg-[#292929] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#383838]"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
-                    >
-                      Enregistrer
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <PaymentMethodsTemplate
+                methods={templatePaymentMethods}
+                includeDefaultPaymentMethods={includeDefaultPaymentMethods}
+                onToggleDefaultPaymentMethods={() =>
+                  setIncludeDefaultPaymentMethods((value) => !value)
+                }
+                paymentCategory={paymentCategory}
+                onPaymentCategoryChange={setPaymentCategory}
+                onConfigure={(method) => {
+                  if (method.id === "wave") {
+                    setPayoutMethod("wave");
+                    setIsWaveConfigOpen(true);
+                  } else {
+                    setPaymentConfigMethod(method.id);
+                    setPaymentConfigPhone("");
+                    setPaymentConfigName(user.name || "");
+                    if (method.category === "wallet") setPaymentConfigDialCode("+225");
+                  }
+                }}
+                onRestoreDefaults={() => {
+                  setPaymentCategory("all");
+                  setIncludeDefaultPaymentMethods(true);
+                  setPayoutMethod("wave");
+                  setWaveVerificationStatus("not_configured");
+                }}
+                onCancel={() => setCompanySettingsSection("menu")}
+              />
             </>
           )}
 

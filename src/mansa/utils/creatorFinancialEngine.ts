@@ -345,14 +345,15 @@ export function createWithdrawalRequest(params: {
   amount: number;
   currency?: string;
   payoutMethodId: string;
+  payoutMethod?: PayoutMethodConfig;
 }): {
   success: boolean;
   request?: WithdrawalRequest;
   error?: string;
 } {
-  const { creatorId, amount, currency = "FCFA", payoutMethodId } = params;
+  const { creatorId, amount, currency = "FCFA", payoutMethodId, payoutMethod } = params;
   const methods = getSavedPayoutMethods(creatorId);
-  const method = methods.find((m) => m.id === payoutMethodId);
+  const method = payoutMethod ?? methods.find((m) => m.id === payoutMethodId);
 
   if (!method) {
     return {

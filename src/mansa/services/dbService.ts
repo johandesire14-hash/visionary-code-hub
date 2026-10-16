@@ -19,6 +19,22 @@ import {
 import { BusinessProject, LiveEvent, MarketplaceItem } from "../types";
 import { safeStorage } from "../utils/storage";
 
+export interface AccountPaymentMethodConfig {
+  dialCode?: string;
+  phone?: string;
+  accountName?: string;
+  bankName?: string;
+  bankIbanRib?: string;
+  bankAccountHolder?: string;
+  identityAuthorized?: boolean;
+}
+
+export interface AccountPaymentSettings {
+  includeDefaultPaymentMethods: boolean;
+  paymentVerificationStatuses: Record<string, "not_configured" | "pending" | "configured">;
+  methods: Record<string, AccountPaymentMethodConfig>;
+}
+
 export interface FirestoreUserProfile {
   uid: string;
   email: string;
@@ -50,6 +66,7 @@ export interface FirestoreUserProfile {
   bankName?: string;
   bankIbanRib?: string;
   bankAccountHolder?: string;
+  accountPaymentSettings?: AccountPaymentSettings;
   createdAt?: any;
   updatedAt?: any;
 }
