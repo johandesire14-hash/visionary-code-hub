@@ -157,114 +157,16 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
     paypal: "PayPal",
   };
   const withdrawalMethodCatalog = [
-    {
-      id: "wave",
-      name: "Wave",
-      category: "wallet",
-      color: "#1DC3FD",
-      countries: ["Côte d'Ivoire", "Sénégal"],
-    },
-    {
-      id: "orange_money",
-      name: "Orange Money",
-      category: "wallet",
-      color: "#FF7900",
-      countries: ["Côte d'Ivoire", "Sénégal", "Bénin", "Togo", "Cameroun"],
-    },
-    {
-      id: "mtn_momo",
-      name: "MTN Mobile Money",
-      category: "wallet",
-      color: "#FFCC00",
-      countries: ["Bénin", "Cameroun", "Côte d'Ivoire", "Ghana"],
-    },
-    {
-      id: "moov_money",
-      name: "Moov Money",
-      category: "wallet",
-      color: "#005BAA",
-      countries: ["Côte d'Ivoire", "Bénin", "Togo"],
-    },
-    {
-      id: "bank_uemoa",
-      name: "Virement bancaire UEMOA",
-      category: "transfers",
-      color: "#8B5CF6",
-      countries: ["Côte d'Ivoire", "Sénégal", "Bénin", "Togo"],
-    },
-    {
-      id: "bank_cemac",
-      name: "Virement bancaire CEMAC",
-      category: "transfers",
-      color: "#7C3AED",
-      countries: ["Cameroun"],
-    },
-    {
-      id: "bank_sepa",
-      name: "Virement bancaire SEPA",
-      category: "transfers",
-      color: "#6366F1",
-      countries: ["France", "Belgique", "Allemagne", "Espagne"],
-    },
-    {
-      id: "paypal",
-      name: "PayPal",
-      category: "other",
-      color: "#0070BA",
-      countries: ["Tous les pays"],
-    },
-    {
-      id: "crypto_usdt",
-      name: "USDT",
-      category: "other",
-      color: "#26A17B",
-      countries: ["Tous les pays"],
-    },
-  ];
-  const withdrawalCountries = [
-    "Côte d'Ivoire",
-    "Sénégal",
-    "Bénin",
-    "Togo",
-    "Cameroun",
-    "Ghana",
-    "France",
-    "Belgique",
-    "Allemagne",
-    "Espagne",
+    { id: "wave", name: "Wave", category: "wallet", color: "#1DC3FD" },
+    { id: "orange_money", name: "Orange Money", category: "wallet", color: "#FF7900" },
+    { id: "mtn_momo", name: "MTN Mobile Money", category: "wallet", color: "#FFCC00" },
+    { id: "moov_money", name: "Moov Money", category: "wallet", color: "#005BAA" },
+    { id: "visa_mastercard", name: "Carte bancaire", category: "card", color: "#2563EB" },
+    { id: "bank_uemoa", name: "Virement bancaire", category: "transfers", color: "#8B5CF6" },
   ];
   const visibleWithdrawalMethods = withdrawalMethodCatalog.filter(
-    (method) =>
-      (withdrawalCategory === "all" || method.category === withdrawalCategory) &&
-      (method.countries.includes(withdrawalCountry) || method.countries.includes("Tous les pays")),
+    (method) => withdrawalCategory === "all" || method.category === withdrawalCategory,
   );
-  const selectWithdrawalMethod = (method: (typeof withdrawalMethodCatalog)[number]) => {
-    const configured = payoutMethods.find((item) => item.type === method.id);
-    if (configured) {
-      setSelectedMethodId(configured.id);
-      setWithdrawalDestination(configured.accountIdentifier);
-      setWithdrawalCountry(configured.country || withdrawalCountry);
-      setWithdrawalError(null);
-      setWithdrawalStep("form");
-      return;
-    }
-    const draftMethod: PayoutMethodConfig = {
-      id: `payout-${method.id}-${Date.now()}`,
-      type: method.id as PayoutMethodType,
-      label: method.name,
-      accountHolder: profile?.momoName || user?.displayName || "",
-      accountIdentifier: "",
-      country: withdrawalCountry,
-      isVerified: false,
-      isDefault: payoutMethods.length === 0,
-      createdAt: new Date().toISOString(),
-    };
-    setPayoutMethods((current) => [...current, draftMethod]);
-    savePayoutMethod(creatorKey, draftMethod);
-    setSelectedMethodId(draftMethod.id);
-    setWithdrawalDestination("");
-    setWithdrawalStep("form");
-  };
 
   // New Payout Method Form
   const [newMethodType, setNewMethodType] = useState<PayoutMethodType>("wave");
@@ -545,11 +447,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
       return;
     }
 
-    if (!withdrawalDestination.trim()) {
-      setWithdrawalError("Veuillez renseigner le numéro ou la destination du retrait.");
-      return;
-    }
-
     if (amountNum > balance.availableBalance) {
       setWithdrawalError(
         `Le montant demandé dépasse votre solde disponible (${formatCurrency(balance.availableBalance, activeCurrency)}).`,
@@ -568,17 +465,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
 
     setIsSubmittingWithdrawal(true);
     setTimeout(() => {
-      if (
-        selectedPayoutMethod &&
-        (withdrawalDestination.trim() !== selectedPayoutMethod.accountIdentifier ||
-          withdrawalCountry !== selectedPayoutMethod.country)
-      ) {
-        savePayoutMethod(creatorKey, {
-          ...selectedPayoutMethod,
-          accountIdentifier: withdrawalDestination.trim(),
-          country: withdrawalCountry.trim(),
-        });
-      }
       const result = createWithdrawalRequest({
         creatorId: creatorKey,
         amount: amountNum,
@@ -617,8 +503,17 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
     };
 
     savePayoutMethod(creatorKey, newConfig);
+    setPayoutMethods((current) => [
+      ...current.filter((method) => method.type !== newConfig.type),
+      newConfig,
+    ]);
+    setSelectedMethodId(newConfig.id);
+    setWithdrawalCountry(newConfig.country);
+    setWithdrawalDestination(newConfig.accountIdentifier);
     setCreatorPayoutConfigured(true);
     setIsAddMethodModalOpen(false);
+    setWithdrawalStep("form");
+    setIsPayoutModalOpen(true);
     showFeedback(
       "success",
       "Moyen de retrait configuré avec succès ! Vos retraits sont débloqués.",
@@ -1558,35 +1453,13 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </button>
             </div>
           ) : withdrawalStep === "methods" ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-4 sm:p-6 space-y-5">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <CreditCard className="size-5 text-white" />
                 <h3 className="text-2xl font-bold text-white">Méthodes de retrait</h3>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.08] bg-[#292929] p-4">
-                <label className="mb-1 block text-sm font-semibold text-white">
-                  Pays du compte de retrait
-                </label>
-                <p className="mb-2 text-xs text-zinc-400">
-                  Les méthodes affichées dépendent du pays sélectionné.
-                </p>
-                <select
-                  value={withdrawalCountry}
-                  onChange={(event) => {
-                    setWithdrawalCountry(event.target.value);
-                    setSelectedMethodId("");
-                    setWithdrawalError(null);
-                  }}
-                  className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
-                >
-                  {withdrawalCountries.map((country) => (
-                    <option key={country}>{country}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 rounded-2xl bg-[#292929] p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#292929] p-4">
                 <div>
                   <p className="text-sm font-semibold text-white">
                     Inclure les méthodes de retrait par défaut
@@ -1609,7 +1482,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
               </div>
 
               <div className="overflow-x-auto border-b border-white/10">
-                <div className="flex min-w-max items-end gap-7">
+                <div className="flex min-w-max items-end gap-6">
                   {[
                     ["all", "Tout"],
                     ["card", "Carte"],
@@ -1641,7 +1514,23 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                     <button
                       key={method.id}
                       type="button"
-                      onClick={() => selectWithdrawalMethod(method)}
+                      onClick={() => {
+                        if (configured) {
+                          setSelectedMethodId(configured.id);
+                          setWithdrawalDestination(configured.accountIdentifier);
+                          setWithdrawalCountry(configured.country || "Côte d'Ivoire");
+                          setWithdrawalError(null);
+                          setWithdrawalStep("form");
+                        } else {
+                          setNewMethodType(method.id as PayoutMethodType);
+                          setNewMethodLabel(method.name);
+                          setNewMethodHolder(profile?.momoName || user?.displayName || "");
+                          setNewMethodIdentifier("");
+                          setNewMethodCountry("Côte d'Ivoire");
+                          setIsPayoutModalOpen(false);
+                          setIsAddMethodModalOpen(true);
+                        }
+                      }}
                       className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${index > 0 ? "border-t border-white/[0.08]" : ""} ${selected ? "bg-emerald-500/10" : "hover:bg-white/[0.04]"}`}
                     >
                       <Lock className="size-5 shrink-0 text-zinc-600" />
@@ -1748,98 +1637,6 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                   · Maximum {formatCurrency(balance.availableBalance, activeCurrency)}
                 </p>
 
-                {/* Quick percentage buttons */}
-                <div className="flex items-center gap-2 mt-2">
-                  {[0.25, 0.5, 0.75, 1.0].map((ratio) => {
-                    const quickAmt = Math.floor(balance.availableBalance * ratio);
-                    return (
-                      <button
-                        key={ratio}
-                        type="button"
-                        onClick={() => setWithdrawalAmount(quickAmt.toString())}
-                        className="flex-1 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono font-semibold text-zinc-400 hover:text-white border border-white/5 cursor-pointer"
-                      >
-                        {ratio === 1 ? "100% (Max)" : `${ratio * 100}%`}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-emerald-300">
-                    Méthode choisie
-                  </p>
-                  <p className="text-sm font-bold text-white">
-                    {selectedPayoutMethod
-                      ? withdrawalMethodLabels[selectedPayoutMethod.type] ||
-                        selectedPayoutMethod.label
-                      : "Méthode de retrait"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setWithdrawalStep("methods")}
-                  className="text-xs font-semibold text-emerald-300 hover:text-white"
-                >
-                  Modifier
-                </button>
-              </div>
-
-              {selectedPayoutMethod && (
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">
-                    Pays sélectionné
-                  </label>
-                  <div className="mb-3 w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 text-sm text-zinc-300">
-                    {withdrawalCountry}
-                  </div>
-                  <label className="mb-1 block text-xs font-semibold text-zinc-300">
-                    {selectedPayoutMethod.type.startsWith("bank")
-                      ? "RIB / IBAN"
-                      : selectedPayoutMethod.type === "paypal"
-                        ? "Adresse e-mail PayPal"
-                        : selectedPayoutMethod.type === "crypto_usdt"
-                          ? "Adresse du portefeuille USDT"
-                          : "Numéro de téléphone"}
-                  </label>
-                  <input
-                    type="text"
-                    value={withdrawalDestination}
-                    onChange={(event) => setWithdrawalDestination(event.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#16181f] px-4 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-500"
-                    placeholder={
-                      selectedPayoutMethod.type.startsWith("bank")
-                        ? "RIB ou IBAN"
-                        : selectedPayoutMethod.type === "paypal"
-                          ? "exemple@email.com"
-                          : selectedPayoutMethod.type === "crypto_usdt"
-                            ? "Adresse USDT"
-                            : "Numéro Mobile Money"
-                    }
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 text-xs text-zinc-400 space-y-1.5">
-                <div className="flex justify-between">
-                  <span>Frais de virement :</span>
-                  <span className="text-emerald-400 font-mono font-bold">
-                    0 {activeCurrency} (Pris en charge)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Délai estimé :</span>
-                  <span className="text-white font-medium">Instantané à 15 minutes</span>
-                </div>
-                <div className="flex justify-between font-bold text-white pt-1.5 border-t border-white/5">
-                  <span>Net à recevoir sur votre compte :</span>
-                  <span className="font-mono text-emerald-400 text-sm">
-                    {formatCurrency(parseFloat(withdrawalAmount) || 0, activeCurrency)}
-                  </span>
-                </div>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -1880,7 +1677,12 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <CreditCard className="size-5 text-emerald-400" />
-              <h3 className="text-base font-bold text-white">Nouveau Compte de Retrait</h3>
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  Configurer {newMethodType === "wave" ? "Wave" : newMethodLabel}
+                </h3>
+                <p className="mt-1 text-xs text-zinc-400">Ajoutez le compte qui recevra vos versements.</p>
+              </div>
             </div>
             <button
               onClick={() => setIsAddMethodModalOpen(false)}
@@ -1920,6 +1722,23 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             </div>
 
             <div>
+              <label className="block text-zinc-300 font-semibold mb-1">Pays</label>
+              <select
+                value={newMethodCountry}
+                onChange={(e) => setNewMethodCountry(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#16181f] p-2.5 text-white outline-none cursor-pointer"
+              >
+                <option value="Côte d'Ivoire">Côte d'Ivoire (+225)</option>
+                <option value="Sénégal">Sénégal (+221)</option>
+                <option value="Bénin">Bénin (+229)</option>
+                <option value="Togo">Togo (+228)</option>
+                <option value="Cameroun">Cameroun (+237)</option>
+                <option value="Ghana">Ghana (+233)</option>
+                <option value="France">France (+33)</option>
+              </select>
+            </div>
+
+            <div>
               <label className="block text-zinc-300 font-semibold mb-1">
                 Nom ou libellé du compte
               </label>
@@ -1933,9 +1752,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             </div>
 
             <div>
-              <label className="block text-zinc-300 font-semibold mb-1">
-                Nom complet du titulaire du compte
-              </label>
+              <label className="block text-zinc-300 font-semibold mb-1">Nom du titulaire</label>
               <input
                 type="text"
                 value={newMethodHolder}
@@ -1947,8 +1764,10 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
 
             <div>
               <label className="block text-zinc-300 font-semibold mb-1">
-                {newMethodType.includes("bank")
-                  ? "Numéro IBAN / RIB complet (24 caractères)"
+                {newMethodType === "wave"
+                  ? "Numéro Wave"
+                  : newMethodType.includes("bank")
+                    ? "Numéro IBAN / RIB complet (24 caractères)"
                   : newMethodType.includes("crypto")
                     ? "Adresse Wallet USDT (TRC-20)"
                     : "Numéro de téléphone Mobile Money avec indicatif (+225...)"}
@@ -1994,7 +1813,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 type="submit"
                 className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all cursor-pointer shadow-md"
               >
-                Enregistrer le compte
+                {newMethodType === "wave" ? "Continuer la vérification" : "Enregistrer le compte"}
               </button>
             </div>
           </form>
