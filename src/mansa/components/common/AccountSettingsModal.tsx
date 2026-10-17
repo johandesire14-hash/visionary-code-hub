@@ -49,6 +49,9 @@ import {
   PaymentMethodsTemplate,
   type PaymentMethodCategory,
 } from "./PaymentMethodsTemplate";
+import { SecuritySettingsPanel } from "./SecuritySettingsPanel";
+import { AccountVerificationPanel } from "./AccountVerificationPanel";
+import { ResolutionCenterPanel } from "./ResolutionCenterPanel";
 
 export type AccountSettingsTab =
   | "profil"
@@ -812,33 +815,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           {/* 4. TAB: SÉCURITÉ DU COMPTE */}
           {/* ================================================================= */}
           {activeTab === "securite" && (
-            <div className="space-y-4 text-xs">
-              <div className="rounded-xl border border-white/[0.08] bg-[#14161b] p-4 space-y-3">
-                <h4 className="font-semibold text-white">Mot de passe & Clés d'accès</h4>
-                <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                  <div>
-                    <span className="font-medium text-zinc-200 block">Mot de passe de connexion</span>
-                    <span className="text-[11px] text-zinc-500">Protégé par Firebase Auth</span>
-                  </div>
-                  <button className="px-3 py-1.5 rounded-lg border border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 cursor-pointer font-medium">
-                    Modifier
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/[0.08] bg-[#14161b] p-4 space-y-3">
-                <h4 className="font-semibold text-white">Authentification à deux facteurs (2FA)</h4>
-                <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                  <div>
-                    <span className="font-medium text-zinc-200 block">Code OTP / Authenticator</span>
-                    <span className="text-[11px] text-emerald-400">Actif sur votre compte</span>
-                  </div>
-                  <button className="px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 cursor-pointer font-medium">
-                    Configuré
-                  </button>
-                </div>
-              </div>
-            </div>
+            <SecuritySettingsPanel email={user.email} />
           )}
 
           {/* ================================================================= */}
@@ -1159,31 +1136,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           {/* 9. TAB: VÉRIFICATIONS */}
           {/* ================================================================= */}
           {activeTab === "verifications" && (
-            <div className="space-y-3 text-xs">
-              <div className="rounded-xl border border-white/[0.08] bg-[#14161b] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="size-5 text-emerald-400" />
-                  <div>
-                    <span className="font-semibold text-white block">Statut du Compte & Conformité</span>
-                    <span className="text-[11px] text-zinc-400">Identité KYC validée avec succès.</span>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Actif</span>
-              </div>
-            </div>
+            <AccountVerificationPanel userId={userId} />
           )}
 
           {/* ================================================================= */}
           {/* 10. TAB: CENTRE DE RÉSOLUTION */}
           {/* ================================================================= */}
           {activeTab === "resolution" && (
-            <div className="rounded-xl border border-white/[0.08] bg-[#14161b] p-6 text-center text-xs space-y-2">
-              <LifeBuoy className="size-8 text-zinc-500 mx-auto" />
-              <h4 className="font-bold text-white">Centre de Résolution & Litiges</h4>
-              <p className="text-zinc-400 text-[11px] max-w-sm mx-auto">
-                Tous vos comptes et transactions sont sains. Aucun litige ou demande de remboursement ouverte.
-              </p>
-            </div>
+            <ResolutionCenterPanel userId={userId} />
           )}
 
         </div>
