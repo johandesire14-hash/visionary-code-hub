@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useRef } from "react";
 import { X, Flag, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useModalDismiss } from "../../hooks/useModalDismiss";
@@ -35,11 +34,14 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
   const [website, setWebsite] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
+    if (website.trim()) return;
     setIsSubmitting(true);
 
     const reportPayload = {
@@ -51,31 +53,23 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
       status: "pending",
     };
 
-    // 1. Enregistrement direct dans Firestore (sécurisé par les règles reports)
     try {
-      addDoc(collection(db, "reports"), reportPayload).catch((err) =>
-        console.warn("Notice: Firestore report write:", err)
-      );
-    } catch (e) {}
-
-    // 2. Enregistrement serveur
-    if (typeof fetch !== "undefined") {
-      fetch("/api/reports/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reportPayload),
-      }).catch((err) => console.warn("Notice: Server report submit:", err));
-    }
-
-    setTimeout(() => {
-      setIsSubmitting(false);
+      if (!db) throw new Error("Le service de signalement n’est pas configuré.");
+      await addDoc(collection(db, "reports"), reportPayload);
       setIsSubmitted(true);
       setTimeout(() => {
         setIsSubmitted(false);
         setDetails("");
         onClose();
       }, 2500);
-    }, 600);
+    } catch (error) {
+      console.error("Enterprise report could not be submitted", error);
+      setSubmitError(
+        "Le signalement n’a pas pu être transmis. Vérifiez votre connexion puis réessayez.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,7 +89,9 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white">Signaler l’entreprise</h2>
-              <p className="text-xs text-zinc-400">Signalement auprès des gérants du site · {companyName}</p>
+              <p className="text-xs text-zinc-400">
+                Signalement auprès des gérants du site · {companyName}
+              </p>
             </div>
           </div>
           <button
@@ -116,7 +112,8 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
             <div className="space-y-1.5">
               <h3 className="text-base font-bold text-white">Signalement transmis</h3>
               <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                Votre signalement a été transmis aux gérants du site afhub. Notre équipe étudiera ce dossier sous 24h avec la plus grande attention.
+                Votre signalement a bien été enregistré. L’équipe de la plateforme pourra consulter
+                les éléments transmis.
               </p>
             </div>
           </div>
@@ -124,7 +121,14 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
           <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs text-zinc-300">
             <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
               <label htmlFor="report-website">Site web</label>
-              <input id="report-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+              <input
+                id="report-website"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <label className="font-semibold text-zinc-200 flex items-center gap-1.5">
@@ -168,6 +172,12 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
               />
             </div>
 
+            {submitError && (
+              <p role="alert" className="text-xs text-rose-300">
+                {submitError}
+              </p>
+            )}
+
             <div className="pt-2 flex items-center justify-end gap-2 border-t border-white/5">
               <button
                 type="button"
@@ -181,7 +191,7 @@ export const ReportEnterpriseModal: React.FC<ReportEnterpriseModalProps> = ({
                 disabled={isSubmitting}
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
               >
-                {isSubmitting ? "Envoi..." : "Signaler aux gérants du site"}
+                {isSubmitting ? "Envoi..." : "Signaler à l’équipe du site"}
               </button>
             </div>
           </form>

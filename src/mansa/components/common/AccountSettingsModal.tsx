@@ -1143,7 +1143,11 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           {/* 10. TAB: CENTRE DE RÉSOLUTION */}
           {/* ================================================================= */}
           {activeTab === "resolution" && (
-            <ResolutionCenterPanel userId={userId} />
+            <ResolutionCenterPanel
+              userId={userId}
+              customerName={user?.name || ""}
+              customerEmail={user?.email || ""}
+            />
           )}
 
         </div>
