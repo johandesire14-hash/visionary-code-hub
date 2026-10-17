@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { Component, ErrorInfo, ReactNode, StrictMode } from "react";
 import { Moon, Sun } from "lucide-react";
 import App from "./App";
@@ -82,14 +81,13 @@ function ViewportMetrics() {
 }
 
 function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
-
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-label={isDark ? "Activer le mode clair" : "Activer le mode sombre"}
       title={isDark ? "Mode clair" : "Mode sombre"}
-      className="fixed bottom-4 right-4 z-[100] flex size-11 items-center justify-center rounded-full bg-store-primary text-store-primary-foreground shadow-lg transition-transform hover:scale-105"
+      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 z-[100] flex size-11 items-center justify-center rounded-full bg-store-primary text-store-primary-foreground shadow-lg transition-transform hover:scale-105 lg:bottom-4"
     >
       {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </button>
