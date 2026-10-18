@@ -292,7 +292,7 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
             <div
               key={enterprise.id}
               onClick={() => handleEnterpriseClick(enterprise)}
-              className="group rounded-2xl border border-white/10 bg-[#12141c] hover:border-white/20 transition-all duration-200 overflow-hidden flex flex-col justify-between cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="group rounded-2xl border border-white/10 bg-[#12141c] hover:border-white/20 transition-colors duration-150 overflow-hidden flex flex-col justify-between cursor-pointer shadow-lg"
             >
               <div>
                 {/* 1. BANNIÈRE (visible si showBanners est actif) */}

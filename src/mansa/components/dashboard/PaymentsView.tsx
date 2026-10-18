@@ -345,7 +345,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({
           : "EN ATTENTE DE VALIDATION";
 
     const content = `============================================================
-              MANSA — BORDEREAU DE VIREMENT OFFICIEL
+              MANSA : BORDEREAU DE VIREMENT OFFICIEL
 ============================================================
 Référence du Virement : ${w.referenceNumber}
 Date d'Émission       : ${new Date(w.requestedAt).toLocaleString("fr-FR")}
@@ -617,7 +617,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
             <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-5 space-y-2 relative overflow-hidden group">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="font-semibold text-white">
-                  {isCompanyContext ? `Solde total — ${contextName}` : "Solde total — Personnel"}
+                  {isCompanyContext ? `Solde total de ${contextName}` : "Solde total personnel"}
                 </span>
                 <Wallet className="size-4 text-emerald-400" />
               </div>
@@ -681,7 +681,7 @@ Document généré électroniquement, faisant foi de bordereau officiel de règl
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-blue-400 animate-pulse" />
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                    Décomposition du Solde Global — Mode Personnel
+                    Décomposition du solde global (mode personnel)
                   </h3>
                 </div>
                 <span className="text-[11px] text-zinc-400">

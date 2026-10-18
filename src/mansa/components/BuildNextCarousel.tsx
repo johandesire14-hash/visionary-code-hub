@@ -14,8 +14,8 @@ const CATEGORIES_DATA: CategoryCardItem[] = [
     id: "community",
     categoryKey: "community",
     title: "Canaux Telegram & Discord Privés",
-    subtitle: "Abonnements VIP avec invitation automatique générée en direct après paiement.",
-    samplePrompt: "Canal Telegram VIP avec bot d'accès automatique",
+    subtitle: "Abonnements à des canaux privés et invitation après paiement.",
+    samplePrompt: "Canal Telegram privé avec invitation après paiement",
     icon: Send,
     colorGradient: "from-[#229ED9]/10 to-transparent",
   },
@@ -53,7 +53,7 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
               Que souhaitez-vous vendre ?
             </h2>
             <p className="text-sm text-zinc-400 mt-1">
-              Sélectionnez un type de produit pour configurer votre offre en 2 minutes.
+              Choisissez un type de produit pour configurer votre offre.
             </p>
           </div>
           <button
@@ -71,7 +71,7 @@ export const BuildNextCarousel: React.FC<BuildNextCarouselProps> = ({
               <div
                 key={cat.id}
                 onClick={() => onSelectCategory(cat)}
-                className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#12141a]/80 p-5 transition-all duration-200 hover:border-emerald-500/40 hover:bg-[#161822] cursor-pointer"
+                className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#12141a]/80 p-5 transition-colors duration-150 hover:border-white/20 hover:bg-[#161822] cursor-pointer"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">

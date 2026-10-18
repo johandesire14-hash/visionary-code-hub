@@ -2848,7 +2848,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                             key={offer.id}
                             type="button"
                             onClick={() => setSelectedProductDetailOffer(offer)}
-                            className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111318] text-left transition-all hover:-translate-y-0.5 hover:border-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+                            className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-[#111318] text-left transition-colors duration-150 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
                           >
                             <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-900">
                               {visual && (

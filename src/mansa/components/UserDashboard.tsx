@@ -2118,8 +2118,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                       <div className="text-xs font-semibold text-zinc-300">
                         <span>
                           {isCompanyContext
-                            ? `Solde total — ${activeCompany?.name}`
-                            : "Solde total — Personnel"}
+                            ? `Solde total de ${activeCompany?.name}`
+                            : "Solde total personnel"}
                         </span>
                       </div>
                       <div id="tour-currency-selector" className="flex items-center gap-1.5">
@@ -2586,7 +2586,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
                           {/* Applications incluses (Dynamic icons matching exact selected apps) */}
                           <td className="py-4 px-4 whitespace-nowrap">
-                            <span className="text-zinc-500">—</span>
+                            <span className="text-zinc-500">Non renseigné</span>
                           </td>
 
                           {/* Conversion de paiement */}

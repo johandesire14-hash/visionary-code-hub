@@ -1,6 +1,6 @@
 import { siteUrl } from "@/lib/site";
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { LiveTickerSection } from "./components/LiveTickerSection";
@@ -10,8 +10,7 @@ import { SocialProofSection } from "./components/SocialProofSection";
 import { FaqSection } from "./components/FaqSection";
 import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
-import { UserDashboard } from "./components/UserDashboard";
-import { ProductCreationStudio, CreatedProductData } from "./components/ProductCreationStudio";
+import type { CreatedProductData } from "./components/ProductCreationStudio";
 import { CategoryCardItem, MarketplaceItem, BusinessProject } from "./types";
 import { Star, X, Check, ArrowRight, LayoutDashboard, Globe } from "lucide-react";
 import {
@@ -25,7 +24,19 @@ import {
 } from "./utils/currency";
 import { useAuth } from "./context/AuthContext";
 import { saveProductToFirestore } from "./services/dbService";
-import { ModalOverlay } from "./components/common/ModalOverlay";
+const ModalOverlay = lazy(() =>
+  import("./components/common/ModalOverlay").then((module) => ({
+    default: module.ModalOverlay,
+  })),
+);
+const UserDashboard = lazy(() =>
+  import("./components/UserDashboard").then((module) => ({ default: module.UserDashboard })),
+);
+const ProductCreationStudio = lazy(() =>
+  import("./components/ProductCreationStudio").then((module) => ({
+    default: module.ProductCreationStudio,
+  })),
+);
 
 export default function App() {
   const { user: authUser, profile, logout, loading: authLoading } = useAuth();
@@ -191,26 +202,38 @@ export default function App() {
   // Le dashboard et ses fonctionnalités restent réservés aux utilisateurs connectés.
   if (currentView === "dashboard" && currentUser) {
     return (
-      <>
-        <UserDashboard
-          user={currentUser}
-          onLogout={handleLogout}
-          onOpenProductStudio={() => handleOpenStudio()}
-          lang={lang}
-        />
-
-        {/* Global Product Creation Studio Modal accessible from Dashboard */}
-        {isStudioOpen && (
-          <ProductCreationStudio
-            isOpen={isStudioOpen}
-            activeCurrency={userLocationInfo.currency}
-            onCurrencyChange={handleGlobalCurrencyChange}
+      <Suspense
+        fallback={
+          <div
+            role="status"
+            aria-label="Chargement du tableau de bord"
+            className="min-h-screen w-full bg-[#2A2929] flex items-center justify-center"
+          >
+            <div className="size-5 rounded-full border-2 border-[#3DDC84] border-t-transparent animate-spin" />
+          </div>
+        }
+      >
+        <>
+          <UserDashboard
+            user={currentUser}
+            onLogout={handleLogout}
+            onOpenProductStudio={() => handleOpenStudio()}
             lang={lang}
-            onClose={() => setIsStudioOpen(false)}
-            onSaveProduct={handleSaveProductFromStudio}
           />
-        )}
-      </>
+
+          {/* Global Product Creation Studio Modal accessible from Dashboard */}
+          {isStudioOpen && (
+            <ProductCreationStudio
+              isOpen={isStudioOpen}
+              activeCurrency={userLocationInfo.currency}
+              onCurrencyChange={handleGlobalCurrencyChange}
+              lang={lang}
+              onClose={() => setIsStudioOpen(false)}
+              onSaveProduct={handleSaveProductFromStudio}
+            />
+          )}
+        </>
+      </Suspense>
     );
   }
 
@@ -273,98 +296,120 @@ export default function App() {
 
       {/* Product Creation Studio Modal */}
       {isStudioOpen && (
-        <ProductCreationStudio
-          isOpen={isStudioOpen}
-          activeCurrency={userLocationInfo.currency}
-          onCurrencyChange={handleGlobalCurrencyChange}
-          lang={lang}
-          onClose={() => setIsStudioOpen(false)}
-          onSaveProduct={handleSaveProductFromStudio}
-        />
+        <Suspense
+          fallback={
+            <div role="status" aria-label="Chargement de l'atelier" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70">
+              <div className="size-5 rounded-full border-2 border-[#3DDC84] border-t-transparent animate-spin" />
+            </div>
+          }
+        >
+          <ProductCreationStudio
+            isOpen={isStudioOpen}
+            activeCurrency={userLocationInfo.currency}
+            onCurrencyChange={handleGlobalCurrencyChange}
+            lang={lang}
+            onClose={() => setIsStudioOpen(false)}
+            onSaveProduct={handleSaveProductFromStudio}
+          />
+        </Suspense>
       )}
 
       {/* Product Detail Modal from Marketplace */}
       {selectedMarketplaceProduct && (
-        <ModalOverlay
-          isOpen={!!selectedMarketplaceProduct}
-          onClose={() => setSelectedMarketplaceProduct(null)}
-          contentClassName="max-w-[460px] mx-auto"
+        <Suspense
+          fallback={
+            <div
+              role="status"
+              aria-label="Chargement de l'offre"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70"
+            >
+              <span className="rounded-xl bg-[#151515] px-4 py-3 text-sm text-white">
+                Chargement de l'offre…
+              </span>
+            </div>
+          }
         >
-          <div className="relative w-full rounded-2xl border border-white/10 bg-[#151515] p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedMarketplaceProduct.creatorAvatar}
-                  alt={selectedMarketplaceProduct.creator}
-                  className="size-10 rounded-full border border-white/10 object-cover"
-                />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold text-white font-heading">{selectedMarketplaceProduct.title}</h3>
+          <ModalOverlay
+            isOpen={!!selectedMarketplaceProduct}
+            onClose={() => setSelectedMarketplaceProduct(null)}
+            contentClassName="max-w-[460px] mx-auto"
+          >
+            <div className="relative w-full rounded-2xl border border-white/10 bg-[#151515] p-6 shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedMarketplaceProduct.creatorAvatar}
+                    alt={selectedMarketplaceProduct.creator}
+                    className="size-10 rounded-full border border-white/10 object-cover"
+                  />
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm font-bold text-white font-heading">{selectedMarketplaceProduct.title}</h3>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#B6B5B0]">Par {selectedMarketplaceProduct.creator}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-[#B6B5B0]">Par {selectedMarketplaceProduct.creator}</span>
+                </div>
+
+                <button
+                  onClick={() => setSelectedMarketplaceProduct(null)}
+                  className="text-[#B6B5B0] hover:text-white cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-[#B6B5B0] font-light leading-relaxed">
+                {selectedMarketplaceProduct.description}
+              </p>
+
+              <div className="rounded-xl border border-white/10 bg-[#2A2929] p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#B6B5B0] block">
+                    Abonnement / Accès
+                  </span>
+                  <span className="text-2xl font-bold font-mono text-white">
+                    {selectedMarketplaceProduct.priceMonthly}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-mono text-amber-400 font-bold bg-amber-400/10 px-2.5 py-1 rounded-md">
+                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                  <span>{selectedMarketplaceProduct.rating}</span>
+                  <span className="text-[#B6B5B0] font-normal">({selectedMarketplaceProduct.reviewsCount})</span>
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedMarketplaceProduct(null)}
-                className="text-[#B6B5B0] hover:text-white cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-[#B6B5B0] font-light leading-relaxed">
-              {selectedMarketplaceProduct.description}
-            </p>
-
-            <div className="rounded-xl border border-white/10 bg-[#2A2929] p-4 flex items-center justify-between">
-              <div>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-[#B6B5B0] block">
-                  Abonnement / Accès
-                </span>
-                <span className="text-2xl font-bold font-mono text-white">
-                  {selectedMarketplaceProduct.priceMonthly}
-                </span>
+              <div className="space-y-2 text-xs text-[#B6B5B0] font-light">
+                <div className="flex items-center gap-2">
+                  <Check className="size-3.5 text-[#3DDC84] shrink-0" />
+                  <span>Accès instantané aux canaux et contenus</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="size-3.5 text-[#3DDC84] shrink-0" />
+                  <span>Paiement sécurisé par Mobile Money & Carte</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-xs font-mono text-amber-400 font-bold bg-amber-400/10 px-2.5 py-1 rounded-md">
-                <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                <span>{selectedMarketplaceProduct.rating}</span>
-                <span className="text-[#B6B5B0] font-normal">({selectedMarketplaceProduct.reviewsCount})</span>
-              </div>
-            </div>
 
-            <div className="space-y-2 text-xs text-[#B6B5B0] font-light">
-              <div className="flex items-center gap-2">
-                <Check className="size-3.5 text-[#3DDC84] shrink-0" />
-                <span>Accès instantané aux canaux et contenus</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="size-3.5 text-[#3DDC84] shrink-0" />
-                <span>Paiement sécurisé par Mobile Money & Carte</span>
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setSelectedMarketplaceProduct(null)}
+                  className="flex-1 py-2.5 rounded-full border border-white/10 text-[#B6B5B0] hover:text-white hover:bg-white/5 text-xs font-semibold cursor-pointer"
+                >
+                  Fermer
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedMarketplaceProduct(null);
+                    handleOpenStudio(selectedMarketplaceProduct.category);
+                  }}
+                  className="mansa-btn-green flex-1 py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer font-bold"
+                >
+                  <span>Créer une offre similaire</span>
+                  <ArrowRight className="size-3" />
+                </button>
               </div>
             </div>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => setSelectedMarketplaceProduct(null)}
-                className="flex-1 py-2.5 rounded-full border border-white/10 text-[#B6B5B0] hover:text-white hover:bg-white/5 text-xs font-semibold cursor-pointer"
-              >
-                Fermer
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedMarketplaceProduct(null);
-                  handleOpenStudio(selectedMarketplaceProduct.category);
-                }}
-                className="mansa-btn-green flex-1 py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer font-bold"
-              >
-                <span>Créer une offre similaire</span>
-                <ArrowRight className="size-3" />
-              </button>
-            </div>
-          </div>
-        </ModalOverlay>
+          </ModalOverlay>
+        </Suspense>
       )}
     </div>
   );

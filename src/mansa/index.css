@@ -74,7 +74,7 @@
 /* The live Pulse feed moves only when a new transaction arrives and is not manually scrollable. */
 .pulse-feed-track {
   transform: translateY(0);
-  transition: transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1);
   will-change: transform;
 }
 
@@ -93,7 +93,7 @@
   font-weight: 700;
   border-radius: 12px;
   box-shadow: 0 1px 2px 0 rgba(61, 220, 132, 0.25);
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 150ms ease-out, transform 150ms ease-out;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -103,15 +103,14 @@
 .mansa-btn-orange:hover,
 .whop-btn-primary:hover {
   background-color: #2FB86A;
-  box-shadow: 0 4px 12px 0 rgba(61, 220, 132, 0.3);
-  transform: translateY(-1px);
+  box-shadow: 0 1px 2px 0 rgba(61, 220, 132, 0.25);
   color: #000000;
 }
 
 .mansa-btn-green:active,
 .mansa-btn-orange:active,
 .whop-btn-primary:active {
-  transform: translateY(0);
+  transform: scale(0.97);
   box-shadow: 0 1px 2px 0 rgba(61, 220, 132, 0.2);
 }
 
@@ -123,7 +122,7 @@
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), border-color 150ms ease-out, transform 150ms ease-out;
 }
 
 .mansa-btn-dark:hover,
@@ -131,12 +130,11 @@
   background-color: #1A1C24;
   border-color: rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
-  transform: translateY(-1px);
 }
 
 .mansa-btn-dark:active,
 .whop-btn-secondary:active {
-  transform: translateY(0);
+  transform: scale(0.97);
 }
 
 /* Dark scrollbar */

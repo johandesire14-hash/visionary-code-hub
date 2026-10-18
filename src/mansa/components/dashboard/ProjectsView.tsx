@@ -405,7 +405,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             return (
               <div
                 key={proj.id}
-                className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#101114] p-5 transition-all duration-200 hover:-translate-y-1 hover:border-[#00D26A]/40 hover:bg-[#14161b] shadow-xl"
+                className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-[#101114] p-5 transition-colors duration-150 hover:border-white/20 hover:bg-[#14161b] shadow-xl"
               >
                 <div>
                   

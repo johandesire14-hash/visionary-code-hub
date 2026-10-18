@@ -145,10 +145,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </div>
 
         {/* 1-Click Instant Demo Exploration Card */}
-        <div className="rounded-2xl border border-[#3DDC84]/30 bg-gradient-to-br from-[#121c15] to-[#151515] p-4.5 shadow-xl">
+        <div className="rounded-2xl border border-white/10 bg-[#151515] p-4.5 shadow-xl">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
-              <div className="size-7 rounded-lg bg-[#3DDC84]/20 border border-[#3DDC84]/40 flex items-center justify-center text-[#3DDC84]">
+              <div className="size-7 rounded-lg bg-[#3DDC84]/20 border border-white/10 flex items-center justify-center text-[#3DDC84]">
                 <Sparkles className="size-4" />
               </div>
               <div>

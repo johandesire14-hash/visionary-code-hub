@@ -431,7 +431,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               {activeTab === "store"
                 ? isCompanyContext
-                  ? `Paramètres de l'Entreprise — ${storeName || activeCompanyName}`
+                  ? `Paramètres de l'entreprise (${storeName || activeCompanyName})`
                   : lang === "fr"
                     ? "Paramètres de l'Entreprise"
                     : "Enterprise Settings"

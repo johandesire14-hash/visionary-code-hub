@@ -42,10 +42,10 @@ export const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Explorer les meilleures offres
+              Offres de la communauté
             </h2>
             <p className="text-sm text-zinc-400 mt-1">
-              Rejoignez des canaux Telegram VIP, achetez des formations et logiciels créés par les meilleurs créateurs.
+              Découvrez des canaux privés sur Telegram, des formations et des logiciels proposés par la communauté.
             </p>
           </div>
 
@@ -68,8 +68,8 @@ export const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
             { id: "trading", label: "Trading & Crypto" },
             { id: "sports", label: "Paris Sportifs" },
             { id: "courses", label: "Formations" },
-            { id: "software", label: "Logiciels & SaaS" },
-            { id: "community", label: "Communautés VIP" },
+            { id: "software", label: "Logiciels" },
+            { id: "community", label: "Communautés privées" },
             { id: "reselling", label: "Achat-Revente" },
           ].map((cat) => {
             const isSelected = selectedCategory === cat.id;
@@ -84,7 +84,7 @@ export const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 className={`rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                   isSelected
                     ? "bg-white text-black shadow-md"
-                    : "border border-white/10 bg-white/5 text-zinc-300 hover:text-white hover:bg-white/10"
+                    : "border border-white/10 bg-[#17191f] text-zinc-300 hover:text-white hover:bg-[#1f222a]"
                 }`}
               >
                 {cat.label}
@@ -126,7 +126,7 @@ export const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 <div
                   key={prod.id}
                   onClick={() => onSelectProduct(prod)}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#12141a]/90 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-[#161822] cursor-pointer"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#12141a]/90 p-5 transition-colors duration-150 hover:border-white/20 hover:bg-[#161822] cursor-pointer"
                 >
                   <div>
                     <div className="flex items-start justify-between mb-3 gap-3">

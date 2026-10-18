@@ -578,7 +578,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
                       const config = SUPPORTED_CURRENCIES[code];
                       return (
                         <option key={code} value={code} className="bg-[#141519]">
-                          {config.flag} {code} — {config.nameFr.split(" - ")[0]}
+                          {config.flag} {code} : {config.nameFr.split(" - ")[0]}
                         </option>
                       );
                     })}
