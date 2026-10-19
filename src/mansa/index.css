@@ -208,6 +208,13 @@
   transform: scale(0.98);
 }
 
+/* One corner language across the product. Full pills/circles remain intentional. */
+button:not(.rounded-full),
+[role="button"]:not(.rounded-full),
+.ui-btn:not(.rounded-full) {
+  border-radius: 12px !important;
+}
+
 /* Dark scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
