@@ -2071,24 +2071,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
             ) : (
               <div id="dashboard-overview" className="dashboard-overview space-y-8 max-w-[1400px]">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <h1 className="text-2xl font-semibold text-white">
-                      {lang === "fr" ? "Vue d’ensemble" : "Overview"}
-                    </h1>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      {isCompanyContext
-                        ? `Les chiffres clés de ${activeCompany?.name}.`
-                        : lang === "fr"
-                          ? "Les chiffres clés de votre activité."
-                          : "The key numbers from your activity."}
-                    </p>
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    {lang === "fr" ? "Données actualisées automatiquement" : "Data refreshes automatically"}
-                  </div>
-                </div>
-
                 {/* Empty State / Simulation Banner */}
                 {projects.length === 0 && !isLoadingFirestore && (
                   <div className="dashboard-callout flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
