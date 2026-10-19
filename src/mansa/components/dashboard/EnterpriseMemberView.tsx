@@ -2226,7 +2226,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                 </div>
                 <div className="relative w-full h-44 sm:h-64 md:h-72 lg:h-80 overflow-hidden bg-[#111216] select-none group">
                   <img
-                    src={currentSub.companyBanner || ""}
+                    src={currentSub.companyBanner || "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1200&q=80"}
                     alt={`Bannière ${currentSub.companyName}`}
                     className="w-full h-full object-cover object-center"
                   />
