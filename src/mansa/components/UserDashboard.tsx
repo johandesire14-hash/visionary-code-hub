@@ -2827,6 +2827,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 lang={lang}
                 activeCompany={activeCompany}
                 companies={companies}
+                isPersonalWorkspace={activeWorkspaceId === "personnel"}
                 onNavigateToClients={() => switchTab("clients")}
               />
             )

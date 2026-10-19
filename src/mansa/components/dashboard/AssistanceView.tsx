@@ -8,6 +8,7 @@ interface AssistanceViewProps {
   lang?: "fr" | "en";
   activeCompany?: Company | null;
   companies?: Company[];
+  isPersonalWorkspace?: boolean;
   onNavigateToClients?: () => void;
 }
 
@@ -28,7 +29,7 @@ interface SupportConversation {
 
 const DEFAULT_MESSAGE = "Bonjour ! Merci d'avoir contacté notre équipe. Nous avons bien reçu votre message et nous vous répondrons dans les plus brefs délais.";
 
-export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", activeCompany, companies = [] }) => {
+export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", activeCompany, companies = [], isPersonalWorkspace = false }) => {
   const { user } = useAuth();
   const userKey = user?.email || "default";
   const availableCompanies = useMemo(() => {
@@ -48,9 +49,9 @@ export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", act
   const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId) || null;
 
   useEffect(() => {
-    const targetId = activeCompany?.id || availableCompanies[0]?.id || "";
+    const targetId = isPersonalWorkspace ? "" : activeCompany?.id || "";
     setCompanyId(targetId);
-  }, [activeCompany?.id, availableCompanies]);
+  }, [activeCompany?.id, isPersonalWorkspace]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -63,7 +64,7 @@ export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", act
   useEffect(() => {
     const handleMemberMessage = (event: Event) => {
       const detail = (event as CustomEvent<{ companyId?: string; memberName?: string; memberEmail?: string; message?: string }>).detail;
-      if (!detail?.companyId || !detail.message) return;
+      if (!detail?.companyId || !detail.message || isPersonalWorkspace || (activeCompany?.id && detail.companyId !== activeCompany.id)) return;
       const memberEmail = detail.memberEmail || "membre@mansa.app";
       const conversationId = `${detail.companyId}:${memberEmail}`;
       const nextMessage: SupportMessage = {
@@ -91,7 +92,7 @@ export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", act
 
     window.addEventListener("mansa_member_assistance_sent", handleMemberMessage);
     return () => window.removeEventListener("mansa_member_assistance_sent", handleMemberMessage);
-  }, []);
+  }, [activeCompany?.id, isPersonalWorkspace]);
 
   const save = (event: React.FormEvent) => {
     event.preventDefault();
@@ -129,6 +130,20 @@ export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", act
     setIsSendingReply(false);
   };
 
+  if (isPersonalWorkspace) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 animate-in fade-in duration-200">
+        <section className="rounded-2xl border border-white/10 bg-[#121316] p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400"><MessageSquare className="size-5" /></div>
+            <div><h1 className="text-xl font-black text-white">Assistance personnelle</h1><p className="mt-1 text-xs text-zinc-400">Cet espace est réservé à votre compte personnel.</p></div>
+          </div>
+        </section>
+        <section className="rounded-2xl border border-white/10 bg-[#121316] p-5 text-sm text-zinc-400">Pour répondre aux membres, sélectionnez une entreprise dans vos espaces de travail.</section>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-4 animate-in fade-in duration-200">
       <section className="rounded-2xl border border-white/10 bg-[#121316] p-5">
@@ -165,7 +180,7 @@ export const AssistanceView: React.FC<AssistanceViewProps> = ({ lang = "fr", act
 
       <div className="rounded-2xl border border-white/10 bg-[#121316] p-5"><div className="flex items-start gap-3"><div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400"><Bot className="size-5" /></div><div><h2 className="text-xl font-black text-white">{lang === "fr" ? "Message automatique" : "Auto-reply message"}</h2><p className="mt-1 text-xs text-zinc-400">Configurez la réponse envoyée automatiquement lorsqu’un membre contacte votre assistance.</p></div></div></div>
       <form onSubmit={save} className="space-y-5 rounded-2xl border border-white/10 bg-[#121316] p-5">
-        <div><label className="mb-2 block text-xs font-semibold text-zinc-300">Entreprise concernée</label><div className="relative"><Building2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" /><select value={companyId} onChange={(event) => setCompanyId(event.target.value)} className="w-full appearance-none rounded-xl border border-white/10 bg-[#101114] py-3 pl-10 pr-3 text-sm text-white outline-none focus:border-blue-400"><option value="">Sélectionner une entreprise</option>{availableCompanies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></div></div>
+        <div><label className="mb-2 block text-xs font-semibold text-zinc-300">Entreprise active</label><div className="relative"><Building2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" /><div className="w-full rounded-xl border border-white/10 bg-[#101114] py-3 pl-10 pr-3 text-sm text-white">{selectedCompany?.name || "Aucune entreprise sélectionnée"}</div></div></div>
         <label className="flex cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4"><div><span className="block text-sm font-semibold text-white">Activer le message automatique</span><span className="mt-1 block text-[11px] text-zinc-500">Les membres reçoivent ce message dès l’ouverture d’une demande.</span></div><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="size-5 accent-blue-500" /></label>
         <div><label className="mb-2 block text-xs font-semibold text-zinc-300">Message envoyé</label><textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={6} maxLength={5000} placeholder={DEFAULT_MESSAGE} className="w-full resize-none rounded-xl border border-white/10 bg-[#101114] p-3 text-sm text-white outline-none focus:border-blue-400" /><div className="mt-1 text-right text-[10px] text-zinc-600">{message.length}/5000</div></div>
         {selectedCompany && <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-xs text-blue-200"><MessageSquare className="mr-2 inline size-4" />Aperçu pour <strong>{selectedCompany.name}</strong> : {message || "Votre message apparaîtra ici."}</div>}
