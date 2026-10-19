@@ -47,7 +47,6 @@ import {
   FileText,
   HelpCircle,
   Link,
-  CheckCircle2,
   Bot,
   BookOpen,
   RefreshCw,
@@ -97,11 +96,10 @@ import { CurrencySelector } from "./dashboard/CurrencySelector";
 import { GuidedTour, OnboardingData } from "./dashboard/GuidedTour";
 import { BusinessProject, Company, EnterpriseSubscription } from "../types";
 import { CompanyOnboardingModal } from "./CompanyOnboardingModal";
-import { getSavedCompanies, saveCompany, seedUserCompanies } from "../utils/companyStorage";
+import { getSavedCompanies, saveCompany } from "../utils/companyStorage";
 import { EnterpriseMemberView } from "./dashboard/EnterpriseMemberView";
 import { ContextualLocationPrompt } from "./common/ContextualLocationPrompt";
-import { getSavedSubscriptions, seedEnterpriseSubscriptions } from "../utils/subscriptionsStorage";
-import { seedCustomerPurchases } from "./dashboard/CustomerPurchasesView";
+import { getSavedSubscriptions } from "../utils/subscriptionsStorage";
 import { CURATED_MARKETPLACE_PRODUCTS } from "../data/marketplaceData";
 import {
   subscribeToCreatorProducts,
@@ -110,8 +108,6 @@ import {
   subscribeToCreatorTransactions,
   subscribeToCreatorCustomers,
   createRealTransaction,
-  seedRealisticDemoData,
-  clearRealisticDemoData,
   FirestoreTransaction,
   FirestoreCustomer,
 } from "../services/dbService";
@@ -728,58 +724,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const [creatorCoursesLink, setCreatorCoursesLink] = useState<string[] | null>(null);
   const [creatorFilesLink, setCreatorFilesLink] = useState<string[] | null>(null);
   const [isGuidedTourOpen, setIsGuidedTourOpen] = useState(false);
-  const [isSeedingData, setIsSeedingData] = useState(false);
-  const [seedToastMessage, setSeedToastMessage] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMemberCheckoutOpen, setIsMemberCheckoutOpen] = useState(false);
-
-  // Auto-seed realistic demo data on first load if workspace is completely empty
-  useEffect(() => {
-    const creatorKey = user.uid || user.email || "creator-default";
-    const userKey = user.uid || user.email || "default";
-    const hasSeeded = safeStorage.getItem(`mansa_auto_seeded_${creatorKey}`);
-    if (!hasSeeded) {
-      safeStorage.setItem(`mansa_auto_seeded_${creatorKey}`, "true");
-      seedRealisticDemoData(
-        creatorKey,
-        user.email || "createur@mansa.af",
-        user.name || "Créateur Mansa"
-      ).catch((e) => console.warn("Auto-seed demo notice:", e));
-      const subs = seedEnterpriseSubscriptions(userKey);
-      setMemberSubscriptions(subs);
-      seedCustomerPurchases();
-      const comps = seedUserCompanies(userKey);
-      setCompanies(comps);
-    }
-  }, [user.uid, user.email, user.name]);
-
-  const handleSeedSimulationData = async () => {
-    setIsSeedingData(true);
-    try {
-      const creatorKey = user.uid || user.email || "creator-default";
-      const userKey = user.uid || user.email || "default";
-      const res = await seedRealisticDemoData(
-        creatorKey,
-        user.email || "createur@mansa.af",
-        user.name || "Créateur Mansa"
-      );
-      const subs = seedEnterpriseSubscriptions(userKey);
-      setMemberSubscriptions(subs);
-      seedCustomerPurchases();
-      const comps = seedUserCompanies(userKey);
-      setCompanies(comps);
-      setSeedToastMessage(
-        lang === "fr"
-          ? `Simulation globale réussie : 5 abonnements entreprises actifs débloqués (Forex Elite, Alpha Bets, DevKreativ...), vos achats & accès VIP connectés, ${res.productsCount} produits, ${res.transactionsCount} transactions (${res.totalRevenue.toLocaleString("fr-FR")} FCFA) et ${res.customersCount} clients !`
-          : `Full simulation successful: 5 active enterprise subscriptions unlocked, VIP purchases connected, ${res.productsCount} products, ${res.transactionsCount} transactions and ${res.customersCount} clients!`
-      );
-      setTimeout(() => setSeedToastMessage(null), 8000);
-    } catch (err) {
-      console.error("Error seeding demo data:", err);
-    } finally {
-      setIsSeedingData(false);
-    }
-  };
 
   // Auto-trigger guided tour for new creators on first connection
   useEffect(() => {
@@ -1012,21 +958,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <Search className="size-4" />
           </button>
 
-          {/* Data Simulation Trigger Button */}
-          <button
-            onClick={handleSeedSimulationData}
-            disabled={isSeedingData}
-            className="hidden md:flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border border-[#00D26A]/40 bg-[#00D26A]/10 hover:bg-[#00D26A]/20 text-[#00D26A] text-xs font-semibold transition-all cursor-pointer shadow-sm disabled:opacity-50 min-h-[36px]"
-            title={lang === "fr" ? "Simuler des données réalistes (produits, ventes Wave/OM, abonnements)" : "Simulate realistic data"}
-          >
-            <Zap className={`size-3.5 ${isSeedingData ? "animate-spin text-amber-400" : ""}`} />
-            <span className="hidden lg:inline">
-              {isSeedingData
-                ? (lang === "fr" ? "Simulation..." : "Simulating...")
-                : (lang === "fr" ? "Simuler données" : "Simulate Data")}
-            </span>
-          </button>
-
           {/* Guided Tour Trigger Button */}
           <button
             onClick={() => {
@@ -1135,17 +1066,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 >
                   <Building2 className="size-3.5 text-blue-400" />
                   <span>{lang === "fr" ? "Paramètres de la boutique" : "Store Settings"}</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsProfileMenuOpen(false);
-                    handleSeedSimulationData();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors cursor-pointer font-medium"
-                >
-                  <Zap className="size-3.5 text-amber-400" />
-                  <span>{lang === "fr" ? "Simuler données & abonnements" : "Simulate data & subscriptions"}</span>
                 </button>
 
                 <button
@@ -1260,7 +1180,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               }
               setActiveNav("applications");
             }}
-            onSeedSimulationData={handleSeedSimulationData}
           />
         </div>
       ) : (
@@ -1962,30 +1881,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Mobile Drawer Bottom Settings & Simulation Actions */}
+              {/* Mobile Drawer Bottom Settings */}
               <div className="border-t border-white/[0.07] pt-3 mt-4 space-y-2 shrink-0">
-                {/* Data Simulation in Mobile Drawer */}
-                <button
-                  onClick={() => {
-                    setIsMobileSidebarOpen(false);
-                    handleSeedSimulationData();
-                  }}
-                  disabled={isSeedingData}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#00D26A]/40 bg-[#00D26A]/10 hover:bg-[#00D26A]/20 text-[#00D26A] text-xs font-bold transition-all min-h-[44px] cursor-pointer disabled:opacity-50"
-                >
-                  <div className="flex items-center gap-2">
-                    <Zap className={`size-4 ${isSeedingData ? "animate-spin text-amber-400" : "text-[#00D26A]"}`} />
-                    <span>
-                      {isSeedingData
-                        ? (lang === "fr" ? "Simulation en cours..." : "Simulating...")
-                        : (lang === "fr" ? "Simuler données réalistes" : "Simulate realistic data")}
-                    </span>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#00D26A]/20 font-mono">
-                    Démo
-                  </span>
-                </button>
-
                 {/* Guided Tour in Mobile Drawer */}
                 <button
                   onClick={() => {
@@ -2071,39 +1968,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
             ) : (
               <div id="dashboard-overview" className="dashboard-overview space-y-8 max-w-[1400px]">
-                {/* Empty State / Simulation Banner */}
-                {projects.length === 0 && !isLoadingFirestore && (
-                  <div className="dashboard-callout flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#00D26A]/10 text-[#00D26A]">
-                        <Zap className="size-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-white">
-                          {lang === "fr" ? "Espace de démonstration vide ? Remplissez-le en 1 clic !" : "Empty demo workspace? Fill it in 1 click!"}
-                        </h4>
-                        <p className="text-xs text-zinc-400">
-                          {lang === "fr"
-                            ? "Générez 5 produits numériques africains, 24 transactions Mobile Money (Wave, Orange Money) réparties sur 30 jours, 16 clients et des partenaires B2B."
-                            : "Generate 5 African digital products, 24 Mobile Money transactions across 30 days, 16 clients and B2B partner deals."}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleSeedSimulationData}
-                      disabled={isSeedingData}
-                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#00D26A] text-black font-semibold text-xs hover:bg-[#00b85c] transition-all cursor-pointer shrink-0 disabled:opacity-50"
-                    >
-                      <Zap className="size-3.5" />
-                      <span>
-                        {isSeedingData
-                          ? (lang === "fr" ? "Génération en cours..." : "Generating...")
-                          : (lang === "fr" ? "Simuler les données maintenant" : "Simulate Data Now")}
-                      </span>
-                    </button>
-                  </div>
-                )}
-
                 {/* Demande de localisation contextuelle */}
                 <ContextualLocationPrompt currentCurrency={currency} className="mb-4" />
 
@@ -3407,21 +3271,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         />
       )}
 
-      {/* Toast Notification for Data Simulation */}
-      {seedToastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-[#00D26A]/50 bg-[#16171b] px-4 py-3 text-sm text-white shadow-2xl animate-in fade-in slide-in-from-bottom-5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#00D26A]/20 text-[#00D26A]">
-            <CheckCircle2 className="size-4" />
-          </div>
-          <div className="text-xs font-medium text-zinc-200">{seedToastMessage}</div>
-          <button
-            onClick={() => setSeedToastMessage(null)}
-            className="text-zinc-500 hover:text-white ml-2 cursor-pointer"
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };

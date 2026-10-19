@@ -110,7 +110,6 @@ interface EnterpriseMemberViewProps {
   onSelectCreatorCompany?: (comp: any) => void;
   user?: { uid?: string; name: string; email: string; avatarInitials?: string };
   onOpenMarketplace?: () => void;
-  onSeedSimulationData?: () => void;
   onOpenCreatorDashboard?: () => void;
   onOpenCreatorAssistance?: () => void;
   onCreateProduct?: () => void;
@@ -128,7 +127,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   onSelectCreatorCompany,
   user = { name: "Johan Désiré", email: "johan@afhub.app", avatarInitials: "JD" },
   onOpenMarketplace,
-  onSeedSimulationData,
   onOpenCreatorDashboard,
   onOpenCreatorAssistance,
   onCreateProduct,

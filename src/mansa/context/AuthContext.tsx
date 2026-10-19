@@ -14,6 +14,7 @@ import {
 } from "../services/firebase";
 import { syncUserProfile, FirestoreUserProfile } from "../services/dbService";
 import { safeStorage } from "../utils/storage";
+import { purgeLegacyDemoDataFromLocalStorage } from "../utils/legacyDemoDataCleanup";
 
 export type AppUser = Pick<FirebaseUser, "uid" | "email" | "displayName" | "photoURL">;
 
@@ -34,7 +35,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AppUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(() => {
+    purgeLegacyDemoDataFromLocalStorage();
+    return null;
+  });
   const [profile, setProfile] = useState<FirestoreUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

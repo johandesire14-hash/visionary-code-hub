@@ -5,51 +5,6 @@ import { db, doc, setDoc, deleteDoc } from "../services/firebase";
 const COMPANIES_STORAGE_PREFIX = "mansa_companies_";
 const LEGACY_COMPANIES_STORAGE_PREFIX = "afhub_companies_";
 
-export const DEFAULT_DEMO_COMPANIES: Company[] = [
-  {
-    id: "comp-cadre-financier",
-    name: "Cadre financier",
-    description: "Académie de trading, signaux VIP scalping et écosystème e-commerce Mansa.",
-    acceptedPayments: ["wave", "orange_money", "mtn_momo", "card"],
-    primaryCurrency: "XOF",
-    logoInitials: "FF",
-    colorGradient: "from-emerald-950 via-slate-900 to-black",
-    supportEmail: "contact@cadrefinancier.com",
-    supportAutoReplyEnabled: true,
-    supportAutoReplyMessage: "Bonjour ! Merci d'avoir contacté l'assistance de Cadre financier. Notre équipe a bien reçu votre demande et vous répondra dans les plus brefs délais.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "comp-mansa-ventures",
-    name: "Mansa Capital Ventures",
-    description: "Holding digitale & incubateur de créateurs africains à forte croissance.",
-    acceptedPayments: ["wave", "orange_money", "mtn_momo", "card"],
-    primaryCurrency: "XOF",
-    logoInitials: "MV",
-    colorGradient: "from-emerald-600 via-teal-700 to-black",
-    supportEmail: "contact@mansaventures.af",
-    supportAutoReplyEnabled: true,
-    supportAutoReplyMessage: "Bonjour ! Bienvenue chez Mansa Capital Ventures. Nous prenons en charge votre demande immédiatement.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "comp-studio-dakar",
-    name: "Studio Digital Dakar",
-    description: "Production de contenus, formations immersives et médias Web3 Afrique.",
-    acceptedPayments: ["wave", "orange_money", "card"],
-    primaryCurrency: "XOF",
-    logoInitials: "SD",
-    colorGradient: "from-blue-600 via-indigo-800 to-black",
-    supportEmail: "hello@studiodakar.sn",
-    supportAutoReplyEnabled: true,
-    supportAutoReplyMessage: "Bonjour ! L'équipe Studio Digital Dakar a bien reçu votre message. Un responsable vous répondra très rapidement.",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 export function getSavedCompanies(userKey: string = "default"): Company[] {
   try {
     let raw = localStorage.getItem(`${COMPANIES_STORAGE_PREFIX}${userKey}`);
@@ -61,34 +16,14 @@ export function getSavedCompanies(userKey: string = "default"): Company[] {
       }
     }
     if (!raw) {
-      localStorage.setItem(`${COMPANIES_STORAGE_PREFIX}${userKey}`, JSON.stringify(DEFAULT_DEMO_COMPANIES));
-      return DEFAULT_DEMO_COMPANIES;
+      return [];
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Ensure default companies (like Cadre financier) are present if missing
-      const hasCadre = parsed.some((c: Company) => c.id === "comp-cadre-financier");
-      if (!hasCadre) {
-        parsed.unshift(DEFAULT_DEMO_COMPANIES[0]);
-        localStorage.setItem(`${COMPANIES_STORAGE_PREFIX}${userKey}`, JSON.stringify(parsed));
-      }
-      return parsed;
-    }
-    localStorage.setItem(`${COMPANIES_STORAGE_PREFIX}${userKey}`, JSON.stringify(DEFAULT_DEMO_COMPANIES));
-    return DEFAULT_DEMO_COMPANIES;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
     console.error("Error reading companies from storage:", err);
-    return DEFAULT_DEMO_COMPANIES;
+    return [];
   }
-}
-
-export function seedUserCompanies(userKey: string = "default"): Company[] {
-  try {
-    localStorage.setItem(`${COMPANIES_STORAGE_PREFIX}${userKey}`, JSON.stringify(DEFAULT_DEMO_COMPANIES));
-  } catch (err) {
-    console.error("Error seeding companies to storage:", err);
-  }
-  return DEFAULT_DEMO_COMPANIES;
 }
 
 export function saveCompany(userKey: string = "default", newCompany: Omit<Company, "id" | "createdAt"> & { id?: string }): { companies: Company[]; created: Company } {

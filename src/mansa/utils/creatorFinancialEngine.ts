@@ -149,45 +149,7 @@ export function getWithdrawalHistory(creatorId: string): WithdrawalRequest[] {
     if (raw) {
       return JSON.parse(raw);
     }
-    // Données de démonstration réalistes si première ouverture
-    const demoWithdrawals: WithdrawalRequest[] = [
-      {
-        id: "wdr-demo-01",
-        creatorId,
-        amount: 250000,
-        currency: "FCFA",
-        fee: 0,
-        netAmount: 250000,
-        payoutMethodId: "pm-default-wave",
-        payoutMethodType: "wave",
-        payoutMethodLabel: "Wave CI (+225 07 88 99 00 11)",
-        destinationDetails: "Wave Côte d'Ivoire · Compte Johan Désiré",
-        accountHolder: "Johan Désiré",
-        status: "completed",
-        requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-        processedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000 + 45 * 60 * 1000).toISOString(),
-        referenceNumber: "WDR-2026-WV882104",
-      },
-      {
-        id: "wdr-demo-02",
-        creatorId,
-        amount: 120000,
-        currency: "FCFA",
-        fee: 0,
-        netAmount: 120000,
-        payoutMethodId: "pm-default-wave",
-        payoutMethodType: "wave",
-        payoutMethodLabel: "Wave CI (+225 07 88 99 00 11)",
-        destinationDetails: "Wave Côte d'Ivoire · Compte Johan Désiré",
-        accountHolder: "Johan Désiré",
-        status: "completed",
-        requestedAt: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
-        processedAt: new Date(Date.now() - 14 * 24 * 3600 * 1000 + 15 * 60 * 1000).toISOString(),
-        referenceNumber: "WDR-2026-WV451093",
-      },
-    ];
-    localStorage.setItem(`${STORAGE_WITHDRAWALS_PREFIX}${creatorId}`, JSON.stringify(demoWithdrawals));
-    return demoWithdrawals;
+    return [];
   } catch (e) {
     return [];
   }
@@ -406,11 +368,6 @@ export function createWithdrawalRequest(params: {
       const docRef = doc(db, "withdrawals", newRequest.id);
       setDoc(docRef, newRequest).catch((e) => console.warn("Notice: Firestore withdrawal sync:", e));
     } catch (e) {}
-
-    // Simulation de validation automatique sous 12 secondes
-    setTimeout(() => {
-      markWithdrawalCompleted(creatorId, newRequest.id);
-    }, 12000);
 
     return {
       success: true,

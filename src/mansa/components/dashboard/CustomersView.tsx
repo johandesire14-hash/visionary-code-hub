@@ -18,7 +18,6 @@ import {
   X,
   MessageSquare,
   Copy,
-  Zap,
 } from "lucide-react";
 import { ConfirmActionModal } from "../common/ConfirmActionModal";
 import { ModalOverlay } from "../common/ModalOverlay";
@@ -27,7 +26,6 @@ import {
   subscribeToCreatorCustomers,
   createRealCustomer,
   deleteCustomerFromFirestore,
-  seedRealisticDemoData,
   FirestoreCustomer,
 } from "../../services/dbService";
 
@@ -237,17 +235,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
                       >
                         <Plus className="size-3.5" />
                         <span>Ajouter manuellement un membre</span>
-                      </button>
-
-                      <button
-                        onClick={async () => {
-                          const creatorKey = profile?.uid || user?.email || "creator-default";
-                          await seedRealisticDemoData(creatorKey, user?.email || "createur@mansa.af", profile?.displayName || "Créateur Mansa");
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00D26A]/40 bg-[#00D26A]/10 hover:bg-[#00D26A]/20 text-[#00D26A] text-xs font-semibold transition-colors cursor-pointer"
-                      >
-                        <Zap className="size-3.5" />
-                        <span>Simuler 16 clients et ventes</span>
                       </button>
                     </div>
                   </td>

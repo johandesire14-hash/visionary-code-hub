@@ -58,134 +58,6 @@ export interface PurchasedProductItem {
   audioTrackName?: string;
 }
 
-export const DEFAULT_CUSTOMER_PURCHASES: PurchasedProductItem[] = [
-  {
-    id: "purch-music",
-    orderNumber: "CMD-928471",
-    name: "Afrobeat Master Pack · 10 Beats & Stems WAV",
-    sellerName: "Afro Beats Studio Dakar",
-    sellerAvatar: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80",
-    price: "20 000 FCFA",
-    planName: "Licence Commerciale Illimitée",
-    purchaseDate: "02 Septembre 2026",
-    status: "active",
-    nextBilling: "Achat unique définitif",
-    telegramChannelName: "Afro Beats VIP Producers Group",
-    telegramChannelId: "tg-afrobeats",
-    discordServerName: "Afro Beats Studio HQ",
-    discordRoleName: "Beatmaker Pro",
-    hasDiscordApp: true,
-    hasTelegramApp: true,
-    hasCourseApp: false,
-    hasFilesApp: true,
-    hasAudioPreview: true,
-    audioTrackName: "Afrobeat_Lagos_Summer_Hit_Master.mp3",
-  },
-  {
-    id: "purch-1",
-    name: "Forex Elite Africa · Signaux VIP Gold & Scalping",
-    sellerName: "Forex Elite Africa SARL",
-    sellerAvatar: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=300&q=80",
-    price: "25 000 FCFA",
-    planName: "Abonnement Mensuel VIP",
-    purchaseDate: "01 Septembre 2026",
-    status: "active",
-    nextBilling: "01 Octobre 2026",
-    telegramChannelName: "Forex Elite · Signaux VIP Gold (Mansa)",
-    telegramChannelId: "tg-fce-vip",
-    discordServerName: "Forex Elite Trading HQ",
-    discordRoleName: "Trader VIP Pro",
-    hasDiscordApp: true,
-    hasTelegramApp: true,
-    hasCourseApp: true,
-    hasFilesApp: true,
-  },
-  {
-    id: "purch-2",
-    name: "Alpha Bets Club · Data Analytics & Algorithmes",
-    sellerName: "Alpha Bets Club Pro",
-    sellerAvatar: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=300&q=80",
-    price: "15 000 FCFA",
-    planName: "Pass Mensuel Prédictions",
-    purchaseDate: "30 Août 2026",
-    status: "active",
-    nextBilling: "30 Septembre 2026",
-    telegramChannelName: "Alpha Bets Picks Safe 1.80+",
-    telegramChannelId: "tg-ab-safe",
-    discordServerName: "Alpha Bets Community Discord",
-    discordRoleName: "VIP Data Bettor",
-    hasDiscordApp: true,
-    hasTelegramApp: true,
-    hasCourseApp: false,
-    hasFilesApp: true,
-  },
-  {
-    id: "purch-3",
-    name: "Masterclass Dropshipping & Import Chine-Afrique",
-    sellerName: "Sarah Diallo Studio",
-    sellerAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
-    price: "45 000 FCFA",
-    planName: "Accès Illimité à Vie",
-    purchaseDate: "28 Août 2026",
-    status: "active",
-    nextBilling: "Accès à vie",
-    telegramChannelName: "E-Commerce Sourcing & Fournisseurs",
-    telegramChannelId: "tg-em-contacts",
-    discordServerName: "E-Commerce Afrique HQ",
-    discordRoleName: "Mastery Elite",
-    hasDiscordApp: true,
-    hasTelegramApp: true,
-    hasCourseApp: true,
-    hasFilesApp: true,
-  },
-  {
-    id: "purch-4",
-    name: "Mansa Automation Bot WhatsApp & Telegram",
-    sellerName: "DevKreativ Lab",
-    sellerAvatar: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80",
-    price: "19 000 FCFA",
-    planName: "Licence Pro SaaS",
-    purchaseDate: "25 Août 2026",
-    status: "active",
-    nextBilling: "25 Septembre 2026",
-    telegramChannelName: "DevKreativ Updates & API",
-    telegramChannelId: "tg-dk-releases",
-    discordServerName: "DevKreativ SaaS Hub",
-    discordRoleName: "Licensed Developer",
-    hasDiscordApp: true,
-    hasTelegramApp: true,
-    hasCourseApp: true,
-    hasFilesApp: true,
-  },
-  {
-    id: "purch-5",
-    name: "Club Foncier & Investissement Immo Diaspora",
-    sellerName: "Diaspora Invest Immo",
-    sellerAvatar: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=300&q=80",
-    price: "30 000 FCFA",
-    planName: "Membre Privé Syndicat",
-    purchaseDate: "20 Août 2026",
-    status: "active",
-    nextBilling: "20 Septembre 2026",
-    telegramChannelName: "Diaspora Invest Opportunités ACD",
-    telegramChannelId: "tg-di-opportunites",
-    discordServerName: "Diaspora Invest VIP",
-    discordRoleName: "Investisseur Foncier",
-    hasDiscordApp: true,
-    hasTelegramApp: true,
-    hasCourseApp: true,
-    hasFilesApp: true,
-  },
-];
-
-export function seedCustomerPurchases(): PurchasedProductItem[] {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CUSTOMER_PURCHASES));
-    window.dispatchEvent(new CustomEvent("mansa_purchases_updated", { detail: DEFAULT_CUSTOMER_PURCHASES }));
-  }
-  return DEFAULT_CUSTOMER_PURCHASES;
-}
-
 interface CustomerPurchasesViewProps {
   lang: "fr" | "en";
   onOpenAccountSettings?: () => void;
@@ -199,7 +71,7 @@ export const CustomerPurchasesView: React.FC<CustomerPurchasesViewProps> = ({
 }) => {
   // Purchases list (persisted in localStorage or demo state with migration)
   const [purchases, setPurchases] = useState<PurchasedProductItem[]>(() => {
-    if (typeof window === "undefined") return DEFAULT_CUSTOMER_PURCHASES;
+    if (typeof window === "undefined") return [];
     let saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) {
       saved = localStorage.getItem(LEGACY_STORAGE_KEY);
@@ -213,9 +85,7 @@ export const CustomerPurchasesView: React.FC<CustomerPurchasesViewProps> = ({
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch {}
     }
-    // Default fallback to show active simulated purchases
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CUSTOMER_PURCHASES));
-    return DEFAULT_CUSTOMER_PURCHASES;
+    return [];
   });
 
   // Listen for purchases updates

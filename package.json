@@ -1,19 +1,20 @@
 {
   "name": "tanstack_start_ts",
- "private": true,
- "sideEffects": false,
- "type": "module",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
   "packageManager": "pnpm@11.25.0",
- "scripts": {
-   "dev": "vite dev",
-   "build": "vite build",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e:enterprise-files": "./scripts/test-enterprise-file-permissions.sh"
+    "test:e2e:enterprise-files": "./scripts/test-enterprise-file-permissions.sh",
+    "cleanup:demo-firestore": "node scripts/cleanup-demo-firestore.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -89,6 +90,7 @@
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "firebase-admin": "^14.5.0",
     "globals": "^15.15.0",
     "jsdom": "^20.0.3",
     "nitro": "3.0.260603-beta",
