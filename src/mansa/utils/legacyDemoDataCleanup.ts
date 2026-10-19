@@ -49,6 +49,11 @@ const telegramChannelNames = new Set([
   "BETSPORT EXCLUSIF",
 ]);
 const withdrawalIds = new Set(["wdr-demo-01", "wdr-demo-02"]);
+const demoPostIds = new Set(["post-cadre-1", "post-cadre-2"]);
+
+function isDemoPostId(id: string): boolean {
+  return demoPostIds.has(id) || id.startsWith("post-welcome-");
+}
 
 function getStringField(item: unknown, field: string): string | undefined {
   if (!item || typeof item !== "object") return undefined;
@@ -65,6 +70,29 @@ function removeMatchingArrayItems(key: string, isDemoItem: (item: unknown) => bo
     const filtered = parsed.filter((item) => !isDemoItem(item));
     const removed = parsed.length - filtered.length;
     if (removed > 0) window.localStorage.setItem(key, JSON.stringify(filtered));
+    return removed;
+  } catch {
+    return 0;
+  }
+}
+
+function removeMatchingStringArrayItems(key: string, ids: Set<string>): number {
+  return removeMatchingArrayItems(key, (item) => typeof item === "string" && ids.has(item));
+}
+
+function removeMatchingObjectEntries(
+  key: string,
+  isDemoEntry: (entryKey: string) => boolean,
+): number {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return 0;
+    const filteredEntries = Object.entries(parsed).filter(([entryKey]) => !isDemoEntry(entryKey));
+    const removed = Object.keys(parsed).length - filteredEntries.length;
+    if (removed > 0)
+      window.localStorage.setItem(key, JSON.stringify(Object.fromEntries(filteredEntries)));
     return removed;
   } catch {
     return 0;
@@ -117,6 +145,7 @@ export function purgeLegacyDemoDataFromLocalStorage(): number {
           telegramChannelIds.has(getStringField(item, "id") || "") ||
           telegramChannelNames.has(getStringField(item, "name") || ""),
       ],
+      [["mansa_company_newsfeed_posts"], (item) => isDemoPostId(getStringField(item, "id") || "")],
     ];
 
     for (const [keys, isDemoItem] of cacheRules) {
@@ -143,6 +172,24 @@ export function purgeLegacyDemoDataFromLocalStorage(): number {
       removedCount += removeMatchingArrayItems(key, (item) =>
         withdrawalIds.has(getStringField(item, "id") || ""),
       );
+    }
+    const removedSubscriptionIds = new Set([...subscriptionIds, ...subscriptionCompanyIds]);
+    for (const key of getMatchingKeys(["mansa_left_enterprises_"])) {
+      removedCount += removeMatchingStringArrayItems(key, removedSubscriptionIds);
+    }
+    for (const key of getMatchingKeys(["mansa_cleared_txs_"])) {
+      removedCount += removeMatchingStringArrayItems(key, transactionIds);
+    }
+    removedCount += removeMatchingObjectEntries("mansa_post_comments_storage", isDemoPostId);
+    for (const key of getMatchingKeys(["mansa_liked_posts_"])) {
+      removedCount += removeMatchingObjectEntries(key, isDemoPostId);
+    }
+
+    for (const key of ["mansa_demo_session", "afhub_demo_session"]) {
+      if (window.localStorage.getItem(key) !== null) {
+        window.localStorage.removeItem(key);
+        removedCount += 1;
+      }
     }
 
     for (const key of getMatchingKeys(["mansa_auto_seeded_", "mansa_subscriptions_seeded_"])) {

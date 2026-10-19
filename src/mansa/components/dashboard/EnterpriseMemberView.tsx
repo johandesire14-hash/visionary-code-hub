@@ -376,15 +376,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [postCommentsMap, setPostCommentsMap] = useState<Record<string, Array<{ author: string; text: string; time: string }>>>(() => {
     try {
       const raw = localStorage.getItem("mansa_post_comments_storage");
-      return raw ? JSON.parse(raw) : {
-        "post-pinned": [
-          { author: "Membre Actif", text: "Merci pour la mise à jour, c'est très clair.", time: "Il y a 20 min" },
-          { author: currentSub.companyName, text: "Merci pour votre retour. Nous restons disponibles.", time: "Il y a 12 min" },
-        ],
-        "post-cadre-1": [
-          { author: "Membre Actif", text: "Merci pour ce point de marché détaillé !", time: "Il y a 30 min" },
-        ],
-      };
+      return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
     }

@@ -16,6 +16,7 @@ vi.mock("../mansa/utils/rightsAccessEngine", () => ({
 }));
 
 import { getSavedCompanies } from "../mansa/utils/companyStorage";
+import { getAllStoredPosts, getPostsForCompany } from "../mansa/utils/companyPostsStorage";
 import { getWithdrawalHistory } from "../mansa/utils/creatorFinancialEngine";
 import { purgeLegacyDemoDataFromLocalStorage } from "../mansa/utils/legacyDemoDataCleanup";
 import { getSavedSubscriptions } from "../mansa/utils/subscriptionsStorage";
@@ -68,6 +69,32 @@ describe("demo data defaults", () => {
       "mansa_withdrawals_alice",
       JSON.stringify([{ id: "wdr-demo-01" }, { id: "real-withdrawal" }]),
     );
+    localStorage.setItem(
+      "mansa_company_newsfeed_posts",
+      JSON.stringify([
+        { id: "post-cadre-1" },
+        { id: "post-welcome-alice-company-123" },
+        { id: "real-post" },
+      ]),
+    );
+    localStorage.setItem(
+      "mansa_post_comments_storage",
+      JSON.stringify({ "post-cadre-1": [{ text: "demo" }], "real-post": [{ text: "real" }] }),
+    );
+    localStorage.setItem(
+      "mansa_liked_posts_alice",
+      JSON.stringify({ "post-welcome-alice-company-123": true, "real-post": true }),
+    );
+    localStorage.setItem(
+      "mansa_left_enterprises_alice",
+      JSON.stringify(["sub-cadre-financier", "real-subscription"]),
+    );
+    localStorage.setItem(
+      "mansa_cleared_txs_alice",
+      JSON.stringify(["tx-demo-2", "real-transaction"]),
+    );
+    localStorage.setItem("mansa_demo_session", JSON.stringify({ uid: "demo-creator-mansa" }));
+    localStorage.setItem("afhub_demo_session", JSON.stringify({ uid: "demo-creator-mansa" }));
     localStorage.setItem("mansa_auto_seeded_alice", "true");
     localStorage.setItem("mansa_subscriptions_seeded_alice", "true");
 
@@ -93,7 +120,30 @@ describe("demo data defaults", () => {
     expect(JSON.parse(localStorage.getItem("mansa_withdrawals_alice") || "[]")).toEqual([
       { id: "real-withdrawal" },
     ]);
+    expect(JSON.parse(localStorage.getItem("mansa_company_newsfeed_posts") || "[]")).toEqual([
+      { id: "real-post" },
+    ]);
+    expect(JSON.parse(localStorage.getItem("mansa_post_comments_storage") || "{}")).toEqual({
+      "real-post": [{ text: "real" }],
+    });
+    expect(JSON.parse(localStorage.getItem("mansa_liked_posts_alice") || "{}")).toEqual({
+      "real-post": true,
+    });
+    expect(JSON.parse(localStorage.getItem("mansa_left_enterprises_alice") || "[]")).toEqual([
+      "real-subscription",
+    ]);
+    expect(JSON.parse(localStorage.getItem("mansa_cleared_txs_alice") || "[]")).toEqual([
+      "real-transaction",
+    ]);
+    expect(localStorage.getItem("mansa_demo_session")).toBeNull();
+    expect(localStorage.getItem("afhub_demo_session")).toBeNull();
     expect(localStorage.getItem("mansa_auto_seeded_alice")).toBeNull();
     expect(localStorage.getItem("mansa_subscriptions_seeded_alice")).toBeNull();
+  });
+
+  it("does not auto-insert example posts into an empty company feed", () => {
+    expect(getAllStoredPosts()).toEqual([]);
+    expect(getPostsForCompany("comp-cadre-financier", "Cadre financier")).toEqual([]);
+    expect(localStorage.getItem("mansa_company_newsfeed_posts")).toBeNull();
   });
 });
