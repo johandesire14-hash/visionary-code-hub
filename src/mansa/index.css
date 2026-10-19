@@ -246,3 +246,98 @@ body,
 .mansa-palette > .mansa-viewport {
   background-color: #2A2929 !important;
 }
+
+/* Dashboard visual system: colour carries decisions, surfaces stay quiet. */
+.mansa-dashboard {
+  --dashboard-bg: #0d0f10;
+  --dashboard-panel: #15181b;
+  --dashboard-panel-raised: #1b1f23;
+  --dashboard-border: rgba(255, 255, 255, 0.1);
+  --dashboard-border-subtle: rgba(255, 255, 255, 0.07);
+  --dashboard-text: #f2f4f5;
+  --dashboard-muted: #9ba3aa;
+  --dashboard-accent: #3ddc84;
+  --dashboard-active: #23282d;
+  background: var(--dashboard-bg) !important;
+  color: var(--dashboard-text);
+}
+
+.mansa-dashboard > header,
+.mansa-dashboard .dashboard-canvas {
+  background: var(--dashboard-bg) !important;
+}
+
+.mansa-dashboard > header {
+  border-color: var(--dashboard-border-subtle) !important;
+}
+
+.mansa-dashboard aside {
+  background: var(--dashboard-bg) !important;
+  border-color: var(--dashboard-border-subtle) !important;
+}
+
+.mansa-dashboard aside nav button[class*="bg-[#0055ff"] {
+  background: var(--dashboard-active) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--dashboard-text) !important;
+}
+
+.mansa-dashboard .dashboard-overview {
+  max-width: 1280px;
+}
+
+.mansa-dashboard .dashboard-panel {
+  background: var(--dashboard-panel) !important;
+  border: 1px solid var(--dashboard-border) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+.mansa-dashboard .dashboard-callout {
+  background: var(--dashboard-panel) !important;
+  border: 1px solid rgba(61, 220, 132, 0.3) !important;
+  border-radius: 10px !important;
+}
+
+.mansa-dashboard .dashboard-segmented-control {
+  background: var(--dashboard-panel-raised) !important;
+  border-color: var(--dashboard-border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.mansa-dashboard .dashboard-feed-row {
+  background: transparent !important;
+  border-color: var(--dashboard-border-subtle) !important;
+  border-radius: 6px !important;
+}
+
+.mansa-dashboard .dashboard-overview [class*="bg-gradient"] {
+  background-image: none !important;
+}
+
+.mansa-dashboard .dashboard-overview [class*="shadow-"] {
+  box-shadow: none !important;
+}
+
+.mansa-dashboard .dashboard-overview [class*="font-mono"] {
+  font-family: inherit !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.mansa-dashboard .dashboard-overview .dashboard-data-number {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+.mansa-dashboard .dashboard-overview h1,
+.mansa-dashboard .dashboard-overview h2,
+.mansa-dashboard .dashboard-overview h3 {
+  letter-spacing: -0.025em;
+}
+
+@media (max-width: 1023px) {
+  .mansa-dashboard .dashboard-overview {
+    max-width: none;
+  }
+}

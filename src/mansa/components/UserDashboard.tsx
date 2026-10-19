@@ -946,7 +946,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     null;
 
   return (
-    <div className="mansa-viewport mansa-safe-bottom flex h-screen w-full flex-col bg-[#0f1012] text-[#eeeeee] font-sans antialiased overflow-hidden selection:bg-[#FA4616]/30 selection:text-[#FA4616]">
+    <div className="mansa-dashboard mansa-viewport mansa-safe-bottom flex h-screen w-full flex-col bg-[#0f1012] text-[#eeeeee] font-sans antialiased overflow-hidden selection:bg-[#FA4616]/30 selection:text-[#FA4616]">
       
       {/* 1. TOP HEADER BAR (Fully Responsive) */}
       <header className={`${isMemberWorkspace || activeNav === "communaute" ? "hidden lg:flex" : "flex"} h-14 w-full shrink-0 items-center justify-between border-b border-white/[0.07] bg-[#0c0d0e] px-2.5 sm:px-6 gap-2 select-none`}>
@@ -2032,7 +2032,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         )}
 
         {/* 3. MAIN CENTER WORKSPACE */}
-        <main className="flex-1 overflow-y-auto bg-[#0f1012] p-6 lg:p-8">
+        <main className="dashboard-canvas flex-1 overflow-y-auto bg-[#0f1012] p-6 lg:p-8">
             
           {/* VIEW: COMMUNAUTÉ (EMPTY STATE LORSQUE L'UTILISATEUR A QUITTÉ LES ENTREPRISES) */}
           {activeNav === "communaute" && !currentCommunitySub && (
@@ -2070,12 +2070,30 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="space-y-8 max-w-[1400px]">
+              <div id="dashboard-overview" className="dashboard-overview space-y-8 max-w-[1400px]">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h1 className="text-2xl font-semibold text-white">
+                      {lang === "fr" ? "Vue d’ensemble" : "Overview"}
+                    </h1>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {isCompanyContext
+                        ? `Les chiffres clés de ${activeCompany?.name}.`
+                        : lang === "fr"
+                          ? "Les chiffres clés de votre activité."
+                          : "The key numbers from your activity."}
+                    </p>
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    {lang === "fr" ? "Données actualisées automatiquement" : "Data refreshes automatically"}
+                  </div>
+                </div>
+
                 {/* Empty State / Simulation Banner */}
                 {projects.length === 0 && !isLoadingFirestore && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-[#00D26A]/30 bg-gradient-to-r from-[#00D26A]/10 via-[#16171b] to-transparent">
+                  <div className="dashboard-callout flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#00D26A]/20 text-[#00D26A]">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#00D26A]/10 text-[#00D26A]">
                         <Zap className="size-5" />
                       </div>
                       <div>
@@ -2092,7 +2110,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     <button
                       onClick={handleSeedSimulationData}
                       disabled={isSeedingData}
-                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#00D26A] text-black font-semibold text-xs hover:bg-[#00b85c] transition-all cursor-pointer shrink-0 shadow-md disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#00D26A] text-black font-semibold text-xs hover:bg-[#00b85c] transition-all cursor-pointer shrink-0 disabled:opacity-50"
                     >
                       <Zap className="size-3.5" />
                       <span>
@@ -2135,24 +2153,24 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                       </div>
                     </div>
                     <div className="flex items-baseline gap-3">
-                      <div className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white font-mono break-all sm:break-normal">
+                      <div className="dashboard-data-number text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white break-all sm:break-normal">
                         {formatCurrency(activeBalance, currency)}
                       </div>
                     </div>
                   </div>
 
                   {/* Minimalist Line Chart with Wavy Curve and Baseline (Matching Screenshot) */}
-                  <div className="relative rounded-2xl border border-white/[0.06] bg-[#121316] p-6 pt-10 overflow-hidden">
+                  <div className="dashboard-panel relative p-6 pt-10 overflow-hidden">
                     
                     {/* Timeframe pill selector */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1 rounded-lg border border-white/5 bg-[#181a1f] p-1 text-[11px] font-mono">
+                    <div className="dashboard-segmented-control absolute top-4 right-4 flex items-center gap-1 rounded-lg border p-1 text-[11px]">
                       {(["24h", "7j", "30j", "1an", "tout"] as const).map((tf) => (
                         <button
                           key={tf}
                           onClick={() => setSelectedTimeframe(tf)}
                           className={`rounded px-2 py-0.5 transition-all cursor-pointer ${
                             selectedTimeframe === tf
-                              ? "bg-[#252830] text-white font-bold"
+                              ? "bg-[#2a3035] text-white font-semibold"
                               : "text-zinc-500 hover:text-zinc-300"
                           }`}
                         >
@@ -2164,17 +2182,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     {/* SVG Wavy Graph */}
                     <div className="h-64 sm:h-72 w-full pt-4">
                       <svg className="h-full w-full overflow-visible" viewBox="0 0 600 200" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="balanceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#00D26A" stopOpacity="0.18" />
-                            <stop offset="100%" stopColor="#00D26A" stopOpacity="0.0" />
-                          </linearGradient>
-                        </defs>
-
-                        {/* Filled area */}
+                        {/* Low-opacity data area; no decorative gradient. */}
                         <path
                           d="M 0,140 Q 60,115 120,135 T 240,110 T 360,95 T 480,80 T 600,85 L 600,190 L 0,190 Z"
-                          fill="url(#balanceGradient)"
+                          fill="#3DDC84"
+                          fillOpacity="0.08"
                         />
 
                         {/* Main wavy stroke line */}
@@ -2207,7 +2219,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <div className="lg:col-span-4 space-y-6">
               
               {/* 1. Soldes Card */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#121316] p-5">
+              <div className="dashboard-panel p-5">
                 <h3 className="text-sm font-bold text-white mb-3">
                   {lang === "fr" ? "Soldes" : "Balances"}
                 </h3>
@@ -2236,7 +2248,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
 
                   {/* 2. Pouls Live Stream Card (Exact match to screenshot) */}
-                  <div id="tour-pulse-feed" className="rounded-2xl border border-white/[0.08] bg-[#121316] p-5 space-y-3">
+                  <div id="tour-pulse-feed" className="dashboard-panel p-5 space-y-3">
                     
                     {/* Pouls header with green dot */}
                     <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
@@ -2273,7 +2285,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           {pulseEvents.map((evt) => (
                           <div
                             key={evt.id}
-                            className="flex items-start gap-3 text-xs text-zinc-300 leading-snug p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:border-white/[0.08] transition-all"
+                            className="dashboard-feed-row flex items-start gap-3 text-xs text-zinc-300 leading-snug p-2.5 border transition-all"
                           >
 
                             <div className="flex-1 min-w-0">
