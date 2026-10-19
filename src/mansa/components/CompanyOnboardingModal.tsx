@@ -391,7 +391,7 @@ export const CompanyOnboardingModal: React.FC<CompanyOnboardingModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className={`mansa-btn-green px-6 py-2.5 text-xs font-bold transition-all shadow-lg flex items-center gap-2 cursor-pointer ${
+              className={`ui-btn-primary px-6 py-2.5 text-xs font-bold transition-all shadow-lg flex items-center gap-2 cursor-pointer ${
                 !name.trim() ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >

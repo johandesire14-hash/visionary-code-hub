@@ -218,7 +218,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           {onOpenProductStudio && (
             <button
               onClick={onOpenProductStudio}
-              className="mansa-btn-dark px-4 py-2.5 text-xs font-bold cursor-pointer flex items-center gap-2 border border-white/15 hover:border-[#00D26A]/50"
+              className="ui-btn-secondary px-4 py-2.5 text-xs font-bold cursor-pointer flex items-center gap-2 border border-white/15 hover:border-[#00D26A]/50"
             >
               <Sliders className="size-4 text-[#00D26A]" />
               <span>Studio Produit</span>
@@ -227,7 +227,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
           <button
             onClick={() => setIsCreatingProject(true)}
-            className="mansa-btn-green px-5 py-2.5 text-xs font-bold cursor-pointer flex items-center gap-2 shadow-lg hover:scale-[1.02] transition-transform"
+            className="ui-btn-primary px-5 py-2.5 text-xs font-bold cursor-pointer flex items-center gap-2 shadow-lg hover:scale-[1.02] transition-transform"
           >
             <Plus className="size-4" />
             <span>Nouveau Projet</span>
@@ -382,13 +382,13 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 setSelectedCategory("all");
                 setSelectedStatus("all");
               }}
-              className="mansa-btn-dark px-4 py-2 text-xs font-semibold cursor-pointer"
+              className="ui-btn-secondary px-4 py-2 text-xs font-semibold cursor-pointer"
             >
               Réinitialiser les filtres
             </button>
             <button
               onClick={() => setIsCreatingProject(true)}
-              className="mansa-btn-green px-4 py-2 text-xs font-bold cursor-pointer flex items-center gap-1.5"
+              className="ui-btn-primary px-4 py-2 text-xs font-bold cursor-pointer flex items-center gap-1.5"
             >
               <Plus className="size-3.5" />
               <span>Créer un projet</span>
@@ -680,7 +680,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="mansa-btn-green px-5 py-2 text-xs font-bold cursor-pointer"
+                  className="ui-btn-primary px-5 py-2 text-xs font-bold cursor-pointer"
                 >
                   Enregistrer les modifications
                 </button>
@@ -774,7 +774,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               </button>
               <button
                 type="submit"
-                className="mansa-btn-green px-5 py-2 text-xs font-bold cursor-pointer"
+                className="ui-btn-primary px-5 py-2 text-xs font-bold cursor-pointer"
               >
                 Créer le projet
               </button>

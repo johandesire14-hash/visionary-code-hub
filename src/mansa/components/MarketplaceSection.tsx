@@ -215,7 +215,7 @@ export const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
 
                       <button
                         onClick={() => onSelectProduct(prod)}
-                        className="mansa-btn-green px-3.5 py-1.5 text-xs font-bold text-black flex items-center gap-1 cursor-pointer rounded-xl"
+                        className="ui-btn-primary px-3.5 py-1.5 text-xs font-bold text-black flex items-center gap-1 cursor-pointer rounded-xl"
                       >
                         <span>Voir l'offre</span>
                         <ArrowRight className="size-3" />

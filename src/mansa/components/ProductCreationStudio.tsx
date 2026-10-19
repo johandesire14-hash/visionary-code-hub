@@ -938,7 +938,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
 
           <button
             onClick={handleFinalSubmit}
-            className="mansa-btn-green text-xs px-4 py-2 font-bold cursor-pointer flex items-center gap-1.5 shadow-lg"
+            className="ui-btn-primary text-xs px-4 py-2 font-bold cursor-pointer flex items-center gap-1.5 shadow-lg"
           >
             <Check className="size-3.5" />
             <span>{initialData?.id ? "Enregistrer les modifications" : "Créer un produit"}</span>
@@ -1088,7 +1088,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                         Musique (MP3, WAV avec écoute 30s), PDF, ePub, ZIP, Vidéo (jusqu'à 2 Go)
                       </span>
                     </div>
-                    <span className="mansa-btn-green text-[11px] px-3.5 py-1 font-bold rounded-lg mt-1">
+                    <span className="ui-btn-primary text-[11px] px-3.5 py-1 font-bold rounded-lg mt-1">
                       Parcourir les fichiers
                     </span>
                   </label>
@@ -1533,7 +1533,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                       </button>
                       <button
                         type="submit"
-                        className="mansa-btn-green px-4 py-1.5 text-xs font-bold cursor-pointer"
+                        className="ui-btn-primary px-4 py-1.5 text-xs font-bold cursor-pointer"
                       >
                         Ajouter l'option
                       </button>
@@ -1604,7 +1604,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                       </button>
                       <button
                         type="submit"
-                        className="mansa-btn-green px-3 py-1 text-xs font-bold cursor-pointer"
+                        className="ui-btn-primary px-3 py-1 text-xs font-bold cursor-pointer"
                       >
                         Enregistrer FAQ
                       </button>
@@ -1684,7 +1684,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
             <button
               type="button"
               onClick={handleFinalSubmit}
-              className="mansa-btn-green w-full py-3.5 text-sm font-bold cursor-pointer flex items-center justify-center gap-2"
+              className="ui-btn-primary w-full py-3.5 text-sm font-bold cursor-pointer flex items-center justify-center gap-2"
             >
               <CheckCircle2 className="size-4" />
               <span>{initialData?.id ? "Enregistrer les modifications" : "Créer un produit"}</span>
@@ -1821,7 +1821,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
                         <button
                           type="button"
                           onClick={() => productImageFileInputRef.current?.click()}
-                          className="mansa-btn-green text-xs px-4 py-2 font-bold cursor-pointer flex items-center gap-2"
+                          className="ui-btn-primary text-xs px-4 py-2 font-bold cursor-pointer flex items-center gap-2"
                         >
                           <Upload className="size-3.5" />
                           Ajouter une image

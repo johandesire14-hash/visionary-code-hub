@@ -292,7 +292,7 @@ export const MansaAutomationView: React.FC<{ lang: "fr" | "en" }> = ({ lang }) =
             </button>
             <button
               onClick={() => setActiveTab("simulator")}
-              className="mansa-btn-orange px-4 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-sm"
+              className="ui-btn-primary px-4 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-sm"
             >
               <Zap className="size-3.5" />
               <span>Simuler un Paiement</span>
@@ -605,7 +605,7 @@ export const MansaAutomationView: React.FC<{ lang: "fr" | "en" }> = ({ lang }) =
             <button
               onClick={() => handleSimulateWebhook()}
               disabled={isLoading}
-              className="w-full mansa-btn-orange py-3 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              className="w-full ui-btn-primary py-3 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
               {isLoading ? <RefreshCw className="size-4 animate-spin" /> : <Send className="size-4" />}
               <span>Envoyer le Webhook Signé HMAC SHA-256</span>
@@ -696,7 +696,7 @@ export const MansaAutomationView: React.FC<{ lang: "fr" | "en" }> = ({ lang }) =
               <button
                 onClick={handleRunCron}
                 disabled={isLoading}
-                className="mansa-btn-orange px-3.5 py-2 text-xs flex items-center gap-2 cursor-pointer"
+                className="ui-btn-primary px-3.5 py-2 text-xs flex items-center gap-2 cursor-pointer"
               >
                 <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""}`} />
                 <span>Exécuter le scan d'expiration immédiat</span>
@@ -925,7 +925,7 @@ export const MansaAutomationView: React.FC<{ lang: "fr" | "en" }> = ({ lang }) =
                     />
                     <button
                       onClick={() => copyToClipboard(createdInviteUrl, "invite_test")}
-                      className="mansa-btn-orange px-2.5 py-1 text-[10px] flex items-center gap-1 cursor-pointer"
+                      className="ui-btn-primary px-2.5 py-1 text-[10px] flex items-center gap-1 cursor-pointer"
                     >
                       {copiedKey === "invite_test" ? <Check className="size-3" /> : <Copy className="size-3" />}
                       <span>Copier</span>
@@ -1074,7 +1074,7 @@ export const MansaAutomationView: React.FC<{ lang: "fr" | "en" }> = ({ lang }) =
                   if (codeTab === "env") textToCopy = envCodeSnippet;
                   copyToClipboard(textToCopy, "vault_code");
                 }}
-                className="mansa-btn-orange px-3 py-1 text-xs flex items-center gap-1.5 cursor-pointer"
+                className="ui-btn-primary px-3 py-1 text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 {copiedKey === "vault_code" ? <Check className="size-3" /> : <Copy className="size-3" />}
                 <span>Copier le fichier</span>

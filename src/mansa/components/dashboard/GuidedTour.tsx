@@ -606,7 +606,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
               <button
                 type="button"
                 onClick={handleFinishAll}
-                className="flex-1 mansa-btn-green py-2.5 text-xs font-bold justify-center cursor-pointer shadow-sm"
+                className="flex-1 ui-btn-primary py-2.5 text-xs font-bold justify-center cursor-pointer shadow-sm"
               >
                 <span>Valider</span>
                 <ChevronRight className="size-4" />
@@ -703,7 +703,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex items-center gap-1.5 mansa-btn-green px-4 py-1.5 text-xs font-bold cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 ui-btn-primary px-4 py-1.5 text-xs font-bold cursor-pointer shadow-sm"
               >
                 <span>{isLastStep ? "Terminer" : "Suivant"}</span>
                 <ChevronRight className="size-3.5" />

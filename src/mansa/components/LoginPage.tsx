@@ -165,7 +165,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             type="button"
             onClick={handleDemoLogin}
             disabled={isSubmitting}
-            className="mansa-btn-green w-full py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2"
+            className="ui-btn-primary w-full py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2"
           >
             <span>Lancer la session Démo & Explorer</span>
             <ArrowRight className="size-3.5" />
@@ -291,7 +291,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mansa-btn-green w-full py-3 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 mt-2"
+              className="ui-btn-primary w-full py-3 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 mt-2"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">

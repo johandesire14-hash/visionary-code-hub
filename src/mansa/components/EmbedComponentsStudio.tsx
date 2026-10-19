@@ -215,7 +215,7 @@ export async function validateLicense(key: string) {
                   <button
                     onClick={handleSimulatePay}
                     disabled={isProcessingPayment}
-                    className="mansa-btn-orange w-full py-3 text-sm cursor-pointer"
+                    className="ui-btn-primary w-full py-3 text-sm cursor-pointer"
                   >
                     {isProcessingPayment ? (
                       <span className="flex items-center gap-2">
@@ -241,10 +241,10 @@ export async function validateLicense(key: string) {
                 </div>
                 <div className="text-3xl font-extrabold font-mono text-white">$14,290.45</div>
                 <div className="flex gap-2">
-                  <button className="mansa-btn-orange flex-1 py-2.5 text-xs cursor-pointer">
+                  <button className="ui-btn-primary flex-1 py-2.5 text-xs cursor-pointer">
                     Transférer vers Banque
                   </button>
-                  <button className="mansa-btn-dark flex-1 py-2.5 text-xs cursor-pointer text-zinc-300">
+                  <button className="ui-btn-secondary flex-1 py-2.5 text-xs cursor-pointer text-zinc-300">
                     Retirer en USDC (0% frais)
                   </button>
                 </div>

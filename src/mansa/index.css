@@ -8,6 +8,13 @@
     --mansa-bg: #F2F2F2;
     --mansa-surface: #F2F2F2;
     --mansa-border: rgba(0, 0, 0, 0.14);
+    --ui-action-primary: #3DDC84;
+    --ui-action-primary-hover: #2FB86A;
+    --ui-action-secondary: #1B1E23;
+    --ui-action-secondary-hover: #252A30;
+    --ui-action-danger: #E05252;
+    --ui-action-danger-hover: #C83F45;
+    --ui-action-focus: #8BE8B1;
   }
 
   body {
@@ -84,57 +91,121 @@
   }
 }
 
-/* Mansa Signature Green Button */
-.mansa-btn-green,
-.mansa-btn-orange,
-.whop-btn-primary {
-  background-color: #3DDC84;
-  color: #000000;
+/* Unified button system. */
+.ui-btn-primary {
+  background-color: var(--ui-action-primary) !important;
+  color: #000000 !important;
   font-weight: 700;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px 0 rgba(61, 220, 132, 0.25);
-  transition: background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 150ms ease-out, transform 150ms ease-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), border-color 150ms ease-out, transform 150ms ease-out;
+}
+
+.ui-btn-primary:hover {
+  background-color: var(--ui-action-primary-hover) !important;
+}
+
+.ui-btn-secondary {
+  background-color: var(--ui-action-secondary) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F2F4F5 !important;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.ui-btn-secondary:hover {
+  background-color: var(--ui-action-secondary-hover) !important;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.ui-btn-outline {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #D7DCE0 !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.mansa-btn-green:hover,
-.mansa-btn-orange:hover,
-.whop-btn-primary:hover {
-  background-color: #2FB86A;
-  box-shadow: 0 1px 2px 0 rgba(61, 220, 132, 0.25);
-  color: #000000;
+.ui-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #FFFFFF !important;
 }
 
-.mansa-btn-green:active,
-.mansa-btn-orange:active,
-.whop-btn-primary:active {
-  transform: scale(0.97);
-  box-shadow: 0 1px 2px 0 rgba(61, 220, 132, 0.2);
+.ui-btn-ghost {
+  background: transparent !important;
+  border: 1px solid transparent;
+  color: #AAB2B9 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.mansa-btn-dark,
-.whop-btn-secondary {
-  background-color: #121318;
-  color: #FFFFFF;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  transition: background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), border-color 150ms ease-out, transform 150ms ease-out;
+.ui-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #FFFFFF !important;
 }
 
-.mansa-btn-dark:hover,
-.whop-btn-secondary:hover {
-  background-color: #1A1C24;
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #FFFFFF;
+.ui-btn-danger {
+  background: var(--ui-action-danger) !important;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.mansa-btn-dark:active,
-.whop-btn-secondary:active {
-  transform: scale(0.97);
+.ui-btn-danger:hover {
+  background: var(--ui-action-danger-hover) !important;
+}
+
+.ui-btn-link {
+  background: transparent !important;
+  border: 0;
+  color: var(--ui-action-primary) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-btn-link:hover {
+  color: var(--ui-action-primary-hover) !important;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ui-btn-primary:focus-visible,
+.ui-btn-secondary:focus-visible,
+.ui-btn-outline:focus-visible,
+.ui-btn-ghost:focus-visible,
+.ui-btn-danger:focus-visible,
+.ui-btn-link:focus-visible {
+  outline: 2px solid var(--ui-action-focus);
+  outline-offset: 2px;
+}
+
+.ui-btn-primary:disabled,
+.ui-btn-secondary:disabled,
+.ui-btn-outline:disabled,
+.ui-btn-ghost:disabled,
+.ui-btn-danger:disabled,
+.ui-btn-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.ui-btn-primary:active,
+.ui-btn-secondary:active,
+.ui-btn-outline:active,
+.ui-btn-ghost:active,
+.ui-btn-danger:active {
+  transform: scale(0.98);
 }
 
 /* Dark scrollbar */

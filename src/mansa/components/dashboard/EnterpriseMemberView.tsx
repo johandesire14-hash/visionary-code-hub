@@ -2433,7 +2433,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
                             new CustomEvent("mansa_community_joined", { detail: { subId: subscription.id } })
                           );
                         }}
-                        className="mansa-btn-green px-4 py-2 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md flex items-center gap-1.5"
+                        className="ui-btn-primary px-4 py-2 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-md flex items-center gap-1.5"
                       >
                         <CheckCircle2 className="size-3.5" />
                         <span>Rejoindre gratuitement</span>

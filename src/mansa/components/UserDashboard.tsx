@@ -2485,7 +2485,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                                     setEditingProduct(null);
                                     setIsProductStudioOpen(true);
                                   }}
-                                  className="mansa-btn-green px-5 py-2 text-xs font-bold flex items-center gap-2 cursor-pointer"
+                                  className="ui-btn-primary px-5 py-2 text-xs font-bold flex items-center gap-2 cursor-pointer"
                                 >
                                   <Plus className="size-3.5" />
                                   <span>{lang === "fr" ? "+ Créer un produit" : "+ Create Product"}</span>
@@ -2503,7 +2503,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                                         setActiveWorkspaceId(companies[0].id);
                                         setActiveNav("produits");
                                       }}
-                                      className="mansa-btn-green px-4 py-1.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
+                                      className="ui-btn-primary px-4 py-1.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
                                     >
                                       <span>{lang === "fr" ? `Accéder à ${companies[0].name}` : `Go to ${companies[0].name}`}</span>
                                       <ArrowRight className="size-3" />
@@ -2511,7 +2511,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                                   ) : (
                                     <button
                                       onClick={() => setIsCompanyOnboardingOpen(true)}
-                                      className="mansa-btn-green px-4 py-1.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
+                                      className="ui-btn-primary px-4 py-1.5 text-xs font-bold flex items-center gap-2 cursor-pointer"
                                     >
                                       <Plus className="size-3" />
                                       <span>{lang === "fr" ? "Créer une entreprise" : "Create a company"}</span>
@@ -2799,7 +2799,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     placeholder="Écrivez un message..."
                     className="flex-1 rounded-xl border border-white/10 bg-[#121316] px-4 py-2 text-xs text-white outline-none focus:border-[#00D26A]"
                   />
-                  <button type="submit" className="mansa-btn-green px-4 py-2 text-xs cursor-pointer">
+                  <button type="submit" className="ui-btn-primary px-4 py-2 text-xs cursor-pointer">
                     <Send className="size-3.5" />
                   </button>
                 </form>

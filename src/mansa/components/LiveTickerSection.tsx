@@ -38,7 +38,7 @@ export const LiveTickerSection: React.FC<LiveTickerProps> = ({ onOpenAiBuilder, 
           <div className="flex items-center gap-3">
             <button
               onClick={() => onOpenAiBuilder && onOpenAiBuilder()}
-              className="afhub-btn-green px-5 py-2.5 text-xs font-bold cursor-pointer bg-[#00D26A] hover:bg-[#10E47A] text-black rounded-xl transition-all shadow-md flex items-center gap-1.5"
+              className="ui-btn-primary px-5 py-2.5 text-xs font-bold cursor-pointer bg-[#00D26A] hover:bg-[#10E47A] text-black rounded-xl transition-all shadow-md flex items-center gap-1.5"
             >
               <Sparkles className="size-3.5" />
               <span>Créer mon produit</span>

@@ -401,7 +401,7 @@ export default function App() {
                     setSelectedMarketplaceProduct(null);
                     handleOpenStudio(selectedMarketplaceProduct.category);
                   }}
-                  className="mansa-btn-green flex-1 py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer font-bold"
+                  className="ui-btn-primary flex-1 py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer font-bold"
                 >
                   <span>Créer une offre similaire</span>
                   <ArrowRight className="size-3" />
