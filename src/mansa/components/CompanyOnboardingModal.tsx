@@ -20,7 +20,7 @@ import { useModalDismiss } from "../hooks/useModalDismiss";
 interface CompanyOnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCompanyCreated: (company: Omit<Company, "id" | "createdAt">) => void;
+  onCompanyCreated: (company: Omit<Company, "id" | "createdAt">) => void | Promise<void>;
   lang?: "fr" | "en";
 }
 
@@ -146,17 +146,23 @@ export const CompanyOnboardingModal: React.FC<CompanyOnboardingModalProps> = ({
     setIsSubmitting(true);
     setError(null);
 
-    setTimeout(() => {
-      onCompanyCreated({
-        name: name.trim(),
-        description: description.trim() || "Vitrine officielle et services digitaux",
-        acceptedPayments,
-        primaryCurrency,
-        logoInitials: getInitials(name),
-        supportEmail: supportEmail.trim(),
-      });
-      setIsSubmitting(false);
-      onClose();
+    setTimeout(async () => {
+      try {
+        await onCompanyCreated({
+          name: name.trim(),
+          description: description.trim() || "Vitrine officielle et services digitaux",
+          acceptedPayments,
+          primaryCurrency,
+          logoInitials: getInitials(name),
+          supportEmail: supportEmail.trim(),
+        });
+        setIsSubmitting(false);
+        onClose();
+      } catch (creationError) {
+        console.error("Company creation failed:", creationError);
+        setError("L’entreprise n’a pas pu être enregistrée. Vérifiez votre connexion puis réessayez.");
+        setIsSubmitting(false);
+      }
     }, 250);
   };
 

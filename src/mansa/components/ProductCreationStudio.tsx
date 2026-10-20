@@ -48,7 +48,7 @@ import {
   getStoredTelegramChannels,
   TelegramChannelItem,
 } from "../utils/telegramStorage";
-import { getSavedCompanies } from "../utils/companyStorage";
+import type { Company } from "../types";
 import {
   CurrencyCode,
   SUPPORTED_CURRENCIES,
@@ -142,6 +142,8 @@ interface ProductCreationStudioProps {
   activeCurrency?: CurrencyCode;
   onCurrencyChange?: (currency: CurrencyCode) => void;
   companyName?: string;
+  companies?: Company[];
+  initialCompanyId?: string;
 }
 
 
@@ -155,17 +157,22 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
   activeCurrency,
   onCurrencyChange,
   companyName,
+  companies = [],
+  initialCompanyId,
 }) => {
   const handleSave = onSave || onSaveProduct || (() => {});
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState(
+    initialData?.companyId || initialCompanyId || companies[0]?.id || "",
+  );
+  const selectedCompany = companies.find((company) => company.id === selectedCompanyId);
+  const effectiveCompanyName = selectedCompany?.name || companyName || initialData?.storeName || "";
 
-  // Nom de l'entreprise créatrice (non modifiable)
-  const defaultSavedCompany = typeof window !== "undefined" ? getSavedCompanies()[0]?.name : "";
-  const effectiveCompanyName =
-    companyName ||
-    initialData?.storeName ||
-    defaultSavedCompany ||
-    "Cadre financier";
+  useEffect(() => {
+    if (!selectedCompanyId && (initialCompanyId || companies[0]?.id)) {
+      setSelectedCompanyId(initialCompanyId || companies[0].id);
+    }
+  }, [selectedCompanyId, initialCompanyId, companies]);
 
   // Synchronized currency: inherited from active dashboard selection, initialData or persisted stored currency
   const initialCurrency: CurrencyCode =
@@ -800,7 +807,11 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
   };
 
   // Final Submit
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
+    if (!selectedCompanyId || !selectedCompany) {
+      window.alert("Sélectionnez une entreprise appartenant à votre compte avant d'enregistrer le produit.");
+      return;
+    }
     const numericPrice = pricingType === "free" ? 0 : parseFloat(priceAmount) || 0;
     const currencyConfig = SUPPORTED_CURRENCIES[currentCurrency] || SUPPORTED_CURRENCIES.USD;
     const symbol = currencyConfig.symbol;
@@ -821,6 +832,8 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
       title: productName,
       description: productDescription,
       storeName: effectiveCompanyName,
+      companyId: selectedCompany.id,
+      companyName: selectedCompany.name,
       priceDisplay: formattedPrice,
       priceAmount: numericPrice,
       currency: currentCurrency,
@@ -852,7 +865,12 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
       communityConfig: communityConfig,
     };
 
-    handleSave(newProduct);
+    try {
+      await handleSave(newProduct);
+    } catch (error) {
+      console.error("Product save failed:", error);
+      window.alert(error instanceof Error ? error.message : "Le produit n’a pas pu être enregistré.");
+    }
   };
 
   // The studio opens directly on product configuration.
@@ -938,6 +956,7 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
 
           <button
             onClick={handleFinalSubmit}
+            disabled={!selectedCompany}
             className="ui-btn-primary text-xs px-4 py-2 font-bold cursor-pointer flex items-center gap-1.5 shadow-lg"
           >
             <Check className="size-3.5" />
@@ -956,6 +975,28 @@ export const ProductCreationStudio: React.FC<ProductCreationStudioProps> = ({
           
           <div className="space-y-6">
             
+            {/* SECTION: ENTREPRISE OBLIGATOIRE */}
+            <div className="space-y-1.5">
+              <label htmlFor="product-company" className="text-[11px] font-semibold text-zinc-300">
+                Entreprise associée <span className="text-[#00D26A]">*</span>
+              </label>
+              <select
+                id="product-company"
+                value={selectedCompanyId}
+                onChange={(event) => setSelectedCompanyId(event.target.value)}
+                required
+                className="w-full rounded-xl border border-white/10 bg-[#16181f] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#00D26A]"
+              >
+                <option value="">Sélectionner une entreprise</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>{company.name}</option>
+                ))}
+              </select>
+              {companies.length === 0 && (
+                <p className="text-[11px] text-amber-300">Créez d’abord une entreprise avant de créer un produit.</p>
+              )}
+            </div>
+
             {/* SECTION: DÉTAILS DU PRODUIT */}
             <div className="space-y-4">
               <div>

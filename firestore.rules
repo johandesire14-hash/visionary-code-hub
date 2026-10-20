@@ -33,6 +33,21 @@ service cloud.firestore {
       return isAdmin() || hasClaim('financeReviewer');
     }
 
+
+    function ownsCompany(companyId) {
+      return signedIn()
+        && companyId is string
+        && companyId.size() > 0
+        && exists(/databases/$(database)/documents/companies/$(companyId))
+        && get(/databases/$(database)/documents/companies/$(companyId)).data.get('ownerUid', '') == request.auth.uid;
+    }
+
+    function productHasOwnedCompany() {
+      return ownsCompany(request.resource.data.get('companyId', ''))
+        && request.resource.data.get('companyName', '')
+          == get(/databases/$(database)/documents/companies/$(request.resource.data.companyId)).data.get('name', '');
+    }
+
     function validStatusUpdate(allowedStatuses) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'status',
@@ -117,11 +132,14 @@ service cloud.firestore {
         || isSupportStaff();
       allow create: if signedIn()
         && request.resource.data.get('creatorId', '') == request.auth.uid
-        && request.resource.data.keys().hasAll(['creatorId', 'name', 'status'])
+        && request.resource.data.keys().hasAll(['creatorId', 'companyId', 'companyName', 'name', 'status'])
+        && productHasOwnedCompany()
         && request.resource.data.get('status', '') in ['active', 'draft', 'paused'];
       allow update: if signedIn()
         && resource.data.get('creatorId', '') == request.auth.uid
         && request.resource.data.get('creatorId', '') == request.auth.uid
+        && request.resource.data.keys().hasAll(['companyId', 'companyName'])
+        && productHasOwnedCompany()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'name', 'tagline', 'description', 'category', 'productType',
           'pricingAmount', 'pricingModel', 'currency', 'targetAudience',
@@ -367,10 +385,66 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Données de l'entreprise: le schéma actuel n'enregistre pas l'UID du
-    // propriétaire. Refus explicite jusqu'à l'ajout/validation d'un ownerUid.
+    // Profil complet privé d'entreprise. Le propriétaire est fixé à la création
+    // et ne peut jamais être changé par le client.
     match /companies/{companyId} {
-      allow read, write: if false;
+      function validCompanyKeys() {
+        return request.resource.data.keys().hasOnly([
+          'id', 'ownerUid', 'name', 'description', 'acceptedPayments', 'primaryCurrency',
+          'logoInitials', 'colorGradient', 'supportEmail', 'supportAutoReplyEnabled',
+          'supportAutoReplyMessage', 'companyBanner', 'companyLogo', 'socialLinks',
+          'discoverable', 'createdAt', 'updatedAt'
+        ]);
+      }
+
+      allow get, list: if signedIn() && resource.data.get('ownerUid', '') == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('id', '') == companyId
+        && request.resource.data.get('name', '') is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.get('discoverable', false) == true
+        && validCompanyKeys();
+      allow update: if signedIn()
+        && resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('id', '') == companyId
+        && request.resource.data.get('discoverable', false) == true
+        && validCompanyKeys();
+      allow delete: if signedIn() && resource.data.get('ownerUid', '') == request.auth.uid;
+    }
+
+    // Annuaire public séparé : aucune donnée privée de l'entreprise n'est exposée.
+    match /discoverableCompanies/{companyId} {
+      function validPublicCompanyKeys() {
+        return request.resource.data.keys().hasOnly([
+          'companyId', 'ownerUid', 'name', 'description', 'logoInitials',
+          'colorGradient', 'companyBanner', 'companyLogo', 'discoverable', 'createdAt', 'updatedAt'
+        ]);
+      }
+
+      function ownerHasPrivateCompany() {
+        return exists(/databases/$(database)/documents/companies/$(companyId))
+          && get(/databases/$(database)/documents/companies/$(companyId)).data.get('ownerUid', '') == request.auth.uid;
+      }
+
+      allow get, list: if resource.data.get('discoverable', false) == true;
+      allow create: if signedIn()
+        && request.resource.data.get('companyId', '') == companyId
+        && request.resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('discoverable', false) == true
+        && ownerHasPrivateCompany()
+        && validPublicCompanyKeys();
+      allow update: if signedIn()
+        && resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('companyId', '') == companyId
+        && request.resource.data.get('discoverable', false) == true
+        && ownerHasPrivateCompany()
+        && validPublicCompanyKeys();
+      allow delete: if signedIn()
+        && resource.data.get('ownerUid', '') == request.auth.uid
+        && ownerHasPrivateCompany();
     }
 
     // CRM du créateur. Les requêtes client doivent inclure creatorId == UID.

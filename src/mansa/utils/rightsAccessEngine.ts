@@ -673,28 +673,21 @@ export function getOffersForCompany(companyId: string): CreatorPlatformOffer[] {
 
   // 2. Produits créés dynamiquement depuis le stockage local
   try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem("mansa_saved_products_cache") : null;
-    if (raw) {
-      const parsed: any[] = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const dynamicOffers: CreatorPlatformOffer[] = parsed
-          .filter((p) => {
-            if (!p || !p.id) return false;
-            const pCompId = (p.companyId || "").trim().toLowerCase();
-            const pCompName = (p.companyName || "").trim().toLowerCase();
-            if (pCompId === normalized || pCompName === normalized) return true;
-            // Si le produit n'a pas d'entreprise explicitement fixée et qu'on consulte l'entreprise par défaut
-            if (!pCompId && (normalized === "comp-cadre-financier" || normalized.includes("cadre"))) return true;
-            return false;
-          })
-          .map((p) => convertProjectToPlatformOffer(p, companyId));
-
-        const existingIds = new Set(staticOffers.map((o) => o.id));
-        for (const dyn of dynamicOffers) {
-          if (!existingIds.has(dyn.id)) {
-            staticOffers.push(dyn);
-            existingIds.add(dyn.id);
-          }
+    if (typeof window !== "undefined") {
+      const keys = Object.keys(localStorage).filter((key) => key.startsWith("mansa_saved_products_cache_"));
+      const products = keys.flatMap((key) => {
+        const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      });
+      const dynamicOffers: CreatorPlatformOffer[] = products
+        .filter((product) => product?.id && product.status === "active"
+          && (product.companyId || "").trim().toLowerCase() === normalized)
+        .map((product) => convertProjectToPlatformOffer(product, companyId));
+      const existingIds = new Set(staticOffers.map((offer) => offer.id));
+      for (const dynamicOffer of dynamicOffers) {
+        if (!existingIds.has(dynamicOffer.id)) {
+          staticOffers.push(dynamicOffer);
+          existingIds.add(dynamicOffer.id);
         }
       }
     }
@@ -715,14 +708,17 @@ export function getOfferById(offerId: string): CreatorPlatformOffer | undefined 
 
   // Chercher dans les produits créés dynamiquement
   try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem("mansa_saved_products_cache") : null;
-    if (raw) {
-      const parsed: any[] = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const dynamicProd = parsed.find((p) => p && p.id === offerId);
-        if (dynamicProd) {
-          return convertProjectToPlatformOffer(dynamicProd);
-        }
+    if (typeof window !== "undefined") {
+      const productCacheKeys = Object.keys(localStorage).filter((key) =>
+        key.startsWith("mansa_saved_products_cache_"),
+      );
+      for (const key of productCacheKeys) {
+        const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!Array.isArray(parsed)) continue;
+        const dynamicProd = parsed.find((product) =>
+          product && product.id === offerId && product.status === "active" && product.companyId,
+        );
+        if (dynamicProd) return convertProjectToPlatformOffer(dynamicProd);
       }
     }
   } catch (err) {

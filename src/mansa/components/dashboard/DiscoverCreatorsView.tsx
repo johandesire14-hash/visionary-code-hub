@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { EnterpriseSubscription, CreatorPlatformOffer } from "../../types";
 import { PLATFORM_OFFERS_CATALOG } from "../../utils/rightsAccessEngine";
+import { loadDiscoverableCompanies } from "../../utils/companyStorage";
 
 export const PLATFORM_CREATOR_OFFERS: CreatorPlatformOffer[] = PLATFORM_OFFERS_CATALOG;
 
@@ -184,6 +185,41 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [ownedListings, setOwnedListings] = useState<CreatorEnterpriseCard[]>([]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const refreshOwnedListings = () => loadDiscoverableCompanies().then((companies) => {
+      if (cancelled) return;
+      setOwnedListings(companies.map((company) => ({
+        id: company.id,
+        companyId: company.id,
+        companyName: company.name,
+        creatorName: "Créateur Mansa",
+        companyLogo: company.companyLogo,
+        companyInitials: company.logoInitials || company.name.slice(0, 2).toUpperCase(),
+        bannerUrl: company.companyBanner || "",
+        description: company.description || "",
+        rating: 0,
+        reviewsCount: 0,
+        subscribersCount: "0 membre",
+        membersNumber: 0,
+        category: "community",
+        categoryLabel: "Communauté",
+        accentColor: company.colorGradient,
+        isVerified: false,
+        offersCount: 0,
+        startingPrice: "Voir les offres",
+        defaultOfferTitle: "Découvrir l’entreprise",
+      })));
+    });
+    refreshOwnedListings();
+    window.addEventListener("mansa_discoverable_companies_updated", refreshOwnedListings);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("mansa_discoverable_companies_updated", refreshOwnedListings);
+    };
+  }, []);
   
   // Le mode compact est automatique sur les écrans étroits et complet sur desktop.
   const [isCompact, setIsCompact] = useState(() =>
@@ -205,9 +241,18 @@ export const DiscoverCreatorsView: React.FC<DiscoverCreatorsViewProps> = ({
     { id: "software", label: "Logiciels & SaaS" },
     { id: "ecommerce", label: "E-Commerce & Import" },
     { id: "crypto", label: "Crypto & Web3" },
+    { id: "community", label: "Communauté" },
   ];
 
-  const filteredEnterprises = DISCOVER_CREATOR_ENTERPRISES.filter((ent) => {
+  const enterpriseCatalog = React.useMemo(() => {
+    const byId = new Map<string, CreatorEnterpriseCard>();
+    [...DISCOVER_CREATOR_ENTERPRISES, ...ownedListings].forEach((enterprise) => {
+      byId.set(enterprise.companyId || enterprise.id, enterprise);
+    });
+    return Array.from(byId.values());
+  }, [ownedListings]);
+
+  const filteredEnterprises = enterpriseCatalog.filter((ent) => {
     const matchesCat = selectedCategory === "all" || ent.category === selectedCategory;
     const q = searchQuery.toLowerCase().trim();
     if (!q) return matchesCat;

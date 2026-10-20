@@ -40,6 +40,7 @@ export interface GeneratedBusinessPlan {
 
 export interface BusinessProject {
   id: string;
+  creatorId?: string;
   name: string;
   tagline: string;
   category: string;
@@ -112,6 +113,7 @@ export interface CompanySocialLinks {
 
 export interface Company {
   id: string;
+  ownerUid: string;
   name: string; // Nom de l'entreprise
   description: string; // Description de la vitrine
   acceptedPayments: string[]; // Moyens de paiement acceptés (Wave, Orange Money, MTN MoMo, Carte bancaire, etc.)
@@ -124,6 +126,7 @@ export interface Company {
   companyBanner?: string; // Bannière personnalisée de l'entreprise
   companyLogo?: string; // Photo de profil / Logo de l'entreprise
   socialLinks?: CompanySocialLinks;
+  discoverable?: boolean;
   createdAt: string;
   updatedAt?: string;
   payoutMethod?: string;

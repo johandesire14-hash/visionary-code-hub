@@ -101,7 +101,7 @@ import { CurrencySelector } from "./dashboard/CurrencySelector";
 import { GuidedTour, OnboardingData } from "./dashboard/GuidedTour";
 import { BusinessProject, Company, EnterpriseSubscription } from "../types";
 import { CompanyOnboardingModal } from "./CompanyOnboardingModal";
-import { getSavedCompanies, saveCompany } from "../utils/companyStorage";
+import { getSavedCompanies, loadCreatorCompanies, saveCompany } from "../utils/companyStorage";
 import { EnterpriseMemberView } from "./dashboard/EnterpriseMemberView";
 import { ContextualLocationPrompt } from "./common/ContextualLocationPrompt";
 import { getSavedSubscriptions } from "../utils/subscriptionsStorage";
@@ -462,6 +462,16 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     return () => window.removeEventListener("mansa_companies_updated", handleCompaniesUpdated);
   }, [user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const ownerUid = user.uid || user.email || "";
+    if (!ownerUid) return;
+    loadCreatorCompanies(ownerUid).then((loaded) => {
+      if (!cancelled) setCompanies(loaded);
+    });
+    return () => { cancelled = true; };
+  }, [user.uid, user.email]);
+
   // Subscribed Enterprises State (Member / Fan Experience: e.g. victory_odds, BS, GS)
   const [memberSubscriptions, setMemberSubscriptions] = useState<EnterpriseSubscription[]>(() => {
     const userKey = user.uid || user.email || "default";
@@ -527,6 +537,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const handleVisitEnterpriseFromDiscover = (enterprise: any) => {
     const compId = enterprise.companyId || enterprise.id;
     const compName = enterprise.companyName || "Entreprise";
+    const ownedCompany = uniqueCompanies.find((company) => company.id === compId);
+    if (ownedCompany) {
+      handleOpenCompanyCommunity(ownedCompany);
+      return;
+    }
 
     // Clean up any previously unjoined preview sub
     if (previewCommunitySubId) {
@@ -636,9 +651,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     switchTab("communaute");
   };
 
-  const handleCompanyCreated = (newComp: Omit<Company, "id" | "createdAt">) => {
-    const userKey = user.uid || user.email || "default";
-    const { companies: updated, created } = saveCompany(userKey, newComp);
+  const handleCompanyCreated = async (newComp: Omit<Company, "id" | "createdAt" | "ownerUid" | "discoverable">) => {
+    const userKey = user.uid || user.email || "";
+    if (!userKey) throw new Error("Un compte connecté est requis.");
+    const { companies: updated, created, persisted } = saveCompany(userKey, newComp);
+    await persisted;
     setCompanies(updated);
     setActiveWorkspaceId(created.id);
   };
@@ -841,6 +858,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       ctaText: newProj.ctaText,
       coverImage: newProj.coverImage,
       bannerUrl: newProj.bannerUrl,
+      companyId: newProj.companyId || activeCompany?.id,
+      companyName: newProj.companyName || activeCompany?.name,
     });
   };
 
@@ -861,11 +880,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       ctaText: updated.ctaText,
       coverImage: updated.coverImage,
       bannerUrl: updated.bannerUrl,
+      companyId: updated.companyId || activeCompany?.id,
+      companyName: updated.companyName || activeCompany?.name,
     });
   };
 
   const handleDeleteProject = async (projId: string) => {
-    await deleteProductFromFirestore(projId);
+    await deleteProductFromFirestore(projId, user.uid || user.email);
   };
 
   // State for Product Creation Studio modal
@@ -1516,7 +1537,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
                     {/* Communauté */}
                     <button
-                      onClick={() => switchTab("communaute")}
+                      onClick={() => uniqueCompanies.length > 0 ? handleOpenCompanyCommunity(uniqueCompanies[0]) : switchTab("communaute")}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer ${
                         activeNav === "communaute"
                           ? "bg-[#22252c] text-white font-semibold"
@@ -1930,7 +1951,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
                         {/* Communauté */}
                         <button
-                          onClick={() => switchTab("communaute")}
+                          onClick={() => uniqueCompanies.length > 0 ? handleOpenCompanyCommunity(uniqueCompanies[0]) : switchTab("communaute")}
                           className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[44px] ${
                             activeNav === "communaute"
                               ? "bg-[#22252c] text-white font-semibold"
@@ -3204,7 +3225,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => switchTab("communaute")}
+              onClick={() => uniqueCompanies.length > 0 ? handleOpenCompanyCommunity(uniqueCompanies[0]) : switchTab("communaute")}
               className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-semibold transition-colors ${activeNav === "communaute" ? "bg-white/10 text-white" : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"}`}
             >
               <UsersIcon className="size-5" />
@@ -3429,7 +3450,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       {/* PRODUCT CREATION STUDIO MODAL */}
       {isProductStudioOpen && (
         <ProductCreationStudio
-          companyName={activeCompany ? activeCompany.name : companies[0]?.name || "Cadre financier"}
+          companyName={activeCompany?.name || editingProduct?.companyName || ""}
+          companies={uniqueCompanies}
+          initialCompanyId={editingProduct?.companyId || activeCompany?.id || uniqueCompanies[0]?.id}
           initialData={editingProduct || undefined}
           activeCurrency={currency}
           onCurrencyChange={(newCurr) => {
@@ -3457,13 +3480,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               ctaText: newProduct.ctaText,
               coverImage: newProduct.imageUrl,
               bannerUrl: newProduct.bannerUrl,
+              companyId: newProduct.companyId,
+              companyName: newProduct.companyName,
             });
             setIsProductStudioOpen(false);
             setEditingProduct(null);
             setActiveNav("produits");
           }}
           onDelete={async (productId) => {
-            await deleteProductFromFirestore(productId);
+            await deleteProductFromFirestore(productId, user.uid || user.email);
             setIsProductStudioOpen(false);
             setEditingProduct(null);
           }}
@@ -3492,7 +3517,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           onClose={() => setProductToDelete(null)}
           onConfirm={async () => {
             if (productToDelete.id) {
-              await deleteProductFromFirestore(productToDelete.id);
+              await deleteProductFromFirestore(productToDelete.id, user.uid || user.email);
             }
             setProductToDelete(null);
           }}
@@ -3539,7 +3564,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           onClose={() => setProjectToDelete(null)}
           onConfirm={async () => {
             if (projectToDelete.id) {
-              await deleteProductFromFirestore(projectToDelete.id);
+              await deleteProductFromFirestore(projectToDelete.id, user.uid || user.email);
             }
             setProjectToDelete(null);
           }}

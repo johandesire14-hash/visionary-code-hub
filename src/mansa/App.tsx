@@ -20,6 +20,7 @@ import {
 import { useAuth } from "./context/AuthContext";
 import { saveProductToFirestore } from "./services/dbService";
 import { purgeLegacyDemoData } from "./utils/storage";
+import { getSavedCompanies } from "./utils/companyStorage";
 const UserDashboard = lazy(() =>
   import("./components/UserDashboard").then((module) => ({ default: module.UserDashboard })),
 );
@@ -132,6 +133,8 @@ export default function App() {
       productUrl: product.productUrl,
       coverImage: product.imageUrl,
       bannerUrl: product.bannerUrl,
+      companyId: product.companyId,
+      companyName: product.companyName,
     });
 
     setIsStudioOpen(false);
@@ -208,6 +211,8 @@ export default function App() {
               lang={lang}
               onClose={() => setIsStudioOpen(false)}
               onSaveProduct={handleSaveProductFromStudio}
+              companies={getSavedCompanies(currentUser.uid)}
+              initialCompanyId={getSavedCompanies(currentUser.uid)[0]?.id}
             />
           )}
         </>

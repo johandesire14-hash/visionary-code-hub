@@ -18,6 +18,7 @@ import {
 } from "./firebase";
 import { BusinessProject, LiveEvent, MarketplaceItem } from "../types";
 import { safeStorage } from "../utils/storage";
+import { getSavedCompanies } from "../utils/companyStorage";
 
 export interface AccountPaymentMethodConfig {
   dialCode?: string;
@@ -191,6 +192,26 @@ export interface FirestoreCommunityMessage {
 
 // Helper for local caching
 const LOCAL_PRODUCTS_KEY = "mansa_saved_products_cache";
+const creatorProductsCacheKey = (creatorId: string) => `${LOCAL_PRODUCTS_KEY}_${creatorId}`;
+
+function getCreatorLocalProducts(creatorId: string): BusinessProject[] {
+  if (!creatorId) return [];
+  const scoped = getLocalItems<BusinessProject>(creatorProductsCacheKey(creatorId));
+  // Import only legacy entries that explicitly identify this creator; never expose
+  // anonymous products from the old shared cache to a different account.
+  const legacy = getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY).filter(
+    (product) => product.creatorId === creatorId,
+  );
+  const merged = [...scoped];
+  for (const product of legacy) {
+    if (!merged.some((saved) => saved.id === product.id)) merged.push(product);
+  }
+  return merged;
+}
+
+function saveCreatorLocalProducts(creatorId: string, products: BusinessProject[]): void {
+  saveLocalItems(creatorProductsCacheKey(creatorId), products);
+}
 const LOCAL_TRANSACTIONS_KEY = "mansa_saved_transactions_cache";
 const LOCAL_CUSTOMERS_KEY = "mansa_saved_customers_cache";
 const LOCAL_WORKFORCE_KEY = "mansa_saved_workforce_cache";
@@ -360,9 +381,7 @@ export async function syncUserProfile(user: {
 
 // ----------------- PRODUCTS (REAL FIRESTORE & CACHE) -----------------
 export async function getCreatorProducts(creatorId: string): Promise<BusinessProject[]> {
-  const localList = getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY).filter(
-    (p) => !p.id.startsWith("remote-") || p.id.includes(creatorId),
-  );
+  const localList = getCreatorLocalProducts(creatorId);
 
   try {
     const q = query(collection(db, "products"), where("creatorId", "==", creatorId));
@@ -373,6 +392,7 @@ export async function getCreatorProducts(creatorId: string): Promise<BusinessPro
       const data = docSnap.data() as FirestoreProduct;
       products.push({
         id: docSnap.id,
+        creatorId: data.creatorId,
         name: data.name,
         tagline: data.tagline || data.description || "",
         category: data.category || "community",
@@ -395,6 +415,8 @@ export async function getCreatorProducts(creatorId: string): Promise<BusinessPro
         ctaText: data.ctaText,
         coverImage: data.coverImage,
         bannerUrl: data.bannerUrl,
+        companyId: data.companyId,
+        companyName: data.companyName,
       });
     });
 
@@ -416,8 +438,8 @@ export function subscribeToCreatorProducts(
   creatorId: string,
   callback: (products: BusinessProject[]) => void,
 ) {
-  // Emit initial local products right away
-  const initialLocal = getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY);
+  // Emit only this creator's local products right away
+  const initialLocal = getCreatorLocalProducts(creatorId);
   callback(initialLocal);
 
   try {
@@ -430,6 +452,7 @@ export function subscribeToCreatorProducts(
           const data = docSnap.data() as FirestoreProduct;
           remoteProducts.push({
             id: docSnap.id,
+            creatorId: data.creatorId,
             name: data.name,
             tagline: data.tagline || data.description || "",
             category: data.category || "community",
@@ -452,10 +475,12 @@ export function subscribeToCreatorProducts(
             ctaText: data.ctaText,
             coverImage: data.coverImage,
             bannerUrl: data.bannerUrl,
+            companyId: data.companyId,
+            companyName: data.companyName,
           });
         });
 
-        const currentLocal = getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY);
+        const currentLocal = getCreatorLocalProducts(creatorId);
         const combined = [...remoteProducts];
         for (const item of currentLocal) {
           if (!combined.some((c) => c.id === item.id)) {
@@ -466,7 +491,7 @@ export function subscribeToCreatorProducts(
       },
       (err) => {
         console.warn("Products snapshot error, using local items:", err);
-        callback(getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY));
+        callback(getCreatorLocalProducts(creatorId));
       },
     );
   } catch (e) {
@@ -494,17 +519,43 @@ export async function saveProductToFirestore(
     ctaText?: string;
     coverImage?: string;
     bannerUrl?: string;
-    companyId?: string;
+    companyId: string;
     companyName?: string;
   },
 ): Promise<string> {
+  if (!creatorId) throw new Error("Connectez-vous pour créer un produit.");
+  if (!productData.companyId?.trim()) throw new Error("Sélectionnez une entreprise pour ce produit.");
+
+  let companyName = "";
+  if (db) {
+    const companySnap = await getDoc(doc(db, "companies", productData.companyId));
+    if (!companySnap.exists() || companySnap.data().ownerUid !== creatorId) {
+      throw new Error("Cette entreprise ne vous appartient pas ou n'existe plus.");
+    }
+    companyName = String(companySnap.data().name || "");
+  } else {
+    const ownedCompany = getSavedCompanies(creatorId).find(
+      (company) => company.id === productData.companyId && company.ownerUid === creatorId,
+    );
+    if (!ownedCompany) throw new Error("Choisissez une entreprise appartenant à votre compte.");
+    companyName = ownedCompany.name;
+  }
+  if (!companyName) throw new Error("L'entreprise sélectionnée n'a pas de nom valide.");
+
   const productId =
     productData.id && !productData.id.startsWith("proj-temp-")
       ? productData.id
       : "prod-" + Math.random().toString(36).substring(2, 9);
-
+  const existingProductSnap = db ? await getDoc(doc(db, "products", productId)) : null;
+  if (existingProductSnap?.exists() && existingProductSnap.data().creatorId !== creatorId) {
+    throw new Error("Vous ne pouvez pas modifier un produit qui appartient à un autre compte.");
+  }
+  const createdAt = existingProductSnap?.exists()
+    ? existingProductSnap.data().createdAt || new Date().toISOString()
+    : new Date().toISOString();
   const newProject: BusinessProject = {
     id: productId,
+    creatorId,
     name: productData.name,
     tagline: productData.description || "Offre digitale exclusive",
     category: (productData.category as any) || "community",
@@ -528,30 +579,17 @@ export async function saveProductToFirestore(
     ctaText: productData.ctaText,
     coverImage: productData.coverImage,
     bannerUrl: productData.bannerUrl,
-    companyId: productData.companyId || "",
-    companyName: productData.companyName || "",
-    createdAt: new Date().toISOString().split("T")[0],
-    updatedAt: new Date().toISOString().split("T")[0],
+    companyId: productData.companyId,
+    companyName,
+    createdAt,
+    updatedAt: new Date().toISOString(),
   };
 
-  // 1. Instantly update local cache
-  const localList = getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY);
-  const existingIdx = localList.findIndex((p) => p.id === productId);
-  if (existingIdx >= 0) {
-    localList[existingIdx] = newProject;
-  } else {
-    localList.unshift(newProject);
-  }
-  saveLocalItems(LOCAL_PRODUCTS_KEY, localList);
-
-  // 2. Persist to Firestore
-  try {
-    const docRef = doc(db, "products", productId);
+  if (db) {
     const payload: FirestoreProduct = {
-      id: productId,
+      ...newProject,
       creatorId,
-      creatorEmail,
-      creatorName,
+      ...(!existingProductSnap?.exists() ? { creatorEmail, creatorName } : {}),
       name: productData.name,
       tagline: productData.description || "",
       description: productData.description || "",
@@ -569,27 +607,30 @@ export async function saveProductToFirestore(
       conversionRate: "0%",
       apps: productData.includedApps,
       storeUrl: productData.productUrl || `mansa.af/p/${productId}`,
-      ctaText: productData.ctaText,
-      coverImage: productData.coverImage,
-      bannerUrl: productData.bannerUrl,
-      companyId: productData.companyId || "",
-      companyName: productData.companyName || "",
-      createdAt: new Date().toISOString(),
+      companyId: productData.companyId,
+      companyName,
+      createdAt,
       updatedAt: new Date().toISOString(),
     };
-    await setDoc(docRef, payload, { merge: true });
-  } catch (err) {
-    console.warn("Firestore save warning (persisted locally):", err);
+    // Persist first. A Firestore failure must not look like a successful product creation.
+    await setDoc(doc(db, "products", productId), payload, { merge: true });
   }
 
+  const localList = getCreatorLocalProducts(creatorId);
+  const existingIdx = localList.findIndex((product) => product.id === productId);
+  if (existingIdx >= 0) localList[existingIdx] = newProject;
+  else localList.unshift(newProject);
+  saveCreatorLocalProducts(creatorId, localList);
   return productId;
 }
 
-export async function deleteProductFromFirestore(productId: string): Promise<void> {
-  const localList = getLocalItems<BusinessProject>(LOCAL_PRODUCTS_KEY).filter(
-    (p) => p.id !== productId,
-  );
-  saveLocalItems(LOCAL_PRODUCTS_KEY, localList);
+export async function deleteProductFromFirestore(productId: string, creatorId?: string): Promise<void> {
+  if (creatorId) {
+    saveCreatorLocalProducts(
+      creatorId,
+      getCreatorLocalProducts(creatorId).filter((product) => product.id !== productId),
+    );
+  }
   try {
     await deleteDoc(doc(db, "products", productId));
   } catch (err) {
