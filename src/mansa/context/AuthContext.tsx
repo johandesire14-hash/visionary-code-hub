@@ -13,6 +13,7 @@ import {
   firebaseConfigured,
 } from "../services/firebase";
 import { syncUserProfile, FirestoreUserProfile } from "../services/dbService";
+import { safeStorage } from "../utils/storage";
 
 export type AppUser = Pick<FirebaseUser, "uid" | "email" | "displayName" | "photoURL">;
 
@@ -31,6 +32,54 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const LOCAL_ACCOUNTS_KEY = "mansa_local_auth_accounts";
+const LOCAL_SESSION_KEY = "mansa_local_auth_session";
+
+type LocalAccount = {
+  uid: string;
+  email: string;
+  password: string;
+  displayName: string;
+  createdAt: string;
+};
+
+const readLocalAccounts = (): LocalAccount[] => {
+  try {
+    const raw = safeStorage.getItem(LOCAL_ACCOUNTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const localProfile = (account: LocalAccount): FirestoreUserProfile => ({
+  uid: account.uid,
+  email: account.email,
+  displayName: account.displayName,
+  avatarInitials: account.displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase(),
+  country: "Côte d’Ivoire",
+  currency: "XOF",
+  createdAt: account.createdAt,
+  updatedAt: new Date().toISOString(),
+});
+
+const localUser = (account: LocalAccount): AppUser => ({
+  uid: account.uid,
+  email: account.email,
+  displayName: account.displayName,
+  photoURL: null,
+});
+
+const saveLocalSession = (account: LocalAccount) => {
+  safeStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(account));
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [profile, setProfile] = useState<FirestoreUserProfile | null>(null);
@@ -41,6 +90,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let isMounted = true;
 
     if (!firebaseConfigured || !auth) {
+      const rawSession = safeStorage.getItem(LOCAL_SESSION_KEY);
+      if (rawSession) {
+        try {
+          const account = JSON.parse(rawSession) as LocalAccount;
+          if (account?.uid && account?.email) {
+            setUser(localUser(account));
+            setProfile(localProfile(account));
+          }
+        } catch {
+          safeStorage.removeItem(LOCAL_SESSION_KEY);
+        }
+      }
       setLoading(false);
       return () => {
         isMounted = false;
@@ -112,6 +173,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signInWithGoogle = async () => {
+    if (!firebaseConfigured || !auth) {
+      const localError = new Error("La connexion Google nécessite la configuration Firebase.");
+      setError(localError.message);
+      throw localError;
+    }
     try {
       setError(null);
       setLoading(true);
@@ -143,6 +209,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
+    if (!firebaseConfigured || !auth) {
+      const account = readLocalAccounts().find(
+        (item) => item.email.toLowerCase() === email.trim().toLowerCase(),
+      );
+      if (!account || account.password !== pass) {
+        const message = "Identifiants invalides. Vérifiez votre email et mot de passe.";
+        setError(message);
+        throw new Error(message);
+      }
+      saveLocalSession(account);
+      setUser(localUser(account));
+      setProfile(localProfile(account));
+      setError(null);
+      return;
+    }
     try {
       setError(null);
       setLoading(true);
@@ -176,6 +257,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUpWithEmail = async (email: string, pass: string, name?: string) => {
+    if (!firebaseConfigured || !auth) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const accounts = readLocalAccounts();
+      if (accounts.some((item) => item.email.toLowerCase() === normalizedEmail)) {
+        const message = "Cette adresse email est déjà associée à un compte.";
+        setError(message);
+        throw new Error(message);
+      }
+      if (pass.length < 6) {
+        const message = "Le mot de passe doit contenir au moins 6 caractères.";
+        setError(message);
+        throw new Error(message);
+      }
+      const account: LocalAccount = {
+        uid: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        email: normalizedEmail,
+        password: pass,
+        displayName: name?.trim() || normalizedEmail.split("@")[0],
+        createdAt: new Date().toISOString(),
+      };
+      safeStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify([...accounts, account]));
+      saveLocalSession(account);
+      setUser(localUser(account));
+      setProfile(localProfile(account));
+      setError(null);
+      return;
+    }
     try {
       setError(null);
       setLoading(true);
@@ -207,6 +315,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
+    if (!firebaseConfigured || !auth) {
+      const exists = readLocalAccounts().some(
+        (item) => item.email.toLowerCase() === email.trim().toLowerCase(),
+      );
+      if (!exists) throw new Error("Aucun compte trouvé avec cette adresse email.");
+      setError("La réinitialisation par email nécessite la configuration Firebase.");
+      return;
+    }
     try {
       setError(null);
       await sendPasswordResetEmail(auth, email);
@@ -218,6 +334,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (!firebaseConfigured || !auth) {
+      safeStorage.removeItem(LOCAL_SESSION_KEY);
+      setUser(null);
+      setProfile(null);
+      return;
+    }
     try {
       await firebaseSignOut(auth);
       setUser(null);
