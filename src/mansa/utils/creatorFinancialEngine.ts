@@ -73,7 +73,10 @@ export function isWithdrawalConfigured(creatorId: string): boolean {
 /**
  * Enregistre ou met à jour une méthode de retrait.
  */
-export function savePayoutMethod(creatorId: string, method: PayoutMethodConfig): PayoutMethodConfig[] {
+export function savePayoutMethod(
+  creatorId: string,
+  method: PayoutMethodConfig,
+): PayoutMethodConfig[] {
   if (typeof window === "undefined") return [];
   try {
     const current = getSavedPayoutMethods(creatorId);
@@ -91,7 +94,9 @@ export function savePayoutMethod(creatorId: string, method: PayoutMethodConfig):
 
     localStorage.setItem(`${STORAGE_PAYOUT_METHODS_PREFIX}${creatorId}`, JSON.stringify(updated));
     localStorage.setItem("mansa_creator_payout_configured", "true");
-    window.dispatchEvent(new CustomEvent(FINANCIAL_EVENTS.PAYOUT_METHOD_CHANGED, { detail: { methods: updated } }));
+    window.dispatchEvent(
+      new CustomEvent(FINANCIAL_EVENTS.PAYOUT_METHOD_CHANGED, { detail: { methods: updated } }),
+    );
     return updated;
   } catch (e) {
     return [];
@@ -113,7 +118,9 @@ export function removePayoutMethod(creatorId: string, methodId: string): PayoutM
     if (filtered.length === 0) {
       localStorage.setItem("mansa_creator_payout_configured", "false");
     }
-    window.dispatchEvent(new CustomEvent(FINANCIAL_EVENTS.PAYOUT_METHOD_CHANGED, { detail: { methods: filtered } }));
+    window.dispatchEvent(
+      new CustomEvent(FINANCIAL_EVENTS.PAYOUT_METHOD_CHANGED, { detail: { methods: filtered } }),
+    );
     return filtered;
   } catch (e) {
     return [];
@@ -132,7 +139,9 @@ export function setDefaultPayoutMethod(creatorId: string, methodId: string): Pay
       isDefault: m.id === methodId,
     }));
     localStorage.setItem(`${STORAGE_PAYOUT_METHODS_PREFIX}${creatorId}`, JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent(FINANCIAL_EVENTS.PAYOUT_METHOD_CHANGED, { detail: { methods: updated } }));
+    window.dispatchEvent(
+      new CustomEvent(FINANCIAL_EVENTS.PAYOUT_METHOD_CHANGED, { detail: { methods: updated } }),
+    );
     return updated;
   } catch (e) {
     return [];
@@ -149,45 +158,7 @@ export function getWithdrawalHistory(creatorId: string): WithdrawalRequest[] {
     if (raw) {
       return JSON.parse(raw);
     }
-    // Données de démonstration réalistes si première ouverture
-    const demoWithdrawals: WithdrawalRequest[] = [
-      {
-        id: "wdr-demo-01",
-        creatorId,
-        amount: 250000,
-        currency: "FCFA",
-        fee: 0,
-        netAmount: 250000,
-        payoutMethodId: "pm-default-wave",
-        payoutMethodType: "wave",
-        payoutMethodLabel: "Wave CI (+225 07 88 99 00 11)",
-        destinationDetails: "Wave Côte d'Ivoire · Compte Johan Désiré",
-        accountHolder: "Johan Désiré",
-        status: "completed",
-        requestedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-        processedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000 + 45 * 60 * 1000).toISOString(),
-        referenceNumber: "WDR-2026-WV882104",
-      },
-      {
-        id: "wdr-demo-02",
-        creatorId,
-        amount: 120000,
-        currency: "FCFA",
-        fee: 0,
-        netAmount: 120000,
-        payoutMethodId: "pm-default-wave",
-        payoutMethodType: "wave",
-        payoutMethodLabel: "Wave CI (+225 07 88 99 00 11)",
-        destinationDetails: "Wave Côte d'Ivoire · Compte Johan Désiré",
-        accountHolder: "Johan Désiré",
-        status: "completed",
-        requestedAt: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
-        processedAt: new Date(Date.now() - 14 * 24 * 3600 * 1000 + 15 * 60 * 1000).toISOString(),
-        referenceNumber: "WDR-2026-WV451093",
-      },
-    ];
-    localStorage.setItem(`${STORAGE_WITHDRAWALS_PREFIX}${creatorId}`, JSON.stringify(demoWithdrawals));
-    return demoWithdrawals;
+    return [];
   } catch (e) {
     return [];
   }
@@ -232,7 +203,7 @@ export function forceClearAllPendingFunds(creatorId: string, txIds: string[]): v
 export function calculateCreatorFinancialBalance(
   creatorId: string,
   transactions: FirestoreTransaction[],
-  currency: string = "FCFA"
+  currency: string = "FCFA",
 ): CreatorFinancialBalance {
   const withdrawals = getWithdrawalHistory(creatorId);
   const forceClearedIds = new Set(getForceClearedTxIds(creatorId));
@@ -300,7 +271,7 @@ export function calculateCreatorFinancialBalance(
 export function verifyWithdrawalEligibility(
   creatorId: string,
   availableBalance: number,
-  currency: string = "FCFA"
+  currency: string = "FCFA",
 ): {
   isEligible: boolean;
   code: "OK" | "NO_PAYOUT_METHOD" | "INSUFFICIENT_FUNDS" | "BELOW_MIN_THRESHOLD" | "KYC_REQUIRED";
@@ -358,7 +329,8 @@ export function createWithdrawalRequest(params: {
   if (!method) {
     return {
       success: false,
-      error: "Moyen de retrait introuvable ou non sélectionné. Veuillez configurer votre compte de retrait.",
+      error:
+        "Moyen de retrait introuvable ou non sélectionné. Veuillez configurer votre compte de retrait.",
     };
   }
 
@@ -384,7 +356,9 @@ export function createWithdrawalRequest(params: {
     const current = getWithdrawalHistory(creatorId);
     const updated = [newRequest, ...current];
     localStorage.setItem(`${STORAGE_WITHDRAWALS_PREFIX}${creatorId}`, JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent(FINANCIAL_EVENTS.WITHDRAWAL_CREATED, { detail: newRequest }));
+    window.dispatchEvent(
+      new CustomEvent(FINANCIAL_EVENTS.WITHDRAWAL_CREATED, { detail: newRequest }),
+    );
     window.dispatchEvent(new CustomEvent(FINANCIAL_EVENTS.BALANCE_CHANGED));
 
     // 1. Synchronisation backend sécurisée côté serveur (Section 5 & 7)
@@ -404,7 +378,9 @@ export function createWithdrawalRequest(params: {
     // 2. Persistance Firestore sécurisée (règles withdrawals)
     try {
       const docRef = doc(db, "withdrawals", newRequest.id);
-      setDoc(docRef, newRequest).catch((e) => console.warn("Notice: Firestore withdrawal sync:", e));
+      setDoc(docRef, newRequest).catch((e) =>
+        console.warn("Notice: Firestore withdrawal sync:", e),
+      );
     } catch (e) {}
 
     // Simulation de validation automatique sous 12 secondes
@@ -438,7 +414,7 @@ export function markWithdrawalCompleted(creatorId: string, withdrawalId: string)
             status: "completed" as WithdrawalStatus,
             processedAt: new Date().toISOString(),
           }
-        : w
+        : w,
     );
     localStorage.setItem(`${STORAGE_WITHDRAWALS_PREFIX}${creatorId}`, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent(FINANCIAL_EVENTS.BALANCE_CHANGED));

@@ -27,7 +27,6 @@ import {
   subscribeToCreatorCustomers,
   createRealCustomer,
   deleteCustomerFromFirestore,
-  seedRealisticDemoData,
   FirestoreCustomer,
 } from "../../services/dbService";
 
@@ -125,7 +124,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -168,10 +166,8 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
 
       {/* Table Container */}
       <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d0e] p-4 space-y-4">
-        
         {/* Filters and search */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          
           <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
             {[
               { id: "all", label: "Tous les membres" },
@@ -203,7 +199,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
               className="w-full rounded-xl border border-white/10 bg-[#16181f] pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-[#0055ff]"
             />
           </div>
-
         </div>
 
         {/* Table */}
@@ -226,9 +221,12 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-zinc-500">
                     <Users className="size-10 mx-auto mb-3 opacity-30 text-[#3DDC84]" />
-                    <p className="text-sm font-semibold text-white">Aucun client ou membre pour l'instant</p>
+                    <p className="text-sm font-semibold text-white">
+                      Aucun client ou membre pour l'instant
+                    </p>
                     <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
-                      Dès qu'un client effectue un achat via Wave, MoMo ou Carte bancaire, il apparaîtra ici automatiquement en temps réel.
+                      Dès qu'un client effectue un achat via Wave, MoMo ou Carte bancaire, il
+                      apparaîtra ici automatiquement en temps réel.
                     </p>
                     <div className="mt-4 flex items-center justify-center gap-2.5">
                       <button
@@ -237,17 +235,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
                       >
                         <Plus className="size-3.5" />
                         <span>Ajouter manuellement un membre</span>
-                      </button>
-
-                      <button
-                        onClick={async () => {
-                          const creatorKey = profile?.uid || user?.email || "creator-default";
-                          await seedRealisticDemoData(creatorKey, user?.email || "createur@mansa.af", profile?.displayName || "Créateur Mansa");
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#00D26A]/40 bg-[#00D26A]/10 hover:bg-[#00D26A]/20 text-[#00D26A] text-xs font-semibold transition-colors cursor-pointer"
-                      >
-                        <Zap className="size-3.5" />
-                        <span>Simuler 16 clients et ventes</span>
                       </button>
                     </div>
                   </td>
@@ -349,7 +336,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
             </tbody>
           </table>
         </div>
-
       </div>
 
       {/* GRANT ACCESS / ADD MEMBER MODAL */}
@@ -359,11 +345,12 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
         contentClassName="max-w-md mx-auto"
       >
         <div className="w-full rounded-2xl border border-white/10 bg-[#151515] p-6 shadow-2xl space-y-4">
-          
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <Plus className="size-5 text-[#3DDC84]" />
-              <h3 className="text-base font-bold text-white font-heading">Accorder un Accès Gratuit / VIP</h3>
+              <h3 className="text-base font-bold text-white font-heading">
+                Accorder un Accès Gratuit / VIP
+              </h3>
             </div>
             <button
               onClick={() => setIsAddMemberOpen(false)}
@@ -426,7 +413,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
               </button>
             </div>
           </form>
-
         </div>
       </ModalOverlay>
 
@@ -438,7 +424,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
       >
         {selectedCustomer && (
           <div className="w-full rounded-2xl border border-white/10 bg-[#121316] p-6 shadow-2xl space-y-5">
-            
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-full bg-[#0055ff] text-sm font-bold text-white">
@@ -468,7 +453,9 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Total dépensé à vie (LTV) :</span>
-                <span className="font-mono font-bold text-emerald-400">${selectedCustomer.totalSpent.toFixed(2)}</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  ${selectedCustomer.totalSpent.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Rôle Discord synchronisé :</span>
@@ -478,7 +465,9 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
               </div>
               <div className="flex justify-between py-2 border-b border-white/5">
                 <span className="text-zinc-400">Statut du compte :</span>
-                <span className="font-semibold text-emerald-400 capitalize">{selectedCustomer.status}</span>
+                <span className="font-semibold text-emerald-400 capitalize">
+                  {selectedCustomer.status}
+                </span>
               </div>
             </div>
 
@@ -511,7 +500,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
                 Fermer
               </button>
             </div>
-
           </div>
         )}
       </ModalOverlay>
@@ -539,8 +527,14 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
           itemDetails={[
             { label: "Email", value: customerToRevoke.email },
             { label: "Produit", value: customerToRevoke.productTitle },
-            { label: "Pays", value: `${customerToRevoke.countryFlag} ${customerToRevoke.countryName}` },
-            { label: "Total dépensé", value: customerToRevoke.totalSpentFormatted || `$${customerToRevoke.totalSpent}` },
+            {
+              label: "Pays",
+              value: `${customerToRevoke.countryFlag} ${customerToRevoke.countryName}`,
+            },
+            {
+              label: "Total dépensé",
+              value: customerToRevoke.totalSpentFormatted || `$${customerToRevoke.totalSpent}`,
+            },
           ]}
           consequences={[
             lang === "fr"
@@ -556,7 +550,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ lang = "fr" }) => 
           lang={lang}
         />
       )}
-
     </div>
   );
 };

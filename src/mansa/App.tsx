@@ -1,18 +1,8 @@
-import { siteUrl } from "@/lib/site";
 // @ts-nocheck
 import React, { lazy, Suspense, useState, useEffect } from "react";
 import { Header } from "./components/Header";
-import { HeroSection } from "./components/HeroSection";
-import { LiveTickerSection } from "./components/LiveTickerSection";
-import { BuildNextCarousel } from "./components/BuildNextCarousel";
-import { MarketplaceSection } from "./components/MarketplaceSection";
-import { SocialProofSection } from "./components/SocialProofSection";
-import { FaqSection } from "./components/FaqSection";
-import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import type { CreatedProductData } from "./components/ProductCreationStudio";
-import { CategoryCardItem, MarketplaceItem, BusinessProject } from "./types";
-import { Star, X, Check, ArrowRight, LayoutDashboard, Globe } from "lucide-react";
 import {
   CurrencyCode,
   SUPPORTED_CURRENCIES,
@@ -24,6 +14,7 @@ import {
 } from "./utils/currency";
 import { useAuth } from "./context/AuthContext";
 import { saveProductToFirestore } from "./services/dbService";
+import { purgeLegacyDemoData } from "./utils/storage";
 const ModalOverlay = lazy(() =>
   import("./components/common/ModalOverlay").then((module) => ({
     default: module.ModalOverlay,
@@ -59,10 +50,10 @@ export default function App() {
   // State for Product Creation Studio modal
   const [isStudioOpen, setIsStudioOpen] = useState(false);
   const [studioInitialCategory, setStudioInitialCategory] = useState<string | undefined>(undefined);
-  const [selectedMarketplaceProduct, setSelectedMarketplaceProduct] = useState<MarketplaceItem | null>(null);
 
   // Global currency sync & location detection on mount
   useEffect(() => {
+    purgeLegacyDemoData();
     const loc = detectUserLocationAndCurrency();
     const stored = getStoredCurrency();
     const activeCurr = stored || loc.currency;
@@ -99,12 +90,15 @@ export default function App() {
   };
 
   // Sync current user with Firebase profile
-  const currentUser = authUser && profile ? {
-    uid: profile.uid,
-    name: profile.displayName || authUser.displayName || "Créateur Mansa",
-    email: profile.email || authUser.email || "",
-    avatarInitials: profile.avatarInitials || "MA",
-  } : null;
+  const currentUser =
+    authUser && profile
+      ? {
+          uid: profile.uid,
+          name: profile.displayName || authUser.displayName || "Créateur Mansa",
+          email: profile.email || authUser.email || "",
+          avatarInitials: profile.avatarInitials || "MA",
+        }
+      : null;
 
   const handleOpenStudio = (category?: string) => {
     // La landing reste publique, mais le studio et les actions métier nécessitent un compte.
@@ -146,22 +140,6 @@ export default function App() {
     if (currentView !== "dashboard") {
       setCurrentView("dashboard");
     }
-  };
-
-  const handleSelectCategory = (cat: CategoryCardItem) => {
-    handleOpenStudio(cat.categoryKey);
-  };
-
-  const handleOpenMarketplace = () => {
-    if (currentView !== "landing") setCurrentView("landing");
-    setTimeout(() => {
-      const el = document.getElementById("marketplace");
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-    }, 50);
-  };
-
-  const handleOpenDocs = () => {
-    window.open(siteUrl("/documentation"), "_blank");
   };
 
   const handleLoginSuccess = () => {
@@ -237,180 +215,22 @@ export default function App() {
     );
   }
 
-  // Tous les visiteurs arrivent d’abord sur la landing page publique.
+  // L’accueil public reste vide tant qu’aucune donnée réelle n’est disponible.
   return (
-    <div id="home" className="afhub-home min-h-screen bg-store-background text-store-foreground flex flex-col font-sans selection:bg-store-primary/30">
-      {/* Header */}
+    <div
+      id="home"
+      className="afhub-home min-h-screen bg-store-background text-store-foreground flex flex-col font-sans"
+    >
       <Header
-        onOpenMarketplace={handleOpenMarketplace}
-        onOpenDocs={handleOpenDocs}
+        onOpenMarketplace={() => {}}
+        onOpenDocs={() => {}}
+        minimal
         onOpenLogin={() => {
-          if (currentUser) {
-            setCurrentView("dashboard");
-          } else {
-            setAuthMode("login");
-            setCurrentView("login");
-          }
+          setAuthMode("login");
+          setCurrentView("login");
         }}
       />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col w-full">
-        {/* 1. Hero Section */}
-        <HeroSection
-          onOpenStudio={() => handleOpenStudio()}
-          lang={lang}
-        />
-
-        {/* 2. Ready to Deploy Blueprints */}
-        <BuildNextCarousel
-          onSelectCategory={handleSelectCategory}
-          onOpenStudio={() => handleOpenStudio()}
-          lang={lang}
-        />
-
-        {/* 3. Marketplace Explorer */}
-        <MarketplaceSection
-          onSelectProduct={(item) => setSelectedMarketplaceProduct(item)}
-          onOpenStudio={() => handleOpenStudio()}
-          lang={lang}
-        />
-
-        {/* 4. Social Proof Testimonials */}
-        <SocialProofSection
-          lang={lang}
-        />
-
-        {/* 5. Dynamic FAQ Section */}
-        <FaqSection
-          onOpenStudio={() => handleOpenStudio()}
-          lang={lang}
-        />
-
-        {/* 6. Footer */}
-        <Footer
-          onOpenStudio={() => handleOpenStudio()}
-          lang={lang}
-        />
-      </main>
-
-      {/* Product Creation Studio Modal */}
-      {isStudioOpen && (
-        <Suspense
-          fallback={
-            <div role="status" aria-label="Chargement de l'atelier" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70">
-              <div className="size-5 rounded-full border-2 border-[#3DDC84] border-t-transparent animate-spin" />
-            </div>
-          }
-        >
-          <ProductCreationStudio
-            isOpen={isStudioOpen}
-            activeCurrency={userLocationInfo.currency}
-            onCurrencyChange={handleGlobalCurrencyChange}
-            lang={lang}
-            onClose={() => setIsStudioOpen(false)}
-            onSaveProduct={handleSaveProductFromStudio}
-          />
-        </Suspense>
-      )}
-
-      {/* Product Detail Modal from Marketplace */}
-      {selectedMarketplaceProduct && (
-        <Suspense
-          fallback={
-            <div
-              role="status"
-              aria-label="Chargement de l'offre"
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70"
-            >
-              <span className="rounded-xl bg-[#151515] px-4 py-3 text-sm text-white">
-                Chargement de l'offre…
-              </span>
-            </div>
-          }
-        >
-          <ModalOverlay
-            isOpen={!!selectedMarketplaceProduct}
-            onClose={() => setSelectedMarketplaceProduct(null)}
-            contentClassName="max-w-[460px] mx-auto"
-          >
-            <div className="relative w-full rounded-2xl border border-white/10 bg-[#151515] p-6 shadow-2xl space-y-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={selectedMarketplaceProduct.creatorAvatar}
-                    alt={selectedMarketplaceProduct.creator}
-                    className="size-10 rounded-full border border-white/10 object-cover"
-                  />
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="text-sm font-bold text-white font-heading">{selectedMarketplaceProduct.title}</h3>
-                    </div>
-                    <span className="text-[10px] font-mono text-[#B6B5B0]">Par {selectedMarketplaceProduct.creator}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setSelectedMarketplaceProduct(null)}
-                  className="text-[#B6B5B0] hover:text-white cursor-pointer"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-
-              <p className="text-xs text-[#B6B5B0] font-light leading-relaxed">
-                {selectedMarketplaceProduct.description}
-              </p>
-
-              <div className="rounded-xl border border-white/10 bg-[#2A2929] p-4 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#B6B5B0] block">
-                    Abonnement / Accès
-                  </span>
-                  <span className="text-2xl font-bold font-mono text-white">
-                    {selectedMarketplaceProduct.priceMonthly}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-xs font-mono text-amber-400 font-bold bg-amber-400/10 px-2.5 py-1 rounded-md">
-                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  <span>{selectedMarketplaceProduct.rating}</span>
-                  <span className="text-[#B6B5B0] font-normal">({selectedMarketplaceProduct.reviewsCount})</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs text-[#B6B5B0] font-light">
-                <div className="flex items-center gap-2">
-                  <Check className="size-3.5 text-[#3DDC84] shrink-0" />
-                  <span>Accès instantané aux canaux et contenus</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="size-3.5 text-[#3DDC84] shrink-0" />
-                  <span>Paiement sécurisé par Mobile Money & Carte</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => setSelectedMarketplaceProduct(null)}
-                  className="flex-1 py-2.5 rounded-full border border-white/10 text-[#B6B5B0] hover:text-white hover:bg-white/5 text-xs font-semibold cursor-pointer"
-                >
-                  Fermer
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedMarketplaceProduct(null);
-                    handleOpenStudio(selectedMarketplaceProduct.category);
-                  }}
-                  className="ui-btn-primary flex-1 py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer font-bold"
-                >
-                  <span>Créer une offre similaire</span>
-                  <ArrowRight className="size-3" />
-                </button>
-              </div>
-            </div>
-          </ModalOverlay>
-        </Suspense>
-      )}
+      <main className="flex-1" aria-label="Page d’accueil vide" />
     </div>
   );
 }

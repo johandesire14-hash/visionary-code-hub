@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { ArrowLeft, Mail, Lock, User, AlertCircle, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, AlertCircle, ArrowRight } from "lucide-react";
 import { AfhubLogo } from "./AfhubLogo";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,7 +17,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   lang,
   initialMode = "signup",
 }) => {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDemo, error, clearError } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, error, clearError } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [name, setName] = useState("");
@@ -25,21 +25,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-
-  const handleDemoLogin = async () => {
-    try {
-      setLocalError(null);
-      clearError();
-      setIsSubmitting(true);
-      await signInAsDemo("Johan Démo", "demo.createur@mansa.app");
-      onLoginSuccess();
-    } catch (err: any) {
-      console.error("Demo login failed", err);
-      setLocalError(err.message || "Échec de l'accès démo.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -101,9 +86,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           <h1 className="text-2xl font-bold tracking-tight text-white font-heading">
-            {mode === "login"
-              ? "Connexion à Mansa"
-              : "Créer votre compte Mansa"}
+            {mode === "login" ? "Connexion à Mansa" : "Créer votre compte Mansa"}
           </h1>
           <p className="mt-1 text-xs text-[#B6B5B0]">
             {mode === "login"
@@ -141,34 +124,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             }`}
           >
             Créer un compte
-          </button>
-        </div>
-
-        {/* 1-Click Instant Demo Exploration Card */}
-        <div className="rounded-2xl border border-white/10 bg-[#151515] p-4.5 shadow-xl">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <div className="size-7 rounded-lg bg-[#3DDC84]/20 border border-white/10 flex items-center justify-center text-[#3DDC84]">
-                <Sparkles className="size-4" />
-              </div>
-              <div>
-                <h3 className="text-xs font-bold text-white">
-                  Explorer en mode Démo (1-clic)
-                </h3>
-                <p className="text-[11px] text-[#B6B5B0]">
-                  Accès instantané complet pour tester & créer
-                </p>
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={isSubmitting}
-            className="ui-btn-primary w-full py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2"
-          >
-            <span>Lancer la session Démo & Explorer</span>
-            <ArrowRight className="size-3.5" />
           </button>
         </div>
 
@@ -215,8 +170,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               {isSubmitting
                 ? "Connexion en cours..."
                 : mode === "login"
-                ? "Continuer avec Google"
-                : "S'inscrire avec Google"}
+                  ? "Continuer avec Google"
+                  : "S'inscrire avec Google"}
             </span>
           </button>
 
@@ -300,11 +255,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </span>
               ) : (
                 <>
-                  <span>
-                    {mode === "login"
-                      ? "Se connecter"
-                      : "Créer mon compte Mansa"}
-                  </span>
+                  <span>{mode === "login" ? "Se connecter" : "Créer mon compte Mansa"}</span>
                   <ArrowRight className="size-3.5" />
                 </>
               )}
@@ -315,8 +266,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         {/* Footer info */}
         <div className="text-center text-[11px] text-[#B6B5B0] leading-relaxed">
           En vous connectant à Mansa, vous acceptez nos{" "}
-          <a href="#" className="underline hover:text-white">Conditions Générales</a> et notre{" "}
-          <a href="#" className="underline hover:text-white">Politique de Confidentialité</a>.
+          <a href="#" className="underline hover:text-white">
+            Conditions Générales
+          </a>{" "}
+          et notre{" "}
+          <a href="#" className="underline hover:text-white">
+            Politique de Confidentialité
+          </a>
+          .
         </div>
       </div>
     </div>

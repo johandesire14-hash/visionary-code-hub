@@ -13,7 +13,6 @@ import {
   firebaseConfigured,
 } from "../services/firebase";
 import { syncUserProfile, FirestoreUserProfile } from "../services/dbService";
-import { safeStorage } from "../utils/storage";
 
 export type AppUser = Pick<FirebaseUser, "uid" | "email" | "displayName" | "photoURL">;
 
@@ -24,7 +23,6 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, name?: string) => Promise<void>;
-  signInAsDemo: (name?: string, email?: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
@@ -63,8 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (firebaseUser) {
         setUser(firebaseUser);
-        safeStorage.removeItem("mansa_demo_session");
-        safeStorage.removeItem("afhub_demo_session");
         try {
           const userProfile = await syncUserProfile({
             uid: firebaseUser.uid,
@@ -89,7 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setProfile({
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",
-              displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Créateur",
+              displayName:
+                firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Créateur",
               avatarInitials: initials,
               photoURL: firebaseUser.photoURL || undefined,
               country: "Côte d'Ivoire",
@@ -99,33 +96,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         if (isMounted) setLoading(false);
       } else {
-        // Check for active demo session (support legacy afhub_demo_session key for smooth transition)
-        const savedDemo = safeStorage.getItem("mansa_demo_session") || safeStorage.getItem("afhub_demo_session");
-        if (savedDemo) {
-          try {
-            const parsed = JSON.parse(savedDemo);
-            if (isMounted) {
-              setUser(parsed);
-              setProfile({
-                uid: parsed.uid || "demo-creator-mansa",
-                email: parsed.email || "demo.createur@mansa.app",
-                displayName: parsed.displayName || "Johan Démo (Créateur)",
-                avatarInitials: "JD",
-                country: "Côte d'Ivoire",
-                currency: "XOF",
-              });
-            }
-          } catch (e) {
-            if (isMounted) {
-              setUser(null);
-              setProfile(null);
-            }
-          }
-        } else {
-          if (isMounted) {
-            setUser(null);
-            setProfile(null);
-          }
+        if (isMounted) {
+          setUser(null);
+          setProfile(null);
         }
         if (isMounted) setLoading(false);
       }
@@ -137,38 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribe();
     };
   }, []);
-
-  const signInAsDemo = async (demoName = "Johan Démo (Créateur)", demoEmail = "demo.createur@mansa.app") => {
-    setError(null);
-    setLoading(true);
-    try {
-      const demoUserObj: AppUser = {
-        uid: "demo-creator-mansa",
-        email: demoEmail,
-        displayName: demoName,
-        photoURL: null,
-      };
-      safeStorage.setItem("mansa_demo_session", JSON.stringify(demoUserObj));
-      safeStorage.removeItem("afhub_demo_session");
-      setUser(demoUserObj);
-      const demoProfile: FirestoreUserProfile = {
-        uid: demoUserObj.uid,
-        email: demoUserObj.email || demoEmail,
-        displayName: demoUserObj.displayName || demoName,
-        avatarInitials: "JD",
-        country: "Côte d'Ivoire",
-        currency: "XOF",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(demoProfile);
-    } catch (err: any) {
-      console.error("Demo login error:", err);
-      setError("Erreur lors de l'accès démo.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signInWithGoogle = async () => {
     try {
@@ -218,7 +159,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       console.error("Email Sign-In Error:", err);
       let msg = "Adresse email ou mot de passe incorrect.";
-      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+      if (
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/invalid-credential"
+      ) {
         msg = "Identifiants invalides. Vérifiez votre email et mot de passe.";
       } else if (err.code === "auth/too-many-requests") {
         msg = "Trop de tentatives échouées. Veuillez patienter un moment.";
@@ -274,15 +219,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      safeStorage.removeItem("mansa_demo_session");
-      safeStorage.removeItem("afhub_demo_session");
       await firebaseSignOut(auth);
       setUser(null);
       setProfile(null);
     } catch (err) {
       console.error("Logout error:", err);
-      safeStorage.removeItem("mansa_demo_session");
-      safeStorage.removeItem("afhub_demo_session");
       setUser(null);
       setProfile(null);
     }
@@ -299,7 +240,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,
-        signInAsDemo,
         resetPassword,
         logout,
         error,
