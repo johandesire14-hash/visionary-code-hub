@@ -12,35 +12,7 @@ export interface TelegramChannelItem {
 const STORAGE_KEY = "mansa_telegram_channels";
 const LEGACY_STORAGE_KEY = "whop_telegram_channels";
 
-export const DEFAULT_TELEGRAM_CHANNELS: TelegramChannelItem[] = [
-  {
-    id: "tg-1",
-    name: "VICTORY ODDS 🤑🔥",
-    type: "channel",
-    memberCount: 1450,
-    isIncluded: true,
-    linkedDate: "Aujourd'hui, 14:32",
-    botStatus: "admin",
-  },
-  {
-    id: "tg-2",
-    name: "VIP TRADING AFRIQUE 📈",
-    type: "channel",
-    memberCount: 2350,
-    isIncluded: true,
-    linkedDate: "Hier, 10:15",
-    botStatus: "admin",
-  },
-  {
-    id: "tg-3",
-    name: "BETSPORT EXCLUSIF",
-    type: "channel",
-    memberCount: 840,
-    isIncluded: true,
-    linkedDate: "Connecté",
-    botStatus: "admin",
-  },
-];
+export const DEFAULT_TELEGRAM_CHANNELS: TelegramChannelItem[] = [];
 
 export function getStoredTelegramChannels(): TelegramChannelItem[] {
   if (typeof window === "undefined") return DEFAULT_TELEGRAM_CHANNELS;

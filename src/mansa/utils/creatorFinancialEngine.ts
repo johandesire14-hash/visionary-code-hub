@@ -383,11 +383,6 @@ export function createWithdrawalRequest(params: {
       );
     } catch (e) {}
 
-    // Simulation de validation automatique sous 12 secondes
-    setTimeout(() => {
-      markWithdrawalCompleted(creatorId, newRequest.id);
-    }, 12000);
-
     return {
       success: true,
       request: newRequest,

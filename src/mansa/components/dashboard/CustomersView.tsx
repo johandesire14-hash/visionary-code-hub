@@ -18,7 +18,6 @@ import {
   X,
   MessageSquare,
   Copy,
-  Zap,
 } from "lucide-react";
 import { ConfirmActionModal } from "../common/ConfirmActionModal";
 import { ModalOverlay } from "../common/ModalOverlay";

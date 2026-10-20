@@ -110,7 +110,6 @@ interface EnterpriseMemberViewProps {
   onSelectCreatorCompany?: (comp: any) => void;
   user?: { uid?: string; name: string; email: string; avatarInitials?: string };
   onOpenMarketplace?: () => void;
-  onSeedSimulationData?: () => void;
   onOpenCreatorDashboard?: () => void;
   onOpenCreatorAssistance?: () => void;
   onCreateProduct?: () => void;
@@ -128,7 +127,6 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   onSelectCreatorCompany,
   user = { name: "Johan Désiré", email: "johan@afhub.app", avatarInitials: "JD" },
   onOpenMarketplace,
-  onSeedSimulationData,
   onOpenCreatorDashboard,
   onOpenCreatorAssistance,
   onCreateProduct,
@@ -378,15 +376,7 @@ export const EnterpriseMemberView: React.FC<EnterpriseMemberViewProps> = ({
   const [postCommentsMap, setPostCommentsMap] = useState<Record<string, Array<{ author: string; text: string; time: string }>>>(() => {
     try {
       const raw = localStorage.getItem("mansa_post_comments_storage");
-      return raw ? JSON.parse(raw) : {
-        "post-pinned": [
-          { author: "Membre Actif", text: "Merci pour la mise à jour, c'est très clair.", time: "Il y a 20 min" },
-          { author: currentSub.companyName, text: "Merci pour votre retour. Nous restons disponibles.", time: "Il y a 12 min" },
-        ],
-        "post-cadre-1": [
-          { author: "Membre Actif", text: "Merci pour ce point de marché détaillé !", time: "Il y a 30 min" },
-        ],
-      };
+      return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
     }

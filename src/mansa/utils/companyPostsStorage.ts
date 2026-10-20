@@ -22,51 +22,15 @@ export interface CompanyPost {
 
 const STORAGE_KEY = "mansa_company_newsfeed_posts";
 
-const DEFAULT_CADRE_POSTS: CompanyPost[] = [
-  {
-    id: "post-cadre-1",
-    companyId: "comp-cadre-financier",
-    companyName: "Cadre financier",
-    title: "🎯 Point de Marché Hebdomadaire & Alertes Algorithmiques",
-    content:
-      "Bienvenue à tous les membres de la communauté Cadre financier ! Les analyses techniques détaillées et les ordres protégés sont en ligne dans vos canaux respectifs. Rappel essentiel : respectez rigoureusement votre gestion du risque.",
-    authorName: "Cadre financier Labs",
-    createdAt: "Il y a 2h",
-    timestamp: Date.now() - 7200000,
-    pinned: true,
-    likesCount: 64,
-    commentsCount: 18,
-    category: "Annonce Officielle",
-  },
-  {
-    id: "post-cadre-2",
-    companyId: "comp-cadre-financier",
-    companyName: "Cadre financier",
-    title: "⚡ Déploiement des Bots Telegram & Discord v2.4",
-    content:
-      "La latence d'envoi de nos alertes instantanées est désormais réduite sous la barre des 250ms. Tous les canaux et accès ont été synchronisés avec succès.",
-    authorName: "Cadre financier Labs",
-    createdAt: "Il y a 6h",
-    timestamp: Date.now() - 21600000,
-    pinned: false,
-    likesCount: 42,
-    commentsCount: 9,
-    category: "Mise à jour technique",
-  },
-];
-
 export function getAllStoredPosts(): CompanyPost[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CADRE_POSTS));
-      return DEFAULT_CADRE_POSTS;
-    }
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed;
-    return DEFAULT_CADRE_POSTS;
+    return [];
   } catch {
-    return DEFAULT_CADRE_POSTS;
+    return [];
   }
 }
 
@@ -89,34 +53,6 @@ export function getPostsForCompany(companyId: string, companyName?: string): Com
     const pName = (p.companyName || "").trim().toLowerCase();
     return pId === normalizedId || (normalizedName && pName && pName === normalizedName);
   });
-
-  if (filtered.length === 0 && (normalizedId || normalizedName)) {
-    // Si c'est Cadre financier, on réinjecte ses posts initiaux
-    if (normalizedId.includes("cadre") || normalizedName.includes("cadre")) {
-      const cadrePosts = DEFAULT_CADRE_POSTS;
-      saveAllPosts([...all, ...cadrePosts]);
-      return cadrePosts;
-    }
-
-    // Pour toute nouvelle entreprise, on crée un post d'accueil exclusif à CETTE entreprise
-    const initialWelcomePost: CompanyPost = {
-      id: `post-welcome-${companyId}-${Date.now()}`,
-      companyId: companyId,
-      companyName: companyName,
-      title: `Bienvenue dans la communauté de ${companyName || "notre entreprise"}`,
-      content: `Bienvenue dans l'espace officiel de ${companyName || "notre entreprise"}. Retrouvez ici toutes les actualités exclusives, annonces officielles et ressources publiées par l'équipe.`,
-      authorName: companyName || "Créateur",
-      createdAt: "Récemment",
-      timestamp: Date.now(),
-      pinned: true,
-      likesCount: 1,
-      commentsCount: 0,
-      category: "Bienvenue",
-    };
-    const updated = [initialWelcomePost, ...all];
-    saveAllPosts(updated);
-    return [initialWelcomePost];
-  }
 
   return filtered.sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
