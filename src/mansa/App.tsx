@@ -1,6 +1,11 @@
 // @ts-nocheck
 import React, { lazy, Suspense, useState, useEffect } from "react";
 import { Header } from "./components/Header";
+import { HeroSection } from "./components/HeroSection";
+import { BuildNextCarousel } from "./components/BuildNextCarousel";
+import { MarketplaceSection } from "./components/MarketplaceSection";
+import { FaqSection } from "./components/FaqSection";
+import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import type { CreatedProductData } from "./components/ProductCreationStudio";
 import {
@@ -15,11 +20,6 @@ import {
 import { useAuth } from "./context/AuthContext";
 import { saveProductToFirestore } from "./services/dbService";
 import { purgeLegacyDemoData } from "./utils/storage";
-const ModalOverlay = lazy(() =>
-  import("./components/common/ModalOverlay").then((module) => ({
-    default: module.ModalOverlay,
-  })),
-);
 const UserDashboard = lazy(() =>
   import("./components/UserDashboard").then((module) => ({ default: module.UserDashboard })),
 );
@@ -215,22 +215,38 @@ export default function App() {
     );
   }
 
-  // L’accueil public reste vide tant qu’aucune donnée réelle n’est disponible.
+  // Landing structurée : les sections restent visibles, mais le catalogue n’affiche
+  // aucun produit tant qu’aucune offre réelle n’est disponible.
   return (
     <div
       id="home"
       className="afhub-home min-h-screen bg-store-background text-store-foreground flex flex-col font-sans"
     >
       <Header
-        onOpenMarketplace={() => {}}
-        onOpenDocs={() => {}}
-        minimal
+        onOpenMarketplace={() =>
+          document.getElementById("marketplace")?.scrollIntoView({ behavior: "smooth" })
+        }
+        onOpenDocs={() => window.open("/documentation", "_blank")}
         onOpenLogin={() => {
           setAuthMode("login");
           setCurrentView("login");
         }}
       />
-      <main className="flex-1" aria-label="Page d’accueil vide" />
+      <main className="flex-1 flex flex-col w-full" aria-label="Accueil afhub">
+        <HeroSection onOpenStudio={() => handleOpenStudio()} lang={lang} />
+        <BuildNextCarousel
+          onSelectCategory={(category) => handleOpenStudio(category.categoryKey)}
+          onOpenStudio={() => handleOpenStudio()}
+          lang={lang}
+        />
+        <MarketplaceSection
+          onSelectProduct={() => undefined}
+          onOpenStudio={() => handleOpenStudio()}
+          lang={lang}
+        />
+        <FaqSection onOpenStudio={() => handleOpenStudio()} lang={lang} />
+        <Footer onOpenStudio={() => handleOpenStudio()} lang={lang} />
+      </main>
     </div>
   );
 }
